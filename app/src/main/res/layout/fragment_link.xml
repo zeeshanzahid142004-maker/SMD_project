@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#C4000000"
+    tools:context=".linkFragment">
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/enter_link_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="26dp"
+            app:cardElevation="14dp"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="28dp"
+                android:background="@drawable/bg_gradient_thirdver">
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="6dp"
+                    android:layout_marginBottom="20dp"
+                    app:cardBackgroundColor="@color/white">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:paddingVertical="14dp"
+                        android:text="Enter Link"
+                        android:textSize="26sp"
+                        android:textStyle="bold"
+                        android:fontFamily="sans-serif-black"
+                        android:letterSpacing="0.05"
+                        android:textColor="@color/figma_purple_main" />
+                </androidx.cardview.widget.CardView>
+
+                <EditText
+                    android:id="@+id/linkInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Paste link here..."
+                    android:padding="14dp"
+                    android:textColor="#FFFFFF"
+                    android:textColorHint="#BBFFFFFF"
+                    android:background="@drawable/edittext_white_outline"
+                    android:inputType="textUri" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/pasteButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="Go"
+                    app:backgroundTint="@color/white"
+                    android:textColor="@color/figma_purple_main"
+                    android:fontFamily="sans-serif-medium"
+                    android:paddingVertical="12dp"
+                    app:cornerRadius="12dp"
+                    android:stateListAnimator="@null" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/loading_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="26dp"
+            app:cardElevation="14dp"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="28dp"
+                android:minHeight="300dp"
+                android:background="@drawable/bg_gradient_thirdver">
+
+                <ProgressBar
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:indeterminateTint="@color/white"
+                    android:layout_gravity="center"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Analyzing..."
+                    android:textColor="@color/white"
+                    style="@style/TextAppearance.Home.CardTitle"
+                    android:layout_marginTop="20dp"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/confirmation_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="26dp"
+            app:cardElevation="14dp"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="28dp"
+                android:background="@drawable/bg_gradient_thirdver">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ready!"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-black"
+                    android:textColor="@color/white"
+                    android:layout_marginBottom="24dp"/>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/rewatch_button"
+                    style="@style/TextAppearance.Button.Large"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:text="Watch Video"
+                    app:backgroundTint="@color/white"
+                    android:textColor="@color/figma_purple_main"
+                    app:cornerRadius="12dp"
+                    android:stateListAnimator="@null" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/quiz_button"
+                    style="@style/TextAppearance.Button.Large"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="16dp"
+                    android:text="Take Quiz"
+                    app:backgroundTint="@color/white"
+                    android:textColor="@color/figma_purple_main"
+                    app:cornerRadius="12dp"
+                    android:stateListAnimator="@null" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

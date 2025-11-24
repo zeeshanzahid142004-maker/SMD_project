@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!--
+    Palette 2: "Electric Purple & Lime"
+    A bold, high-contrast, modern option.
+    -->
+    <gradient
+        android:angle="135"
+        android:startColor="#C0FF00"
+        android:endColor="#6a32f9"
+        android:type="linear" />
+
+    <corners android:radius="16dp" />
+</shape>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="12dp"
+    app:cardBackgroundColor="@color/white"
+    android:layout_marginBottom="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_question_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/figma_purple_main"
+            style="@style/TextAppearance.Body.Small.Bold"
+            tools:text="Question 1"/>
+
+        <TextView
+            android:id="@+id/tv_question_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_primary_dark"
+            style="@style/TextAppearance.Body.Small.Medium"
+            tools:text="What is the main function of the 'main' method in a Java application?"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="12dp">
+
+            <ImageView
+                android:id="@+id/iv_answer_status"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="8dp"
+                tools:src="@drawable/ic_correct_check"
+                />
+
+            <TextView
+                android:id="@+id/tv_your_answer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_secondary_gray"
+                style="@style/TextAppearance.Body.Small.Medium"
+                tools:text="The entry point of the application."/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/ll_correct_answer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_correct_check"
+                />
+
+            <TextView
+                android:id="@+id/tv_correct_answer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_primary_dark"
+                style="@style/TextAppearance.Body.Small.Medium"
+                tools:text="To manage memory."/>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

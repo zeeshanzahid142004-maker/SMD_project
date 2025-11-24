@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.example.learnify">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Learnify"
+        android:hardwareAccelerated="true"
+        tools:targetApi="31">
+        <activity
+            android:name=".RecommendationsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CodingExerciseActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FeedbackActivity"
+            android:exported="false" /> <!-- STEP 1: Make SplashActivity the new LAUNCHER -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Learnify">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity> <!-- STEP 2: Remove the LAUNCHER from Welcome_Page_Activity -->
+        <activity
+            android:name=".Welcome_Page_Activity"
+            android:exported="false" /> <!-- STEP 3: Ensure all other activities are declared -->
+        <activity
+            android:name=".OnboardingActivity"
+            android:exported="false" />
+        <activity
+            android:name=".signin_activity"
+            android:exported="false" />
+        <activity
+            android:name=".signup_activity"
+            android:exported="false" />
+        <activity
+            android:name=".ForgotPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".CreateNewPasswordActivity"
+            android:exported="false" /> <!-- This is your main app "house" -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+
+
+        </activity>
+        <activity
+            android:name=".QuizActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+
+    </application>
+
+</manifest>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- This is the gradient from your Profile Card -->
+    <gradient
+        android:angle="225"
+        android:startColor="@color/gradient_start_blue"
+        android:endColor="@color/gradient_stop_purple"
+        android:type="linear" />
+
+    <!-- We match the corner radius from the CardView -->
+    <corners android:radius="16dp" />
+</shape>

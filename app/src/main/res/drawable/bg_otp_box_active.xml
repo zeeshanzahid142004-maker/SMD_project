@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/otp_box_background" />
+            <corners android:radius="5dp" />
+        </shape>
+    </item>
+
+    <item
+        android:left="29dp"
+        android:right="29dp"
+        android:top="11dp"
+        android:bottom="11dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/figma_purple_main" />
+            <size android:width="2dp" />
+        </shape>
+    </item>
+
+</layer-list>

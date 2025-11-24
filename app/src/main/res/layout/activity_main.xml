@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!--
+    THIS IS THE "SMART" FIX (Bug #5)
+    The container's bottom is constrained to the TOP of the app bar.
+    This stops it from overlapping the navigation.
+    -->
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        app:layout_constraintBottom_toTopOf="@id/bottom_app_bar" />
+
+    <!-- This is the custom-shaped "Cradle" Bottom App Bar -->
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bottom_app_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        app:fabCradleMargin="10dp"
+        app:fabCradleRoundedCornerRadius="20dp"
+        app:fabCradleVerticalOffset="10dp"
+        android:backgroundTint="@color/white">
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottom_navigation_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="16dp"
+            android:background="@android:color/transparent"
+            app:elevation="0dp"
+
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_app_bar_menu" />
+
+    </com.google.android.material.bottomappbar.BottomAppBar>
+
+    <!-- The purple "Progress" button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_progress"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_graph_white"
+        app:backgroundTint="@color/figma_purple_main"
+        app:layout_anchor="@id/bottom_app_bar"
+        app:tint="@color/white"
+        android:contentDescription="View Progress"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

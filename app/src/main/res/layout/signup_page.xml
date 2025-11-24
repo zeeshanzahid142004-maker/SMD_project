@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".signup_activity">
+
+    <ImageView
+        android:id="@+id/sign_up_illustration"
+        android:layout_width="0dp"
+        android:layout_height="281dp"
+        android:src="@drawable/illustration_sign_up"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="60dp"
+        android:contentDescription="Illustration of person signing up"/>
+
+    <TextView
+        android:id="@+id/sign_up_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sign Up"
+        style="@style/TextAppearance.Header.Small"
+        app:layout_constraintTop_toBottomOf="@id/sign_up_illustration"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="5dp"/>
+
+    <EditText
+        android:id="@+id/name_input"
+        android:layout_width="328dp"
+        android:layout_height="60dp"
+        style="@style/Widget.App.EditText"
+        android:hint="Name"
+        android:inputType="textPersonName"
+        app:layout_constraintTop_toBottomOf="@id/sign_up_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="18dp" />
+
+    <EditText
+        android:id="@+id/email_input"
+        android:layout_width="328dp"
+        android:layout_height="60dp"
+        style="@style/Widget.App.EditText"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        app:layout_constraintTop_toBottomOf="@id/name_input"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="18dp" />
+
+    <EditText
+        android:id="@+id/password_input"
+        android:layout_width="328dp"
+        android:layout_height="60dp"
+        style="@style/Widget.App.EditText"
+        android:hint="Password"
+        android:inputType="textPassword"
+        app:layout_constraintTop_toBottomOf="@id/email_input"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="18dp" />
+
+    <ImageView
+        android:id="@+id/password_visibility_toggle"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_eye_invisible"
+        app:layout_constraintTop_toTopOf="@id/password_input"
+        app:layout_constraintBottom_toBottomOf="@id/password_input"
+        app:layout_constraintEnd_toEndOf="@id/password_input"
+        android:layout_marginEnd="28dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Toggle password visibility" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/sign_up_button"
+        android:layout_width="328dp"
+        android:layout_height="58dp"
+        android:text="Sign up"
+        style="@style/TextAppearance.Button.Large"
+        android:background="@drawable/bg_sign_up_gradient"
+        app:backgroundTint="@null"
+        app:layout_constraintTop_toBottomOf="@id/password_input"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="18dp"/>
+
+    <TextView
+        android:id="@+id/or_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OR"
+        style="@style/TextAppearance.Separator"
+        app:layout_constraintTop_toBottomOf="@id/sign_up_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="18dp" />
+
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/google_sign_up_button"
+        android:layout_width="328dp"
+        android:layout_height="70dp"
+        style="@style/Widget.App.Button.Stroked"
+        android:text="Sign Up with Google"
+        app:icon="@drawable/ic_google_logo"
+        app:iconPadding="16dp"
+        app:iconGravity="textStart"
+        app:layout_constraintTop_toBottomOf="@id/or_text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_gradient_secondver"
+        android:backgroundTint="@null"
+        />
+
+
+    <LinearLayout
+        android:id="@+id/log_in_prompt_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toBottomOf="@id/google_sign_up_button"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/log_in_prompt_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Already have an account? "
+            style="@style/TextAppearance.Body.Small.Medium" />
+
+        <TextView
+            android:id="@+id/log_in_prompt_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Login"
+            style="@style/TextAppearance.Body.Small.Bold"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- This uses the purple/blue gradient from your app's theme -->
+    <gradient
+        android:angle="135"
+        android:startColor="@color/gradient_start_blue"
+        android:endColor="@color/gradient_stop_purple"
+        android:type="linear" />
+
+    <!-- We'll match the corner radius from your CardView -->
+    <corners android:radius="26dp" />
+</shape>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/screen_background_light_blue"
+    tools:context=".FavouritesFragment">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/favourites_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:padding="16dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/list_item_history"
+        android:visibility="gone"/>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/empty_favourites_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginTop="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="170dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/bg_profile_card_gradient">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="No Favourites Yet"
+                android:textColor="@color/white"
+                style="@style/TextAppearance.Home.CardTitle"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Tap the heart icon on a paper to save it here."
+                android:textColor="#CCFFFFFF"
+                style="@style/TextAppearance.Body.Onboarding"
+                android:layout_marginTop="4dp"/>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</FrameLayout>

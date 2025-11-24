@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!--
+    MIXED GRADIENT:
+    - startColor is the light blue you liked (#33b6ff)
+    - endColor is the new, deeper purple (#734cff)
+    -->
+    <gradient
+        android:angle="135"
+        android:startColor="#33b6ff"
+        android:endColor="#734cff"
+        android:type="linear" />
+
+    <!-- We'll match the corner radius from your CardView -->
+    <corners android:radius="26dp" />
+</shape>

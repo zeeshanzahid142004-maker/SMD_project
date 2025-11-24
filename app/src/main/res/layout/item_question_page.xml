@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- item_question_page ->what a single question of a quiz looks like -->
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp">
+
+        <TextView
+            android:id="@+id/tv_difficulty_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_difficulty_easy"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:textColor="@color/white"
+            style="@style/TextAppearance.Body.Small.Bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="EASY"/>
+
+        <TextView
+            android:id="@+id/tv_question_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/TextAppearance.Body.Small.Medium"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/tv_difficulty_indicator"
+            app:layout_constraintBottom_toBottomOf="@id/tv_difficulty_indicator"
+            tools:text="1 / 10"/>
+
+        <TextView
+            android:id="@+id/tv_question_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            style="@style/TextAppearance.Header.Small"
+            android:textSize="22sp"
+            app:layout_constraintTop_toBottomOf="@id/tv_difficulty_indicator"
+            tools:layout_editor_absoluteX="16dp"
+            tools:text="What is the main function of the 'main' method in Java?"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_options"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:nestedScrollingEnabled="false"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintTop_toBottomOf="@id/tv_question_text"
+            tools:itemCount="4"
+            tools:listitem="@layout/item_quiz_option"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

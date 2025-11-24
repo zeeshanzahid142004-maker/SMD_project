@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/white">
+
+    <FrameLayout
+        android:id="@+id/back_button_container"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="@drawable/bg_back_button_stroke"
+        android:elevation="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="44dp"> <ImageView
+        android:id="@+id/back_button_icon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_back_button"
+        android:contentDescription="Back Button" />
+    </FrameLayout>
+
+    <ImageView
+        android:id="@+id/onboarding_illustration"
+        android:layout_width="0dp"
+        android:layout_height="369dp"
+
+        app:layout_constraintTop_toBottomOf="@id/back_button_container"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="29dp"
+        android:layout_marginStart="13dp"
+        android:layout_marginEnd="12dp"
+        android:contentDescription="Illustration of person learning at home" />
+
+    <TextView
+        android:id="@+id/title_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Learning at Home Anything"
+        style="@style/TextAppearance.Title.Onboarding"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/onboarding_illustration"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="62dp"
+        android:layout_marginEnd="62dp" />
+
+    <TextView
+        android:id="@+id/body_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="We are Providing the best\nonline courses for you."
+        style="@style/TextAppearance.Body.Onboarding"
+        android:gravity="center"
+        app:layout_constraintTop_toBottomOf="@id/title_text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp" />
+
+    <LinearLayout
+        android:id="@+id/pagination_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toBottomOf="@id/body_text"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="30dp">
+
+        <View
+            android:id="@+id/dot_1"
+            android:layout_width="29dp"
+            android:layout_height="7dp"
+            android:background="@drawable/dot_active"
+            android:layout_marginEnd="8dp"/>
+
+        <View
+            android:id="@+id/dot_2"
+            android:layout_width="15dp"
+            android:layout_height="7dp"
+            android:background="@drawable/dot_inactive"
+            android:layout_marginEnd="8dp"/>
+
+        <View
+            android:id="@+id/dot_3"
+            android:layout_width="15dp"
+            android:layout_height="7dp"
+            android:background="@drawable/dot_inactive" />
+    </LinearLayout>
+
+
+    <FrameLayout
+        android:id="@+id/next_button_container"
+        android:layout_width="92dp"
+        android:layout_height="92dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/pagination_container">
+
+        <ImageView
+            android:id="@+id/button_arc"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/next_button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/next_button"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:layout_gravity="center"
+            android:text="Next"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:cornerRadius="100dp"
+
+            />
+
+    </FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

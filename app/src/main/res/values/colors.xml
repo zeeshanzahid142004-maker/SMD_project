@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="text_primary_dark">#131313</color>
+    <color name="text_secondary_gray">#808080</color>
+
+    <color name="icon_gray_light">#DADADA</color>
+    <color name="icon_dark">#200E32</color>
+    <color name="white">#FFFFFF</color>
+    <color name="gradient_orange_start">#FFA042</color>
+    <color name="gradient_orange_stop">#FF7139</color>
+
+    <color name="illustration_bg_cream">#FFFAF4</color>
+    <color name="illustration_peach">#FFECD7</color>
+    <color name="illustration_pink_light">#FFE0F0</color>
+    <color name="illustration_blue_medium">#5B82FF</color>
+    <color name="illustration_yellow_light">#FEF6CC</color>
+    <color name="illustration_tan">#D8BFAB</color>
+    <color name="illustration_off_white">#FFFDFB</color>
+    <color name="illustration_beige">#F2DFCC</color>
+    <color name="illustration_cream_dark">#FFF1E2</color>
+    <color name="illustration_tan_light">#E8D4C1</color>
+    <color name="illustration_brown_dark_2">#7A5B3C</color>
+    <color name="illustration_brown_medium">#A67C52</color>
+    <color name="illustration_blue_dark">#4A52BD</color>
+    <color name="illustration_purple_muted">#868AE0</color>
+    <color name="illustration_red_muted">#AB534D</color>
+    <color name="illustration_skin_tone_light">#FCB58A</color>
+    <color name="figma_purple_main">#6A32F9</color>
+    <color name="gray">#D1D1D1</color>
+    <color name="black">#000000</color>
+
+    <color name="text_hint_gray_light">#C2C2C2</color>
+    <color name="text_link_blue">#4B65ED</color>
+
+    <color name="illustration_bg_cream_light">#FFFAF1</color>
+    <color name="illustration_bg_pink_light">#FFF3F3</color>
+    <color name="illustration_lavender_light">#F0F1FC</color>
+    <color name="illustration_lavender_muted">#D2D6FA</color>
+    <color name="illustration_lavender_dark">#ADB6E0</color>
+    <color name="illustration_purple_dark_muted">#6C4A67</color>
+    <color name="illustration_purple_deep">#2B2137</color>
+    <color name="illustration_orange_muted">#FEA169</color>
+    <color name="illustration_red_muted_light">#EF948C</color>
+    <color name="illustration_gold">#FCB651</color>
+    <color name="illustration_teal_dark">#57879E</color>
+
+    <color name="illustration_black_muted">#263238</color>
+    <color name="illustration_gray_dark">#37474F</color>
+    <color name="illustration_gray_medium">#455A64</color>
+    <color name="illustration_off_white_2">#FAFAFA</color>
+    <color name="illustration_pink_muted">#F28F8F</color>
+    <color name="illustration_pink_skin">#FFA8A7</color>
+    <color name="text_secondary_gray_dark">#828181</color>
+
+
+        <color name="illustration_bg_lavender_light">#F3F4FE</color>
+        <color name="illustration_bg_lavender_medium">#EBECFD</color>
+        <color name="illustration_lavender_faint">#F1F2FD</color>
+        <color name="illustration_blue_deep">#153E63</color>
+        <color name="illustration_blue_deeper">#0C314C</color>
+        <color name="illustration_blue_steel">#396E96</color>
+        <color name="illustration_skin_pink">#F5A491</color>
+        <color name="illustration_skin_pink_dark">#EF927F</color>
+        <color name="illustration_skin_pink_light">#FFC4AF</color>
+        <color name="illustration_black_purple">#230D30</color>
+        <color name="illustration_red_bright">#E1160C</color>
+        <color name="illustration_gray_blue">#6F7D96</color>
+        <color name="illustration_gray_purple">#4E4A65</color>
+        <color name="illustration_blue_muted">#A7BBD8</color>
+        <color name="illustration_blue_muted_dark">#8797B1</color>
+        <color name="illustration_blue_sky">#6AB0EF</color>
+        <color name="illustration_blue_sky_dark">#2D639E</color>
+        <color name="illustration_pink_hot">#E1617F</color>
+        <color name="illustration_pink_hot_dark">#F28F8F</color>
+        <color name="illustration_black">#000000</color>
+    <color name="otp_box_background">#F4FFF0</color>
+    <color name="color_checkmark_white">#F1EFFF</color>
+    <color name="gradient_start_blue">#7D9EF8</color>
+    <color name="gradient_stop_purple">#DB88F7</color>
+
+    <color name="screen_background_light_blue">#EFF3FB</color>
+    <color name="nav_text_inactive">#BEBEBE</color>
+    <color name="fab_gradient_start">#8A66FC</color>
+    <color name="fab_gradient_stop">#762AF3</color>
+    <color name="profile_image_bg">#E6E0FF</color>
+    <color name="illustration_check_light">#F1EFFF</color>
+    <color name="profile_image_background">#E6E0FF</color>
+
+
+    <color name="screen_background_blue_tint">#E8F3FB</color>
+    <color name="card_surface">#FAFBFC</color>
+    <color name="primary_blue">#1976D2</color>
+
+    <color name="text_secondary_dark">#616161</color>
+    <color name="figma_red_error">#FD0303</color>
+    <color name="figma_green_correct">#4EFD03</color>
+
+    <color name="figma_blue">#4285F4</color>
+    <color name="quiz_difficulty_easy">#43A047</color>
+    <color name="quiz_difficulty_normal">#FF9800</color>
+    <color name="quiz_difficulty_hard">#E53935</color>
+    <color name="figma_lime_green">#AEFF42</color>
+</resources>
