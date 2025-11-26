@@ -115,12 +115,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginEnd="24dp" />
 
-        <!--
-        "SMART" REFACTOR (Bug #3)
-        This FrameLayout now holds *both* the list and the empty view.
-        This fixes the layout collapse bug.
-        The "Upload" buttons are now constrained to THIS FrameLayout.
-        -->
+
         <FrameLayout
             android:id="@+id/history_container"
             android:layout_width="match_parent"
@@ -166,6 +161,7 @@
                     android:gravity="center"
                     android:orientation="vertical"
                     android:padding="16dp"
+                    android:id="@+id/rv_recent_history"
                     android:background="@drawable/bg_profile_card_gradient">
 
                     <TextView

@@ -7,10 +7,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android. material.floatingactionbutton.FloatingActionButton;
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
+
 public class MainActivity extends AppCompatActivity implements
-        HomeFragment.OnHomeFragmentInteractionListener {
+        HomeFragment. OnHomeFragmentInteractionListener {
 
     private static final String TAG = "MainActivity";
     BottomNavigationView bottomNav;
@@ -19,11 +20,12 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R. layout.activity_main);
 
         bottomNav = findViewById(R.id.bottom_navigation_view);
         fab = findViewById(R.id.fab_progress);
         PDFBoxResourceLoader.init(getApplicationContext());
+
         // 1. Load Home by default
         if (savedInstanceState == null) {
             loadFragment_NoBackStack(new HomeFragment());
@@ -53,16 +55,16 @@ public class MainActivity extends AppCompatActivity implements
         // 3. Floating Action Button (Progress)
         fab.setOnClickListener(v -> {
             loadFragment_WithBackStack(new progress_fragment());
-            bottomNav.getMenu().findItem(R.id.nav_placeholder).setChecked(true);
+            bottomNav.getMenu().findItem(R.id.nav_placeholder). setChecked(true);
         });
     }
 
     // --- Navigation Helper Methods ---
 
     private void loadFragment_WithBackStack(Fragment fragment) {
-        Log.d(TAG, "Loading fragment WITH backstack: " + fragment.getClass().getSimpleName());
+        Log. d(TAG, "Loading fragment WITH backstack: " + fragment.getClass().getSimpleName());
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.replace(R.id.fragment_container, fragment);
+        transaction.replace(R.id. fragment_container, fragment);
         transaction.addToBackStack(null);
         transaction.commit();
     }
@@ -78,17 +80,21 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onViewMoreHistoryClicked() {
-        loadFragment_WithBackStack(new HistoryFragment());
+        // ⭐ FIXED: Open HistoryActivity as an Intent (not Fragment)
+        Log.d(TAG, "📜 Opening full History");
+        Intent intent = new Intent(this, HistoryActivity.class);
+        startActivity(intent);
     }
 
     @Override
     public void onUploadLinkClicked() {
+        Log.d(TAG, "📤 Opening link upload");
         loadFragment_WithBackStack(new linkFragment());
     }
 
     @Override
     public void onGoToVideoFragment(String url) {
-        Log.d(TAG, "Opening video fragment for URL: " + url);
+        Log.d(TAG, "🎬 Opening video fragment for URL: " + url);
         VideoNotesFragment videoFragment = new VideoNotesFragment();
         Bundle args = new Bundle();
         args.putString("VIDEO_URL", url);
@@ -99,8 +105,6 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onGoToQuizFragment(String url) {
         Log.d(TAG, "🎯 Opening quiz generator for URL: " + url);
-
-        // UNCOMMENTED AND FIXED!
         GenerateQuizFragment generateFragment = GenerateQuizFragment.newInstance(url);
         loadFragment_WithBackStack(generateFragment);
     }

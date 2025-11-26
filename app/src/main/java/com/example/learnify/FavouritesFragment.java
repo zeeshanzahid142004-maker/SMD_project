@@ -5,38 +5,34 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget. TextView;
+import android.widget. Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
+import androidx. fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class FavouritesFragment extends Fragment {
 
     private static final String TAG = "FavouritesFragment";
 
-    RecyclerView favouritesRecyclerView;
-    View emptyFavouritesView;
-    HistoryAdapter historyAdapter;
-    List<HistoryItem> favouritesList;
+    private RecyclerView rvFavourites;
+    private LinearLayout llEmptyFavourites;
+    private TextView tvEmptyMessage;
+    private HistoryAdapter adapter;
+    private List<QuizAttempt> favouritesList = new ArrayList<>();
 
-    // --- Firebase Variables ---
-    private FirebaseAuth mAuth;
-    private FirebaseFirestore db;
-
-    // We don't need DocumentReference or User variables at the class level if they are only used in one function.
+    private QuizAttemptRepository attemptRepository;
+    private FirebaseAuth auth;
 
     @Nullable
     @Override
@@ -48,133 +44,123 @@ public class FavouritesFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // --- 1. Find Views ---
-        favouritesRecyclerView = view.findViewById(R.id.favourites_recycler_view);
-        emptyFavouritesView = view.findViewById(R.id.empty_favourites_view);
+        Log.d(TAG, "❤️ FavouritesFragment created");
 
-        // --- 2. Initialize Firebase ---
-        db = FirebaseFirestore.getInstance();
-        mAuth = FirebaseAuth.getInstance();
+        attemptRepository = new QuizAttemptRepository();
+        auth = FirebaseAuth.getInstance();
 
-        // --- 3. Setup List and Adapter ---
-        favouritesList = new ArrayList<>();
-        historyAdapter = new HistoryAdapter(getContext(), favouritesList);
-        favouritesRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        favouritesRecyclerView.setAdapter(historyAdapter);
+        // Initialize views
+        rvFavourites = view.findViewById(R.id.rv_favourites);
+        llEmptyFavourites = view.findViewById(R.id. ll_empty_favourites);
+        tvEmptyMessage = view. findViewById(R.id.tv_empty_message);
 
-        // --- 4. Fetch Data ---
-        fetchUserFavourites();
+        // Setup RecyclerView
+        rvFavourites.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        // ⭐ CREATE ADAPTER CORRECTLY
+        adapter = new HistoryAdapter(favouritesList, new HistoryAdapter.OnHistoryActionListener() {
+            @Override
+            public void onDownload(QuizAttempt attempt, int position) {
+                Toast.makeText(getContext(), "Opening History to download", Toast.LENGTH_SHORT). show();
+            }
+
+            @Override
+            public void onToggleFavorite(QuizAttempt attempt, int position) {
+                toggleFavorite(attempt, position);
+            }
+        });
+        rvFavourites.setAdapter(adapter);
+
+        // Load favourite quizzes
+        loadFavourites();
     }
 
-    private void fetchUserFavourites() {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+    /**
+     * Load all favourite quizzes from Firebase
+     */
+    private void loadFavourites() {
+        Log.d(TAG, "📥 Loading favourite quizzes.. .");
 
-        // Check if user is logged in
-        if (currentUser == null) {
-            showEmptyView(true);
-            Log.w(TAG, "User not logged in.");
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
+            showEmptyState("Please log in to view favourites");
+            Log.e(TAG, "❌ User not authenticated");
             return;
         }
 
-        String userID = currentUser.getUid();
-        DocumentReference userDocRef = db.collection("users").document(userID);
-
-        // STEP 1: Get the user's document to find the list of favourite IDs
-        userDocRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+        // Get all quiz attempts and filter by favourite
+        attemptRepository.getAllAttempts(new QuizAttemptRepository.OnAttemptsLoadedListener() {
             @Override
-            public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                if (!task.isSuccessful()) {
-                    Log.e(TAG, "Failed to get user data", task.getException());
-                    showEmptyView(true);
-                    return;
+            public void onAttemptsLoaded(List<QuizAttempt> attempts) {
+                favouritesList.clear();
+
+                // Filter only favourite quizzes
+                for (QuizAttempt attempt : attempts) {
+                    if (attempt.isFavorite) {
+                        favouritesList. add(attempt);
+                        Log.d(TAG, "❤️ Found favourite: " + attempt.quizTitle);
+                    }
                 }
 
-                DocumentSnapshot documentSnapshot = task.getResult();
-                if (!documentSnapshot.exists()) {
-                    Log.d(TAG, "User document does not exist.");
-                    showEmptyView(true);
-                    return;
+                if (favouritesList.isEmpty()) {
+                    showEmptyState("No favourite quizzes yet.\nMark quizzes as favourite!");
+                    Log.d(TAG, "📭 No favourites found");
+                } else {
+                    showContent();
+                    adapter.notifyDataSetChanged();
+                    Log.d(TAG, "✅ Loaded " + favouritesList.size() + " favourite quizzes");
                 }
+            }
 
-                // Safely extract the 'favorites' array as a List<String>
-                // We must check if the field exists before casting.
-                List<String> favouriteQuizIds = (List<String>) documentSnapshot.get("favorites");
-
-                if (favouriteQuizIds == null || favouriteQuizIds.isEmpty()) {
-                    Log.d(TAG, "Favourites array is empty for this user.");
-                    showEmptyView(true);
-                    return;
-                }
-
-                // STEP 2: Use the list of IDs to fetch the full Quiz documents
-                fetchQuizDetails(favouriteQuizIds);
+            @Override
+            public void onError(Exception e) {
+                Log.e(TAG, "❌ Failed to load favourites", e);
+                showEmptyState("Failed to load favourites");
+                Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast. LENGTH_SHORT).show();
             }
         });
     }
 
     /**
-     * Fetches details for all quizzes whose IDs are in the provided list.
+     * Toggle favourite status
      */
-    private void fetchQuizDetails(List<String> quizIds) {
-        // Clear the list before adding new items
-        favouritesList.clear();
+    private void toggleFavorite(QuizAttempt attempt, int position) {
+        attempt.isFavorite = !attempt.isFavorite;
 
-        // Firestore 'whereIn' limits the list size to 10. If you have more, you need batched reads.
-        // For simplicity, we use 'whereIn' assuming less than 10 favorites for now.
-        db.collection("quizzes")
-                .whereIn("quizId", quizIds) // Assuming your quiz documents store their own ID field
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-                    @Override
-                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if (task.isSuccessful()) {
-                            for (QueryDocumentSnapshot quizDocument : task.getResult()) {
-                                // Extract basic information from the Quiz document
-                                String title = quizDocument.getString("title");
-                                String thumbnailUrl = quizDocument.getString("thumbnailUrl");
-                                long totalLong = quizDocument.getLong("totalMarks") != null ? quizDocument.getLong("totalMarks") : 0;
+        Log.d(TAG, "❤️ Toggling favourite: " + attempt.isFavorite);
 
-                                // NOTE: We don't have an "obtained score" here, so we default it to 0 or 1.
-                                // We are just showing the quiz card.
+        attemptRepository.markAsFavorite(attempt. attemptId, attempt.isFavorite);
 
-                                // Create the HistoryItem (representing the quiz)
-                               // HistoryItem item = new HistoryItem(title, 0, (int)totalLong, thumbnailUrl, true);
-                               // favouritesList.add(item);
-                            }
+        if (! attempt.isFavorite) {
+            // Remove from list if unfavourited
+            favouritesList.remove(position);
+            adapter.notifyItemRemoved(position);
 
-                            // Check if we found any quizzes
-                            if (favouritesList.isEmpty()) {
-                                showEmptyView(true);
-                            } else {
-                                historyAdapter.notifyDataSetChanged();
-                                showEmptyView(false);
-                            }
-                        } else {
-                            Log.e(TAG, "Error fetching quiz details", task.getException());
-                            showEmptyView(true);
-                        }
-                    }
-                });
-    }
-
-    // --- Utility Methods ---
-
-    /**
-     * Removes the redundant method signature and sets favorite logic directly in adapter.
-     */
-    private void setupFavouritesList() {
-        // This method is now redundant and should be removed.
-    }
-
-    private void showEmptyView(boolean show) {
-        if (emptyFavouritesView != null && favouritesRecyclerView != null) {
-            if (show) {
-                emptyFavouritesView.setVisibility(View.VISIBLE);
-                favouritesRecyclerView.setVisibility(View.GONE);
-            } else {
-                emptyFavouritesView.setVisibility(View.GONE);
-                favouritesRecyclerView.setVisibility(View.VISIBLE);
+            if (favouritesList.isEmpty()) {
+                showEmptyState("No favourite quizzes yet");
             }
+        } else {
+            adapter.updateItem(position, attempt);
         }
+
+        String message = attempt.isFavorite ? "❤️ Added to favourites" : "Removed from favourites";
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void showEmptyState(String message) {
+        llEmptyFavourites.setVisibility(View.VISIBLE);
+        rvFavourites.setVisibility(View.GONE);
+        tvEmptyMessage.setText(message);
+    }
+
+    private void showContent() {
+        llEmptyFavourites.setVisibility(View.GONE);
+        rvFavourites.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadFavourites(); // Refresh when returning
     }
 }

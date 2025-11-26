@@ -296,6 +296,8 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
         }
     }
 
+
+
     private void finishQuiz() {
         if (isSubmitted) return;
         isSubmitted = true;
@@ -304,17 +306,16 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
             quizTimer.cancel();
         }
 
-        // 💾 SAVE TO FIREBASE HISTORY
-        if (currentQuizId != null && historyRepository != null) {
-            Log.d(TAG, "💾 Saving to Firebase history: " + currentQuizTitle);
-            historyRepository.saveQuizAttempt(
+        // ⭐ USE NEW REPOSITORY TO SAVE ATTEMPT
+        if (currentQuizId != null) {
+            Log.d(TAG, "💾 Saving quiz attempt to history");
+            QuizAttemptRepository attemptRepo = new QuizAttemptRepository();
+            attemptRepo.saveQuizAttempt(
                     currentQuizId,
                     currentQuizTitle,
                     correctCount,
                     questions.size(),
-                    questions,
-                    false,
-                    false
+                    questions
             );
         }
 
@@ -378,25 +379,32 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
 
     @Override
     public void onRegenerateQuiz() {
-        Log.d(TAG, "🔄 Regenerate Quiz clicked");
+        Log. d(TAG, "🔄 Regenerate Quiz clicked");
 
         try {
-            if (quizSourceContent != null && !quizSourceContent.isEmpty()) {
+            // ⭐ IF WE HAVE SOURCE CONTENT, REGENERATE ON SAME TOPIC
+            if (quizSourceContent != null && ! quizSourceContent.isEmpty()) {
                 Log.d(TAG, "✅ Regenerating quiz on same topic");
+
+                // Create GenerateQuizFragment with same content
+                GenerateQuizFragment generateFragment = GenerateQuizFragment.newInstance(quizSourceContent);
+
+                // Replace current fragment stack
+                getSupportFragmentManager(). beginTransaction()
+                        .replace(R.id.fragment_container, generateFragment)
+                        . addToBackStack(null)
+                        .commit();
+            } else {
+
+                Log.d(TAG, "⚠️ No source content stored, going to home");
                 Intent intent = new Intent(this, MainActivity.class);
-                intent.putExtra("LAUNCH_GENERATE", true);
-                intent.putExtra("QUIZ_SOURCE", quizSourceContent);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(intent);
-            } else {
-                Intent intent = new Intent(this, MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent. FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
+                finish();
             }
-            finish();
         } catch (Exception e) {
             Log.e(TAG, "Error with regenerate quiz", e);
-            Toast.makeText(this, "Error returning to home", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error regenerating quiz", Toast.LENGTH_SHORT).show();
             finish();
         }
     }

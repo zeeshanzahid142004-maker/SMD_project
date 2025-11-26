@@ -7,35 +7,19 @@
     android:orientation="vertical"
     android:background="@color/screen_background_light_blue">
 
-    <!-- Header -->
-    <LinearLayout
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:background="@color/white">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="❤️ Favourites"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/black"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Your saved favourite quizzes"
-            android:textSize="14sp"
-            android:textColor="@color/gray"
-            android:layout_marginTop="4dp"/>
-
-    </LinearLayout>
+        android:background="@color/white"
+        app:title="📜 Quiz History"
+        app:navigationIcon="@drawable/ic_back_button"
+        app:elevation="4dp" />
 
     <!-- Empty State -->
     <LinearLayout
-        android:id="@+id/ll_empty_favourites"
+        android:id="@+id/ll_empty_state"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
@@ -46,39 +30,38 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="💔"
+            android:text="📭"
             android:textSize="64sp"
-            android:layout_marginBottom="16dp"/>
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:id="@+id/tv_empty_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No favourite quizzes yet"
+            android:text="No quiz history yet"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/black"
             android:textAlignment="center"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Mark quizzes as favourite to see them here!"
+            android:text="Take a quiz to get started!"
             android:textSize="14sp"
             android:textColor="@color/gray"
-            android:textAlignment="center"/>
+            android:textAlignment="center" />
 
     </LinearLayout>
 
-    <!-- Favourites List -->
+
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_favourites"
+        android:id="@+id/rv_history"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:padding="12dp"
-        android:visibility="gone"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
 </LinearLayout>
