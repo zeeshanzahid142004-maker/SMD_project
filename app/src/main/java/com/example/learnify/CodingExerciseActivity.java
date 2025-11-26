@@ -1,10 +1,11 @@
 package com.example.learnify;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.TextView;
+import android.widget. TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -21,6 +22,7 @@ public class CodingExerciseActivity extends AppCompatActivity {
     private TextView tvExercisePrompt;
     private EditText etCodeInput;
     private MaterialButton btnSubmit;
+    private MaterialButton btnSkip; // ⭐ ADD SKIP BUTTON
 
     private QuizQuestion question;
 
@@ -29,87 +31,102 @@ public class CodingExerciseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_coding_exercise);
 
-        // Get question from intent
+        Log.d(TAG, "🎯 CodingExerciseActivity started");
+
+        // ⭐ GET QUESTION FROM INTENT (not individual fields)
         if (getIntent().hasExtra("QUESTION")) {
             question = (QuizQuestion) getIntent().getSerializableExtra("QUESTION");
-            Log.d(TAG, "Received coding question: " + question.questionText);
+            Log.d(TAG, "✅ Received coding question: " + question.questionText);
         } else {
-            Log.e(TAG, "No question provided!");
-            Toast.makeText(this, "No exercise provided", Toast.LENGTH_SHORT).show();
+            Log.e(TAG, "❌ No question provided!");
+            Toast.makeText(this, "No exercise provided", Toast.LENGTH_SHORT). show();
             finish();
             return;
         }
 
         // Initialize views
-        toolbar = findViewById(R.id.toolbar);
+        toolbar = findViewById(R. id.toolbar);
         tvExercisePrompt = findViewById(R.id.tv_exercise_prompt);
         etCodeInput = findViewById(R.id.et_code_input);
         btnSubmit = findViewById(R.id.btn_submit_exercise);
+        btnSkip = findViewById(R.id.btn_skip_coding);
 
-        // Setup toolbar
+        // Setup toolbar with back button to skip
         setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
+
         toolbar.setNavigationOnClickListener(v -> {
-            // Going back means they didn't complete it
+            Log.d(TAG, "⏭️ Back button tapped - skipping exercise");
             setResult(RESULT_CANCELED);
             finish();
         });
 
         // Setup prompt
-        String promptText = "💻 Coding Practice\n\n" + question.questionText;
+        String promptText = "💻 Coding Exercise\n\n" + question.questionText;
         if (question.correctAnswer != null && !question.correctAnswer.isEmpty()) {
-            promptText += "\n\n💡 Hint: Check the expected solution format";
+            promptText += "\n\n💡 Hint: Look for keywords like loops, conditions, and functions";
         }
         tvExercisePrompt.setText(promptText);
 
-        // Setup buttons
-        btnSubmit.setOnClickListener(v -> submitCode());
+        // ⭐ SUBMIT BUTTON
+        btnSubmit.setOnClickListener(v -> {
+            Log. d(TAG, "📤 Submit button clicked");
+            submitCode();
+        });
+
+        // ⭐ SKIP BUTTON (explicit)
+        if (btnSkip != null) {
+            btnSkip.setOnClickListener(v -> {
+                Log. d(TAG, "⏭️ Skip button clicked");
+                setResult(RESULT_CANCELED);
+                finish();
+            });
+        }
     }
 
     private void submitCode() {
-        String code = etCodeInput.getText().toString().trim();
+        String code = etCodeInput.getText(). toString().trim();
 
         if (code.isEmpty()) {
             Toast.makeText(this, "Please write some code first!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Log.d(TAG, "User submitted code: " + code);
+        Log.d(TAG, "📝 User submitted code: " + code. substring(0, Math.min(50, code.length())));
 
-        // Simple validation - check if code contains expected keywords
         boolean hasRelevantCode = validateCode(code);
 
         if (hasRelevantCode) {
-            // Show success with beautiful dialog
             showSuccessDialog(code);
         } else {
-            // Show hint with beautiful dialog
             showHintDialog();
         }
     }
 
     private void showSuccessDialog(String code) {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_success, null);
+        View dialogView = getLayoutInflater().inflate(R. layout.dialog_success, null);
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setView(dialogView)
                 .setCancelable(false)
                 .create();
 
-        // Make dialog background transparent
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
 
-        // Setup dialog content
-        TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_title);
-        TextView tvMessage = dialogView.findViewById(R.id.tv_dialog_message);
-        com.google.android.material.button.MaterialButton btnDone = dialogView.findViewById(R.id.btn_dialog_positive);
+        TextView tvTitle = dialogView.findViewById(R. id.tv_dialog_title);
+        TextView tvMessage = dialogView.findViewById(R. id.tv_dialog_message);
+        MaterialButton btnDone = dialogView.findViewById(R.id.btn_dialog_positive);
 
         tvTitle.setText("Great Job! 🎉");
         tvMessage.setText("Your code looks good! You've completed this exercise.");
         btnDone.setText("Continue");
         btnDone.setOnClickListener(v -> {
             dialog.dismiss();
+            Log.d(TAG, "✅ Code accepted - returning OK");
             setResult(RESULT_OK);
             finish();
         });
@@ -118,22 +135,20 @@ public class CodingExerciseActivity extends AppCompatActivity {
     }
 
     private void showHintDialog() {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_hint, null);
+        View dialogView = getLayoutInflater(). inflate(R.layout.dialog_hint, null);
 
-        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+        androidx. appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setView(dialogView)
                 .create();
 
-        // Make dialog background transparent
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+            dialog.getWindow().setBackgroundDrawable(new android.graphics. drawable.ColorDrawable(android. graphics.Color.TRANSPARENT));
         }
 
-        // Setup dialog content
         TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_title);
-        TextView tvMessage = dialogView.findViewById(R.id.tv_dialog_message);
-        com.google.android.material.button.MaterialButton btnTryAgain = dialogView.findViewById(R.id.btn_dialog_positive);
-        com.google.android.material.button.MaterialButton btnShowSolution = dialogView.findViewById(R.id.btn_dialog_negative);
+        TextView tvMessage = dialogView. findViewById(R.id.tv_dialog_message);
+        MaterialButton btnTryAgain = dialogView.findViewById(R.id.btn_dialog_positive);
+        MaterialButton btnShowSolution = dialogView.findViewById(R.id.btn_dialog_negative);
 
         tvTitle.setText("Need a hint? 💡");
         tvMessage.setText("Your code might be missing something. Would you like to see the expected solution?");
@@ -152,16 +167,14 @@ public class CodingExerciseActivity extends AppCompatActivity {
     }
 
     private boolean validateCode(String code) {
-        // Simple validation - check for basic coding keywords
         String lowerCode = code.toLowerCase();
 
-        // Check for common programming constructs
         return lowerCode.contains("for") ||
                 lowerCode.contains("while") ||
                 lowerCode.contains("if") ||
-                lowerCode.contains("function") ||
-                lowerCode.contains("def") ||
-                lowerCode.contains("return") ||
-                lowerCode.length() > 20; // At least some effort
+                lowerCode. contains("function") ||
+                lowerCode. contains("def") ||
+                lowerCode. contains("return") ||
+                code.length() > 20;
     }
 }

@@ -18,9 +18,9 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.splash_screen); // Assumes R.layout.splash_screen exists
+        setContentView(R.layout.splash_screen);
 
-        // Initialize Firebase Auth
+
         mAuth = FirebaseAuth.getInstance();
     }
 
@@ -31,7 +31,7 @@ public class SplashActivity extends AppCompatActivity {
         // Check if user is signed in (non-null)
         FirebaseUser currentUser = mAuth.getCurrentUser();
 
-        // A 2-second delay to show the splash screen
+
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
             if (currentUser != null) {
@@ -49,6 +49,6 @@ public class SplashActivity extends AppCompatActivity {
             // Finish this SplashActivity so the user can't press "back" to it
             finish();
 
-        }, 2000); // 2000 milliseconds = 2 seconds
+        }, 2000);
     }
 }

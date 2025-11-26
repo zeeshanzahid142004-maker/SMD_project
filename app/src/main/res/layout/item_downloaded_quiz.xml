@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeColor="#F0F0F0"
+    app:strokeWidth="1dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_quiz_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            tools:text="Introduction to Java Programming"
+            style="@style/TextAppearance.Home.CardTitle"
+            android:textColor="@color/text_primary_dark"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toStartOf="@+id/iv_favorite"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iv_favorite"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Favorite"
+            android:src="@drawable/ic_favorite_border"
+            app:tint="@color/figma_purple_main"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_quiz_title"
+            app:layout_constraintEnd_toStartOf="@+id/iv_delete"
+            app:layout_constraintTop_toTopOf="@+id/tv_quiz_title" />
+
+        <ImageView
+            android:id="@+id/iv_delete"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Delete"
+            android:src="@drawable/ic_close_white"
+            app:tint="@color/text_secondary_gray"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_quiz_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tv_quiz_title" />
+
+        <View
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:background="#F0F0F0"
+            app:layout_constraintTop_toBottomOf="@id/tv_quiz_title" />
+
+        <LinearLayout
+            android:id="@+id/info_container"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/divider">
+
+            <TextView
+                android:id="@+id/tv_questions_count"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="10 Qs"
+                style="@style/TextAppearance.Body.Small.Medium"
+                app:drawableStartCompat="@drawable/ic_quiz"
+                android:drawablePadding="6dp"
+                app:drawableTint="@color/text_secondary_gray"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="12dp"
+                android:layout_marginHorizontal="12dp"
+                android:background="#E0E0E0"/>
+
+            <TextView
+                android:id="@+id/tv_last_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Best: 8/10"
+                style="@style/TextAppearance.Body.Small.Bold"
+                android:textColor="@color/figma_green_correct"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="12dp"
+                android:layout_marginHorizontal="12dp"
+                android:background="#E0E0E0"/>
+
+            <TextView
+                android:id="@+id/tv_attempts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="3 Attempts"
+                style="@style/TextAppearance.Body.Small.Medium"
+                android:textColor="@color/figma_blue"/>
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_downloaded_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            tools:text="Downloaded: Jan 15, 2025"
+            style="@style/TextAppearance.Body.Small.Medium"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/info_container" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_retake"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Retake Quiz"
+            style="@style/Widget.MaterialComponents.Button"
+            android:textColor="@color/white"
+            app:backgroundTint="@color/figma_purple_main"
+            app:icon="@drawable/ic_redo"
+            app:iconTint="@color/white"
+            app:iconGravity="textStart"
+            app:cornerRadius="12dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tv_downloaded_date" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

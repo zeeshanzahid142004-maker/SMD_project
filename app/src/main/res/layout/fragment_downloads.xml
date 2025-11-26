@@ -1,57 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/screen_background_light_blue"
-    tools:context=".DownloadsFragment">
+    android:orientation="vertical"
+    android:background="@color/screen_background_light_blue">
 
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@color/white">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📥 Downloaded Quizzes"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Retake and review your downloaded quizzes offline"
+            android:textSize="14sp"
+            android:textColor="@color/gray"
+            android:layout_marginTop="4dp"/>
+
+    </LinearLayout>
+
+    <!-- Empty State -->
+    <LinearLayout
+        android:id="@+id/ll_empty_state"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📭"
+            android:textSize="64sp"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tv_empty_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No Downloaded Quizzes Yet"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Complete a quiz and download it to access it offline"
+            android:textSize="14sp"
+            android:textColor="@color/gray"
+            android:textAlignment="center"/>
+
+    </LinearLayout>
+
+    <!-- Downloads List -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/downloads_recycler_view"
+        android:id="@+id/rv_downloads"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:padding="16dp"
+        android:padding="12dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        tools:listitem="@layout/list_item_history"
-        android:visibility="gone"
-        tools:visibility="visible" /> <androidx.cardview.widget.CardView
-    android:id="@+id/empty_downloads_view"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
-    android:visibility="visible"
-    android:layout_marginStart="24dp"
-    android:layout_marginEnd="24dp"
-    android:layout_gravity="center"> <LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:minHeight="170dp"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:background="@drawable/bg_profile_card_gradient">
+        tools:listitem="@layout/item_downloaded_quiz"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="No Downloads Yet"
-        android:textColor="@color/white"
-        style="@style/TextAppearance.Home.CardTitle"/>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="Tap the download icon on a paper to save it for offline use."
-        android:textColor="#CCFFFFFF"
-        style="@style/TextAppearance.Body.Onboarding"
-        android:layout_marginTop="4dp"/>
 </LinearLayout>
-</androidx.cardview.widget.CardView>
-
-</FrameLayout>

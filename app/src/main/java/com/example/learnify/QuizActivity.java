@@ -5,13 +5,13 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget. ProgressBar;
+import android.widget. TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity.OnBackPressedDispatcher;
-import androidx.annotation.Nullable;
+import androidx.activity. OnBackPressedDispatcher;
+import androidx.annotation. Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -19,11 +19,11 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com. google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
+import java.util. Locale;
 import java.util.concurrent.TimeUnit;
 
 public class QuizActivity extends AppCompatActivity implements QuizCompleteDialogFragment.QuizCompleteDialogListener {
@@ -32,19 +32,17 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
     private static final int REQUEST_CODE_CODING_EXERCISE = 100;
     private static final long BACK_PRESS_DELAY = 2000;
 
-    // Views
     private ViewPager2 viewPager;
     private ProgressBar progressBar;
     private TextView tvTimer;
     private MaterialButton btnNext;
-    private MaterialButton btnStartCoding; // New button for coding questions
+    private MaterialButton btnStartCoding;
 
-    // Data
     private List<QuizQuestion> questions;
-    private String currentQuizId;    // To store the ID
-    private String currentQuizTitle; // To store the Title
+    private String currentQuizId;
+    private String currentQuizTitle;
+    private String quizSourceContent;
 
-    // State
     private int correctCount = 0;
     private int currentQuestionIndex = 0;
     private CountDownTimer quizTimer;
@@ -53,37 +51,43 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
     private long backPressedTime = 0;
     private Toast exitToast;
 
-    // Repository
     private UserActionRepository actionRepository;
+    private QuizHistoryRepository historyRepository;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_quiz);
 
-        Log.d(TAG, "QuizActivity started");
+        Log.d(TAG, "🎯 QuizActivity started");
         actionRepository = new UserActionRepository();
+        historyRepository = new QuizHistoryRepository();
 
         // Initialize Views
         viewPager = findViewById(R.id.view_pager_questions);
         progressBar = findViewById(R.id.quiz_progress_bar);
-        tvTimer = findViewById(R.id.tv_timer);
+        tvTimer = findViewById(R.id. tv_timer);
         btnNext = findViewById(R.id.btn_next_question);
-        btnStartCoding = findViewById(R.id.btn_start_coding); // Ensure this ID exists in XML
+        btnStartCoding = findViewById(R.id.btn_start_coding);
 
-        // --- 1. Retrieve Intent Data ---
-        if (getIntent().hasExtra("QUIZ_ID")) {
+        // Get quiz data from intent
+        if (getIntent(). hasExtra("QUIZ_ID")) {
             currentQuizId = getIntent().getStringExtra("QUIZ_ID");
         }
         if (getIntent().hasExtra("QUIZ_TITLE")) {
             currentQuizTitle = getIntent().getStringExtra("QUIZ_TITLE");
         } else {
-            currentQuizTitle = "Generated Quiz"; // Fallback title
+            currentQuizTitle = "Generated Quiz";
+        }
+
+        if (getIntent().hasExtra("QUIZ_SOURCE")) {
+            quizSourceContent = getIntent().getStringExtra("QUIZ_SOURCE");
+            Log.d(TAG, "✅ Stored quiz source for regenerate");
         }
 
         if (getIntent().hasExtra("QUIZ_DATA")) {
             questions = (List<QuizQuestion>) getIntent().getSerializableExtra("QUIZ_DATA");
-            Log.d(TAG, "✅ Received " + (questions != null ? questions.size() : 0) + " questions from intent");
+            Log.d(TAG, "✅ Received " + (questions != null ? questions.size() : 0) + " questions");
 
             if (questions == null || questions.isEmpty()) {
                 Toast.makeText(this, "No questions found.", Toast.LENGTH_SHORT).show();
@@ -91,18 +95,16 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
                 return;
             }
 
-            // Assign IDs if missing
             for (int i = 0; i < questions.size(); i++) {
                 questions.get(i).id = i + 1;
-                if (questions.get(i).difficulty == null || questions.get(i).difficulty.isEmpty()) {
-                    questions.get(i).difficulty = "NORMAL";
+                if (questions.get(i).difficulty == null || questions.get(i).difficulty. isEmpty()) {
+                    questions. get(i).difficulty = "NORMAL";
                 }
             }
 
             setupQuiz();
 
         } else if (getIntent().hasExtra("QUIZ_ID")) {
-            // Fallback: Load from Firestore if only ID is passed
             Log.d(TAG, "📥 Loading quiz from Firestore: " + currentQuizId);
             fetchQuizFromFirestore(currentQuizId);
         } else {
@@ -111,77 +113,76 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
             finish();
         }
 
-        // --- 2. Setup Back Press Handling ---
         setupBackPressHandler();
     }
 
     private void setupQuiz() {
         Log.d(TAG, "📋 Setting up quiz with " + questions.size() + " questions");
 
-        // Setup ViewPager
         QuizPagerAdapter adapter = new QuizPagerAdapter(this, questions);
         viewPager.setAdapter(adapter);
-        viewPager.setUserInputEnabled(false); // Disable swipe
+        viewPager.setUserInputEnabled(false);
 
-        // Setup progress bar
         progressBar.setMax(questions.size());
         progressBar.setProgress(0);
 
-        // Setup timer
         calculateTotalTime();
         startTimer();
 
-        // Setup buttons
         btnNext.setEnabled(false);
         btnNext.setOnClickListener(v -> goToNextQuestion());
         btnStartCoding.setOnClickListener(v -> startCodingExercise());
 
-        // ViewPager Listener
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+        // ViewPager page change listener
+        viewPager. registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 currentQuestionIndex = position;
                 progressBar.setProgress(position + 1);
 
-                // Update button state based on the NEW page
+                // ⭐ UPDATE BUTTON STATE FOR NEW PAGE
                 updateButtonState(position);
             }
         });
 
-        // --- CRITICAL FIX: Initialize buttons for the FIRST question ---
+        // ⭐ CRITICAL: Initialize buttons for FIRST question
         updateButtonState(0);
 
         Log.d(TAG, "✅ Quiz setup complete");
     }
 
     /**
-     * Updates visibility of "Next" vs "Skip/Start Coding" buttons
+     * ⭐ EXTRACTED METHOD: Updates button visibility/state
+     * Called from setupQuiz() for first question
+     * Called from onPageSelected() for subsequent navigation
      */
     private void updateButtonState(int position) {
+        if (position < 0 || position >= questions.size()) {
+            Log.w(TAG, "⚠️ Invalid position: " + position);
+            return;
+        }
+
         QuizQuestion currentQuestion = questions.get(position);
-        boolean isCodingQuestion = currentQuestion.type != null && currentQuestion.type.equals("CODING");
+        boolean isCodingQuestion = currentQuestion. type != null && currentQuestion.type.equals("CODING");
 
         if (isCodingQuestion) {
-            // Show Coding Button
+            // 💻 CODING QUESTION
             btnStartCoding.setVisibility(View.VISIBLE);
-
-            // Enable "Next" but rename it to "Skip"
             btnNext.setText("Skip For Now");
-            btnNext.setEnabled(true);
-            Log.d(TAG, "📝 Coding question at pos " + position + " - Skip enabled");
+            btnNext. setEnabled(true); // Always enabled for coding
+            Log.d(TAG, "📝 Coding question at position " + position + " - Skip enabled ✅");
         } else {
-            // Hide Coding Button
+            // ❓ REGULAR QUESTION
             btnStartCoding.setVisibility(View.GONE);
-
-            // Only enable "Next" if answered
             btnNext.setEnabled(currentQuestion.isAnswered);
 
             if (position == questions.size() - 1) {
                 btnNext.setText("Finish Quiz");
             } else {
-                btnNext.setText("Next Question");
+                btnNext. setText("Next Question");
             }
+            Log.d(TAG, "❓ Regular question at position " + position + " - Enabled: " + currentQuestion.isAnswered);
         }
     }
 
@@ -192,7 +193,7 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
             totalTimeInMillis += (long) (q.timeLimit * 60 * 1000);
         }
         if (totalTimeInMillis == 0) {
-            totalTimeInMillis = 10 * 60 * 1000; // Default 10 min
+            totalTimeInMillis = 10 * 60 * 1000;
         }
     }
 
@@ -203,19 +204,18 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished);
                 long seconds = TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) -
                         TimeUnit.MINUTES.toSeconds(minutes);
-                tvTimer.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
+                tvTimer. setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
             }
 
             @Override
             public void onFinish() {
                 tvTimer.setText("00:00");
-                Toast.makeText(QuizActivity.this, "Time's up!", Toast.LENGTH_SHORT).show();
-                finishQuiz(); // Auto-submit
+                Toast.makeText(QuizActivity. this, "Time's up!", Toast.LENGTH_SHORT).show();
+                finishQuiz();
             }
-        }.start();
+        }. start();
     }
 
-    // Called by QuizOptionsAdapter when an option is selected
     public void onOptionSelected(int selectedOptionIndex, boolean isCorrect) {
         Log.d(TAG, "Question " + currentQuestionIndex + " answered. Correct: " + isCorrect);
 
@@ -228,20 +228,18 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
             correctCount++;
         }
 
-        // Enable next button since it's answered
+        // Enable next button
         btnNext.setEnabled(true);
     }
 
     private void startCodingExercise() {
         QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
-        Log.d(TAG, "Starting coding exercise for question " + currentQuestionIndex);
+        Log.d(TAG, "🚀 Starting coding exercise for question " + currentQuestionIndex);
 
         Intent intent = new Intent(this, CodingExerciseActivity.class);
-        // Pass data to coding activity
-        intent.putExtra("PROMPT", currentQuestion.codingPrompt);
-        intent.putExtra("STARTER_CODE", currentQuestion.starterCode);
-        intent.putExtra("EXPECTED_OUTPUT", currentQuestion.expectedOutput);
-
+        // ⭐ PASS FULL QUESTION OBJECT (not individual fields)
+        intent.putExtra("QUESTION", currentQuestion);
+        intent.putExtra("QUESTION_INDEX", currentQuestionIndex);
         startActivityForResult(intent, REQUEST_CODE_CODING_EXERCISE);
     }
 
@@ -250,8 +248,11 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_CODE_CODING_EXERCISE) {
+            Log.d(TAG, "⬅️ Returned from CodingExerciseActivity");
+
             if (resultCode == RESULT_OK) {
-                Log.d(TAG, "✅ Coding exercise completed successfully");
+                // ✅ CODE WAS SUCCESSFUL
+                Log. d(TAG, "✅ Coding exercise completed successfully");
 
                 QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
                 currentQuestion.isAnswered = true;
@@ -259,26 +260,37 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
                 correctCount++;
 
                 Toast.makeText(this, "Great job! Code passed.", Toast.LENGTH_SHORT).show();
-                goToNextQuestion(); // Auto-advance
-            } else {
-                Log.d(TAG, "Coding exercise cancelled");
+                goToNextQuestion();
+
+            } else if (resultCode == RESULT_CANCELED) {
+                // ❌ USER BACK/SKIPPED - Mark as skipped
+                Log. d(TAG, "⏭️ User skipped/cancelled coding exercise");
+
+                QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
+                currentQuestion.isAnswered = true;
+                currentQuestion. isCorrect = false; // Mark as incorrect/skipped
+
+                // ⭐ UPDATE BUTTON STATE AFTER RETURNING
+                updateButtonState(currentQuestionIndex);
+                Toast.makeText(this, "Question marked as skipped", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     private void goToNextQuestion() {
         QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
-        boolean isCodingQuestion = currentQuestion.type != null && currentQuestion.type.equals("CODING");
+        boolean isCodingQuestion = currentQuestion. type != null && currentQuestion.type.equals("CODING");
 
-        // If user clicked "Skip" on a coding question
-        if (isCodingQuestion && !currentQuestion.isCorrect) {
-            Log.d(TAG, "Skipping coding question " + currentQuestionIndex);
+        // Handle skip for coding question
+        if (isCodingQuestion && ! currentQuestion.isCorrect) {
+            Log. d(TAG, "⏭️ Skipping coding question " + currentQuestionIndex);
             currentQuestion.isAnswered = true;
-            currentQuestion.isCorrect = false;
+            currentQuestion. isCorrect = false;
         }
 
         if (currentQuestionIndex < questions.size() - 1) {
             viewPager.setCurrentItem(currentQuestionIndex + 1, true);
+            // btnNext will be updated by onPageSelected callback
         } else {
             finishQuiz();
         }
@@ -292,17 +304,18 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
             quizTimer.cancel();
         }
 
-        // --- SAVE TO HISTORY ---
-        if (currentQuizId != null && actionRepository != null) {
-            Log.d(TAG, "💾 Saving history for: " + currentQuizTitle);
-            actionRepository.saveHistoryEntry(
+        // 💾 SAVE TO FIREBASE HISTORY
+        if (currentQuizId != null && historyRepository != null) {
+            Log.d(TAG, "💾 Saving to Firebase history: " + currentQuizTitle);
+            historyRepository.saveQuizAttempt(
                     currentQuizId,
+                    currentQuizTitle,
                     correctCount,
                     questions.size(),
-                    currentQuizTitle
+                    questions,
+                    false,
+                    false
             );
-        } else {
-            Log.e(TAG, "❌ Cannot save history. Quiz ID is null.");
         }
 
         showQuizCompleteDialog();
@@ -319,14 +332,14 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
 
     private void fetchQuizFromFirestore(String quizId) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("quizzes").document(quizId).get()
+        db.collection("quizzes"). document(quizId).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         Quiz quiz = documentSnapshot.toObject(Quiz.class);
                         if (quiz != null) {
                             questions = quiz.getQuestions();
-                            currentQuizTitle = quiz.getTitle(); // Get title from DB
-                            if (questions != null && !questions.isEmpty()) {
+                            currentQuizTitle = quiz.getTitle();
+                            if (questions != null && ! questions.isEmpty()) {
                                 setupQuiz();
                             } else {
                                 Toast.makeText(this, "Error: Quiz is empty.", Toast.LENGTH_SHORT).show();
@@ -344,7 +357,6 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
                 });
     }
 
-    // --- Interface Methods for Dialog ---
     @Override
     public void onViewResults() {
         ArrayList<QuizQuestion> incorrectQuestions = new ArrayList<>();
@@ -355,27 +367,44 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
         }
 
         Intent intent = new Intent(this, RecommendationsActivity.class);
-        intent.putExtra("TOTAL_QUESTIONS", questions.size());
+        intent. putExtra("TOTAL_QUESTIONS", questions.size());
         intent.putExtra("CORRECT_COUNT", correctCount);
         intent.putExtra("INCORRECT_QUESTIONS", incorrectQuestions);
+        intent.putExtra("QUIZ_ID", currentQuizId);
+        intent.putExtra("QUIZ_TITLE", currentQuizTitle);
         startActivity(intent);
         finish();
     }
 
     @Override
     public void onRegenerateQuiz() {
-        Toast.makeText(this, "Returning to Home...", Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-        finish();
+        Log.d(TAG, "🔄 Regenerate Quiz clicked");
+
+        try {
+            if (quizSourceContent != null && !quizSourceContent.isEmpty()) {
+                Log.d(TAG, "✅ Regenerating quiz on same topic");
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.putExtra("LAUNCH_GENERATE", true);
+                intent.putExtra("QUIZ_SOURCE", quizSourceContent);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            } else {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent. FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+            }
+            finish();
+        } catch (Exception e) {
+            Log.e(TAG, "Error with regenerate quiz", e);
+            Toast.makeText(this, "Error returning to home", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     @Override
     public void onRetakeQuiz() {
-        Log.d(TAG, "Retaking quiz...");
+        Log. d(TAG, "🔄 Retaking quiz...");
 
-        // Reset State
         correctCount = 0;
         isSubmitted = false;
 
@@ -389,7 +418,7 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
         currentQuestionIndex = 0;
         progressBar.setProgress(0);
 
-        // Re-initialize first button state
+        // ⭐ CALL FIXED METHOD
         updateButtonState(0);
 
         if (quizTimer != null) quizTimer.cancel();
@@ -397,11 +426,12 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
         startTimer();
 
         if (viewPager.getAdapter() != null) {
-            viewPager.getAdapter().notifyDataSetChanged();
+            viewPager. getAdapter().notifyDataSetChanged();
         }
+
+        Toast.makeText(this, "Retaking quiz", Toast.LENGTH_SHORT).show();
     }
 
-    // --- Focus Control (Double Back Press) ---
     private void setupBackPressHandler() {
         OnBackPressedDispatcher dispatcher = getOnBackPressedDispatcher();
         dispatcher.addCallback(this, new OnBackPressedCallback(true) {
@@ -430,7 +460,6 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
         if (quizTimer != null) quizTimer.cancel();
     }
 
-    // --- ViewPager Adapter Class ---
     private static class QuizPagerAdapter extends FragmentStateAdapter {
         private final List<QuizQuestion> questions;
 
