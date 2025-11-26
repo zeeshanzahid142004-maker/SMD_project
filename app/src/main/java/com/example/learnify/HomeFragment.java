@@ -10,27 +10,30 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget. TextView;
-import android.widget. Toast;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx. annotation.Nullable;
+import androidx. activity.result.contract.ActivityResultContracts;
+import androidx. annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 import com.tom_roush.pdfbox. pdmodel.PDDocument;
-import com. tom_roush.pdfbox.text.PDFTextStripper;
+import com.tom_roush.pdfbox.text.PDFTextStripper;
 
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
-import org.apache.poi.xwpf. usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
 import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io. InputStreamReader;
+import java.io. InputStream;
+import java.io.InputStreamReader;
 import java. util.ArrayList;
 import java.util.List;
 
@@ -41,16 +44,20 @@ public class HomeFragment extends Fragment {
     private OnHomeFragmentInteractionListener mListener;
     private CardView uploadFileButton;
     private CardView uploadLinkButton;
+    private CardView profileCard; // ⭐ ADD THIS
     private TextView viewMoreButton;
+    private TextView profileNameView; // ⭐ ADD THIS
     private ActivityResultLauncher<String[]> filePickerLauncher;
 
     // History views
     private RecyclerView rvRecentHistory;
-    private LinearLayout llEmptyHistory;
+    private CardView emptyHistoryCard;
     private HistoryAdapter historyAdapter;
     private List<QuizAttempt> recentAttempts = new ArrayList<>();
 
     private QuizAttemptRepository attemptRepository;
+    private FirebaseAuth auth; // ⭐ ADD THIS
+    private FirebaseFirestore db; // ⭐ ADD THIS
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -68,6 +75,10 @@ public class HomeFragment extends Fragment {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "🛠️ HomeFragment onCreate");
 
+        // ⭐ INITIALIZE FIREBASE
+        auth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+
         try {
             PDFBoxResourceLoader.init(requireContext());
             Log.d(TAG, "✅ PDFBox Initialized");
@@ -79,7 +90,7 @@ public class HomeFragment extends Fragment {
                 new ActivityResultContracts.OpenDocument(),
                 uri -> {
                     if (uri != null) {
-                        Log.d(TAG, "📂 File selected: " + uri. toString());
+                        Log.d(TAG, "📂 File selected: " + uri.toString());
                         extractAndProcessFile(uri);
                     } else {
                         Log.w(TAG, "⚠️ File picker returned null URI");
@@ -100,18 +111,46 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        Log. d(TAG, "🖼️ HomeFragment View Created");
+        Log.d(TAG, "🖼️ HomeFragment View Created");
 
         // Initialize views
         uploadFileButton = view. findViewById(R.id.upload_file_button);
         uploadLinkButton = view.findViewById(R.id.upload_link_button);
-        viewMoreButton = view.findViewById(R.id.view_more_button);
+        profileCard = view.findViewById(R.id.profile_card); // ⭐ ADD THIS
+        viewMoreButton = view. findViewById(R.id.view_more_button);
+        profileNameView = view.findViewById(R.id.profile_name); // ⭐ ADD THIS
         rvRecentHistory = view.findViewById(R.id.history_recycler_view);
-        llEmptyHistory = view.findViewById(R.id.empty_history_view);
+        emptyHistoryCard = view.findViewById(R. id.empty_history_view);
+
+        // Check for null views
+        if (rvRecentHistory == null) {
+            Log.e(TAG, "❌ rvRecentHistory is null!");
+            return;
+        }
+        if (emptyHistoryCard == null) {
+            Log.e(TAG, "❌ emptyHistoryCard is null!");
+            return;
+        }
+
+        // ⭐ LOAD USER NAME FROM FIREBASE
+        loadUserName();
+
+        // ⭐ PROFILE CARD CLICK - OPEN PROFILE FRAGMENT
+        profileCard.setOnClickListener(v -> {
+            Log.d(TAG, "👤 Profile card clicked - opening ProfileFragment");
+            if (mListener != null) {
+                // Open profile by clicking profile in bottom nav
+                // You can also navigate directly
+                getParentFragmentManager().beginTransaction()
+                        .replace(R. id.fragment_container, new ProfileFragment())
+                        .addToBackStack(null)
+                        .commit();
+            }
+        });
 
         // Setup upload buttons
         uploadFileButton.setOnClickListener(v -> {
-            Log.d(TAG, "🖱️ File Upload Clicked");
+            Log. d(TAG, "🖱️ File Upload Clicked");
             String[] mimeTypes = {
                     "application/pdf",
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -127,7 +166,7 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        // ⭐ VIEW MORE BUTTON - Open HistoryActivity
+        // VIEW MORE BUTTON - Open HistoryActivity
         viewMoreButton.setOnClickListener(v -> {
             Log.d(TAG, "📜 View More History clicked");
             startActivity(new Intent(getActivity(), HistoryActivity.class));
@@ -138,28 +177,58 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Setup recent history display
+     * ⭐ LOAD USER NAME FROM FIREBASE AUTHENTICATION
+     */
+    private void loadUserName() {
+        Log.d(TAG, "📥 Loading user name from Firebase...");
+
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser != null) {
+            String displayName = currentUser.getDisplayName();
+            String email = currentUser.getEmail();
+
+            if (displayName != null && ! displayName.isEmpty()) {
+                // Use display name if available
+                String firstName = displayName.split(" ")[0]; // Get first name only
+                profileNameView.setText("Welcome, " + firstName + "!");
+                Log.d(TAG, "✅ Display name loaded: " + displayName);
+            } else if (email != null) {
+                // Use email prefix if no display name
+                String emailPrefix = email.split("@")[0];
+                profileNameView.setText("Welcome, " + emailPrefix + "!");
+                Log.d(TAG, "✅ Email loaded: " + email);
+            } else {
+                profileNameView.setText("Welcome!");
+                Log.w(TAG, "⚠️ No user name or email found");
+            }
+        } else {
+            Log.e(TAG, "❌ No user authenticated");
+            profileNameView.setText("Welcome!");
+        }
+    }
+
+    /**
+     * Setup recent history display - HORIZONTAL with swipe
      */
     private void setupRecentHistory() {
-        Log.d(TAG, "📜 Setting up recent history view");
+        Log.d(TAG, "📜 Setting up recent history view - HORIZONTAL");
 
-        rvRecentHistory.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
+        // ⭐ HORIZONTAL LinearLayoutManager for swiping
+        rvRecentHistory.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
 
         historyAdapter = new HistoryAdapter(recentAttempts, new HistoryAdapter.OnHistoryActionListener() {
             @Override
             public void onDownload(QuizAttempt attempt, int position) {
-                // Redirect to HistoryActivity for download
-                Log.d(TAG, "Redirecting to History for download");
+                Log.d(TAG, "⬇️ Redirecting to History for download");
                 startActivity(new Intent(getActivity(), HistoryActivity.class));
             }
 
             @Override
             public void onToggleFavorite(QuizAttempt attempt, int position) {
-                // Toggle favourite locally
                 attempt.isFavorite = !attempt.isFavorite;
-                attemptRepository.markAsFavorite(attempt. attemptId, attempt.isFavorite);
+                attemptRepository.markAsFavorite(attempt.attemptId, attempt.isFavorite);
                 historyAdapter.updateItem(position, attempt);
-                String msg = attempt.isFavorite ?  "❤️ Favourited!" : "Removed";
+                String msg = attempt.isFavorite ? "❤️ Favourited!" : "Removed";
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
@@ -185,12 +254,12 @@ public class HomeFragment extends Fragment {
                 if (recentAttempts.isEmpty()) {
                     // Show empty state
                     rvRecentHistory.setVisibility(View.GONE);
-                    llEmptyHistory.setVisibility(View.VISIBLE);
+                    emptyHistoryCard.setVisibility(View. VISIBLE);
                     Log.d(TAG, "📭 No recent history - showing empty state");
                 } else {
                     // Show history
-                    rvRecentHistory.setVisibility(View. VISIBLE);
-                    llEmptyHistory.setVisibility(View.GONE);
+                    rvRecentHistory.setVisibility(View.VISIBLE);
+                    emptyHistoryCard.setVisibility(View.GONE);
                     historyAdapter.notifyDataSetChanged();
                     Log.d(TAG, "✅ Loaded " + recentAttempts.size() + " recent attempts");
                 }
@@ -199,7 +268,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onError(Exception e) {
                 Log.e(TAG, "❌ Failed to load recent history", e);
-                llEmptyHistory.setVisibility(View.VISIBLE);
+                emptyHistoryCard.setVisibility(View.VISIBLE);
                 rvRecentHistory.setVisibility(View.GONE);
             }
         });
@@ -242,7 +311,7 @@ public class HomeFragment extends Fragment {
                             Log.d(TAG, "✅ Extraction SUCCESS! Length: " + extractedText.length() + " chars");
                             launchGenerateQuizFragment(extractedText);
                         } else {
-                            Log. e(TAG, "❌ Extraction result was empty or null");
+                            Log.e(TAG, "❌ Extraction result was empty or null");
                             Toast.makeText(getContext(), "Could not read text from this file.", Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -260,13 +329,13 @@ public class HomeFragment extends Fragment {
     }
 
     private void launchGenerateQuizFragment(String text) {
-        Log. d(TAG, "🚀 Launching GenerateQuizFragment.. .");
+        Log. d(TAG, "🚀 Launching GenerateQuizFragment...");
         GenerateQuizFragment fragment = GenerateQuizFragment.newInstance(text);
 
         getParentFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
-                .commit();
+                . commit();
     }
 
     private String extractPdf(Uri uri) throws Exception {
@@ -275,7 +344,7 @@ public class HomeFragment extends Fragment {
         PDFTextStripper stripper = new PDFTextStripper();
         String text = stripper.getText(doc);
         doc.close();
-        Log.d(TAG, "📖 PDF extracted. Pages: " + doc.getNumberOfPages());
+        Log.d(TAG, "📖 PDF extracted.  Pages: " + doc.getNumberOfPages());
         return text;
     }
 
@@ -283,7 +352,7 @@ public class HomeFragment extends Fragment {
         InputStream is = getContext().getContentResolver().openInputStream(uri);
         XWPFDocument doc = new XWPFDocument(is);
         XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
-        String text = extractor. getText();
+        String text = extractor.getText();
         extractor.close();
         Log. d(TAG, "📖 DOCX extracted.");
         return text;
@@ -295,7 +364,7 @@ public class HomeFragment extends Fragment {
         StringBuilder sb = new StringBuilder();
         String line;
         while ((line = r.readLine()) != null) {
-            sb.append(line). append("\n");
+            sb.append(line).append("\n");
         }
         Log.d(TAG, "📖 TXT extracted.");
         return sb.toString();
@@ -313,6 +382,8 @@ public class HomeFragment extends Fragment {
         super.onResume();
         // Refresh history when returning
         loadRecentHistory();
+        // Refresh user name in case profile was updated
+        loadUserName();
     }
 
     @Override

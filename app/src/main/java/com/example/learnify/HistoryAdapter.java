@@ -71,10 +71,10 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
         // Download button state
         if (attempt.isDownloaded) {
-            holder.btnDownload.setText("✅ Downloaded");
+            holder.btnDownload.setText("Downloaded");
             holder. btnDownload.setEnabled(false);
         } else {
-            holder.btnDownload. setText("⬇️ Download");
+            holder.btnDownload. setText("Download");
             holder. btnDownload.setEnabled(true);
         }
 
