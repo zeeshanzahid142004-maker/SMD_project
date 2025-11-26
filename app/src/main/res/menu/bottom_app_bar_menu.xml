@@ -1,34 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/nav_home"
-        android:title="Home"
+        android:id="@+id/navigation_home"
         android:icon="@drawable/ic_home_inactive"
-        app:showAsAction="ifRoom" />
-
+        android:title="Home" />
     <item
-        android:id="@+id/nav_explore"
-        android:title="Downloads"
-        android:icon="@drawable/ic_download"
-        app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/nav_placeholder"
-        android:title=""
-        android:enabled="false"
-        app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/nav_courses"
-        android:title="Favourites"
+        android:id="@+id/navigation_favourites"
         android:icon="@drawable/ic_favourite_inactive"
-        app:showAsAction="ifRoom" />
+        android:title="Favourites" />
+
 
     <item
-        android:id="@+id/nav_profile"
-        android:title="Profile"
-        android:icon="@drawable/ic_profile_inactive"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/navigation_notes"
+        android:icon="@drawable/ic_edit"
+        android:title="Notes" />
+
+    <item
+        android:id="@+id/navigation_downloads"
+        android:icon="@drawable/ic_download"
+        android:title="Downloads" />
 </menu>

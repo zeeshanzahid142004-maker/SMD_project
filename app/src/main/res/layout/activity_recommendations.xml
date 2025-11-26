@@ -113,34 +113,62 @@
                 android:layout_weight="1"
                 android:minHeight="24dp"/>
 
+            <!-- UPDATED BUTTON CONTAINER -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center">
+                android:gravity="center"
+                android:layout_marginBottom="16dp">
 
+                <!--
+                     Favorite Button:
+                     - Uses `Widget.MaterialComponents.Button.OutlinedButton` style for stroke.
+                     - Explicitly sets cornerRadius to match.
+                     - Uses `app:strokeColor` to match primary color.
+                -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_mark_favorite"
                     android:layout_width="0dp"
-                    android:layout_height="67dp"
+                    android:layout_height="56dp"
                     android:layout_weight="1"
                     android:layout_marginEnd="8dp"
                     android:text="Favorite"
+                    android:textColor="@color/text_primary_dark"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/text_primary_dark"
+                    app:strokeWidth="1dp"
                     app:icon="@drawable/ic_favorite_border"
                     app:iconGravity="textStart"
                     app:iconTint="@color/text_primary_dark"
-                    style="@style/Widget.App.Button.Stroked"/>
+                    app:iconPadding="4dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
 
+                <!--
+                     Download Button:
+                     - Uses consistent cornerRadius (12dp).
+                     - Removed custom background drawable to rely on `backgroundTint` if possible,
+                       but since you want gradient, we keep it but ensure shape matches.
+                     - Note: If using a custom background drawable, `app:cornerRadius` on the button
+                       might be ignored in favor of the drawable's corners. Ensure drawable matches.
+                -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_download_quiz"
                     android:layout_width="0dp"
-                    android:layout_height="67dp"
+                    android:layout_height="56dp"
                     android:layout_weight="1"
                     android:layout_marginStart="8dp"
                     android:text="Download"
+                    android:textColor="@color/white"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    app:cornerRadius="12dp"
                     app:icon="@drawable/ic_download"
                     app:iconGravity="textStart"
                     app:iconTint="@color/white"
+                    app:iconPadding="4dp"
                     style="@style/TextAppearance.Button.Large"
                     android:background="@drawable/bg_sign_up_gradient"
                     app:backgroundTint="@null"/>

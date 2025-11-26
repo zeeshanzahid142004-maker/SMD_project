@@ -162,9 +162,7 @@ public class RecommendationsActivity extends AppCompatActivity {
         rvRecommendations.setVisibility(View.VISIBLE);
     }
 
-    /**
-     * ⭐ NEW: Setup YouTube recommendations from AI
-     */
+
     private void setupYoutubeRecommendations() {
         if (incorrectQuestions.isEmpty() || llYoutubeSection == null) {
             if (llYoutubeSection != null) llYoutubeSection.setVisibility(View.GONE);
@@ -252,7 +250,7 @@ public class RecommendationsActivity extends AppCompatActivity {
                 incorrectQuestions);
 
         btnDownloadQuiz.setEnabled(false);
-        btnDownloadQuiz.setText("✅ Downloaded");
+        btnDownloadQuiz.setText(" Downloaded");
     }
 
     private void markAsFavorite() {
@@ -264,7 +262,7 @@ public class RecommendationsActivity extends AppCompatActivity {
         historyRepository.markAsFavorite(quizId, true);
         Toast.makeText(this, "❤️ Added to favorites!", Toast.LENGTH_SHORT).show();
         btnMarkFavorite.setEnabled(false);
-        btnMarkFavorite.setText("❤️ Favorited");
+        btnMarkFavorite.setText(" Favorited");
     }
 
     private void openYoutubeVideo(String videoUrl) {

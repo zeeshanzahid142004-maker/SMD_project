@@ -33,7 +33,7 @@ public class CodingExerciseActivity extends AppCompatActivity {
 
         Log.d(TAG, "🎯 CodingExerciseActivity started");
 
-        // ⭐ GET QUESTION FROM INTENT (not individual fields)
+
         if (getIntent().hasExtra("QUESTION")) {
             question = (QuizQuestion) getIntent().getSerializableExtra("QUESTION");
             Log.d(TAG, "✅ Received coding question: " + question.questionText);

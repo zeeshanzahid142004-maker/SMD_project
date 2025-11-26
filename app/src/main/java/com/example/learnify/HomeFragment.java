@@ -8,33 +8,34 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget. TextView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
-import androidx. activity.result.contract.ActivityResultContracts;
-import androidx. annotation.NonNull;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.LinearSnapHelper; // Import for Snapping
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SnapHelper;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
-import com.tom_roush.pdfbox. pdmodel.PDDocument;
+import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.text.PDFTextStripper;
 
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
 import java.io.BufferedReader;
-import java.io. InputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java. util.ArrayList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
@@ -44,9 +45,9 @@ public class HomeFragment extends Fragment {
     private OnHomeFragmentInteractionListener mListener;
     private CardView uploadFileButton;
     private CardView uploadLinkButton;
-    private CardView profileCard; // ⭐ ADD THIS
+    private CardView profileCard;
     private TextView viewMoreButton;
-    private TextView profileNameView; // ⭐ ADD THIS
+    private TextView profileNameView;
     private ActivityResultLauncher<String[]> filePickerLauncher;
 
     // History views
@@ -56,13 +57,12 @@ public class HomeFragment extends Fragment {
     private List<QuizAttempt> recentAttempts = new ArrayList<>();
 
     private QuizAttemptRepository attemptRepository;
-    private FirebaseAuth auth; // ⭐ ADD THIS
-    private FirebaseFirestore db; // ⭐ ADD THIS
+    private FirebaseAuth auth;
+    private FirebaseFirestore db;
 
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        Log.d(TAG, "✅ HomeFragment Attached");
         if (context instanceof OnHomeFragmentInteractionListener) {
             mListener = (OnHomeFragmentInteractionListener) context;
         } else {
@@ -73,15 +73,11 @@ public class HomeFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "🛠️ HomeFragment onCreate");
-
-        // ⭐ INITIALIZE FIREBASE
         auth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
         try {
             PDFBoxResourceLoader.init(requireContext());
-            Log.d(TAG, "✅ PDFBox Initialized");
         } catch (Exception e) {
             Log.e(TAG, "❌ PDFBox Init Failed", e);
         }
@@ -90,10 +86,8 @@ public class HomeFragment extends Fragment {
                 new ActivityResultContracts.OpenDocument(),
                 uri -> {
                     if (uri != null) {
-                        Log.d(TAG, "📂 File selected: " + uri.toString());
                         extractAndProcessFile(uri);
                     } else {
-                        Log.w(TAG, "⚠️ File picker returned null URI");
                         Toast.makeText(getContext(), "No file selected", Toast.LENGTH_SHORT).show();
                     }
                 }
@@ -111,46 +105,30 @@ public class HomeFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        Log.d(TAG, "🖼️ HomeFragment View Created");
 
         // Initialize views
-        uploadFileButton = view. findViewById(R.id.upload_file_button);
+        uploadFileButton = view.findViewById(R.id.upload_file_button);
         uploadLinkButton = view.findViewById(R.id.upload_link_button);
-        profileCard = view.findViewById(R.id.profile_card); // ⭐ ADD THIS
-        viewMoreButton = view. findViewById(R.id.view_more_button);
-        profileNameView = view.findViewById(R.id.profile_name); // ⭐ ADD THIS
+        profileCard = view.findViewById(R.id.profile_card);
+        viewMoreButton = view.findViewById(R.id.view_more_button);
+        profileNameView = view.findViewById(R.id.profile_name);
         rvRecentHistory = view.findViewById(R.id.history_recycler_view);
-        emptyHistoryCard = view.findViewById(R. id.empty_history_view);
+        emptyHistoryCard = view.findViewById(R.id.empty_history_view);
 
-        // Check for null views
-        if (rvRecentHistory == null) {
-            Log.e(TAG, "❌ rvRecentHistory is null!");
-            return;
-        }
-        if (emptyHistoryCard == null) {
-            Log.e(TAG, "❌ emptyHistoryCard is null!");
-            return;
-        }
+        if (rvRecentHistory == null || emptyHistoryCard == null) return;
 
-        // ⭐ LOAD USER NAME FROM FIREBASE
         loadUserName();
 
-        // ⭐ PROFILE CARD CLICK - OPEN PROFILE FRAGMENT
         profileCard.setOnClickListener(v -> {
-            Log.d(TAG, "👤 Profile card clicked - opening ProfileFragment");
             if (mListener != null) {
-                // Open profile by clicking profile in bottom nav
-                // You can also navigate directly
                 getParentFragmentManager().beginTransaction()
-                        .replace(R. id.fragment_container, new ProfileFragment())
+                        .replace(R.id.fragment_container, new ProfileFragment())
                         .addToBackStack(null)
                         .commit();
             }
         });
 
-        // Setup upload buttons
         uploadFileButton.setOnClickListener(v -> {
-            Log. d(TAG, "🖱️ File Upload Clicked");
             String[] mimeTypes = {
                     "application/pdf",
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -160,66 +138,64 @@ public class HomeFragment extends Fragment {
         });
 
         uploadLinkButton.setOnClickListener(v -> {
-            Log.d(TAG, "🖱️ Link Upload Clicked");
             if (mListener != null) {
                 mListener.onUploadLinkClicked();
             }
         });
 
-        // VIEW MORE BUTTON - Open HistoryActivity
         viewMoreButton.setOnClickListener(v -> {
-            Log.d(TAG, "📜 View More History clicked");
             startActivity(new Intent(getActivity(), HistoryActivity.class));
         });
 
-        // Setup recent history RecyclerView
         setupRecentHistory();
     }
 
-    /**
-     * ⭐ LOAD USER NAME FROM FIREBASE AUTHENTICATION
-     */
     private void loadUserName() {
-        Log.d(TAG, "📥 Loading user name from Firebase...");
-
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser != null) {
             String displayName = currentUser.getDisplayName();
             String email = currentUser.getEmail();
 
-            if (displayName != null && ! displayName.isEmpty()) {
-                // Use display name if available
-                String firstName = displayName.split(" ")[0]; // Get first name only
+            if (displayName != null && !displayName.isEmpty()) {
+                String firstName = displayName.split(" ")[0];
                 profileNameView.setText("Welcome, " + firstName + "!");
-                Log.d(TAG, "✅ Display name loaded: " + displayName);
             } else if (email != null) {
-                // Use email prefix if no display name
                 String emailPrefix = email.split("@")[0];
                 profileNameView.setText("Welcome, " + emailPrefix + "!");
-                Log.d(TAG, "✅ Email loaded: " + email);
             } else {
                 profileNameView.setText("Welcome!");
-                Log.w(TAG, "⚠️ No user name or email found");
             }
         } else {
-            Log.e(TAG, "❌ No user authenticated");
             profileNameView.setText("Welcome!");
         }
     }
 
     /**
-     * Setup recent history display - HORIZONTAL with swipe
+     * Setup recent history display - HORIZONTAL CAROUSEL EFFECT
      */
     private void setupRecentHistory() {
-        Log.d(TAG, "📜 Setting up recent history view - HORIZONTAL");
+        Log.d(TAG, "📜 Setting up recent history view - Carousel Mode");
 
-        // ⭐ HORIZONTAL LinearLayoutManager for swiping
-        rvRecentHistory.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
+        // 1. Setup Layout Manager
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
+        rvRecentHistory.setLayoutManager(layoutManager);
+
+        // 2. Add SnapHelper (Centers the scrolling item)
+        SnapHelper snapHelper = new LinearSnapHelper();
+        snapHelper.attachToRecyclerView(rvRecentHistory);
+
+        // 3. Add Scroll Listener for Scaling (The "Cool" Effect)
+        rvRecentHistory.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                updateCarouselScale(recyclerView);
+            }
+        });
 
         historyAdapter = new HistoryAdapter(recentAttempts, new HistoryAdapter.OnHistoryActionListener() {
             @Override
             public void onDownload(QuizAttempt attempt, int position) {
-                Log.d(TAG, "⬇️ Redirecting to History for download");
                 startActivity(new Intent(getActivity(), HistoryActivity.class));
             }
 
@@ -234,17 +210,37 @@ public class HomeFragment extends Fragment {
         });
 
         rvRecentHistory.setAdapter(historyAdapter);
-
-        // Load recent attempts
         loadRecentHistory();
     }
 
     /**
-     * Load recent quiz attempts (up to 5)
+     * Calculates distance from center and scales items accordingly
      */
-    private void loadRecentHistory() {
-        Log.d(TAG, "📥 Loading recent history (up to 5)");
+    private void updateCarouselScale(RecyclerView recyclerView) {
+        float minScale = 0.85f; // The scale of items on the side (85% size)
+        float minAlpha = 0.5f;  // Transparency of items on the side
 
+        int centerX = recyclerView.getWidth() / 2;
+
+        for (int i = 0; i < recyclerView.getChildCount(); i++) {
+            View child = recyclerView.getChildAt(i);
+            int childCenterX = (child.getLeft() + child.getRight()) / 2;
+            int distance = Math.abs(centerX - childCenterX);
+
+            // Calculate scale based on distance (closer to 0 distance = closer to 1.0 scale)
+            float scale = 1.0f - ((float) distance / centerX) * 0.4f;
+            scale = Math.max(minScale, scale); // Clamp to minScale
+
+            child.setScaleX(scale);
+            child.setScaleY(scale);
+
+            // Optional: Fade out items on the side
+            float alpha = 1.0f - ((float) distance / centerX) * 0.5f;
+            child.setAlpha(Math.max(minAlpha, alpha));
+        }
+    }
+
+    private void loadRecentHistory() {
         attemptRepository.getRecentAttempts(5, new QuizAttemptRepository.OnAttemptsLoadedListener() {
             @Override
             public void onAttemptsLoaded(List<QuizAttempt> attempts) {
@@ -252,16 +248,15 @@ public class HomeFragment extends Fragment {
                 recentAttempts.addAll(attempts);
 
                 if (recentAttempts.isEmpty()) {
-                    // Show empty state
                     rvRecentHistory.setVisibility(View.GONE);
-                    emptyHistoryCard.setVisibility(View. VISIBLE);
-                    Log.d(TAG, "📭 No recent history - showing empty state");
+                    emptyHistoryCard.setVisibility(View.VISIBLE);
                 } else {
-                    // Show history
                     rvRecentHistory.setVisibility(View.VISIBLE);
                     emptyHistoryCard.setVisibility(View.GONE);
                     historyAdapter.notifyDataSetChanged();
-                    Log.d(TAG, "✅ Loaded " + recentAttempts.size() + " recent attempts");
+
+                    // Force an update of the scale once data is loaded
+                    rvRecentHistory.post(() -> updateCarouselScale(rvRecentHistory));
                 }
             }
 
@@ -281,24 +276,18 @@ public class HomeFragment extends Fragment {
         new Thread(() -> {
             String text = null;
             String type = getContext().getContentResolver().getType(uri);
-            Log.d(TAG, "📄 File MIME type: " + type);
 
             try {
                 if (type != null && type.equals("application/pdf")) {
-                    Log.d(TAG, "⚙️ Extracting PDF.. .");
                     text = extractPdf(uri);
                 } else if (type != null && (type.contains("wordprocessingml") || type.contains("msword"))) {
-                    Log.d(TAG, "⚙️ Extracting DOCX...");
                     text = extractDocx(uri);
                 } else if (type != null && type.startsWith("text/")) {
-                    Log.d(TAG, "⚙️ Extracting TXT...");
                     text = extractTxt(uri);
                 } else {
-                    Log.w(TAG, "⚠️ Unknown MIME type.  Attempting PDF fallback.");
                     try {
                         text = extractPdf(uri);
                     } catch (Exception e) {
-                        Log.w(TAG, "⚠️ PDF fallback failed. Attempting TXT fallback.");
                         text = extractTxt(uri);
                     }
                 }
@@ -308,10 +297,8 @@ public class HomeFragment extends Fragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         if (extractedText != null && !extractedText.isEmpty()) {
-                            Log.d(TAG, "✅ Extraction SUCCESS! Length: " + extractedText.length() + " chars");
                             launchGenerateQuizFragment(extractedText);
                         } else {
-                            Log.e(TAG, "❌ Extraction result was empty or null");
                             Toast.makeText(getContext(), "Could not read text from this file.", Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -329,13 +316,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void launchGenerateQuizFragment(String text) {
-        Log. d(TAG, "🚀 Launching GenerateQuizFragment...");
         GenerateQuizFragment fragment = GenerateQuizFragment.newInstance(text);
-
         getParentFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
-                . commit();
+                .commit();
     }
 
     private String extractPdf(Uri uri) throws Exception {
@@ -344,7 +329,6 @@ public class HomeFragment extends Fragment {
         PDFTextStripper stripper = new PDFTextStripper();
         String text = stripper.getText(doc);
         doc.close();
-        Log.d(TAG, "📖 PDF extracted.  Pages: " + doc.getNumberOfPages());
         return text;
     }
 
@@ -354,7 +338,6 @@ public class HomeFragment extends Fragment {
         XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
         String text = extractor.getText();
         extractor.close();
-        Log. d(TAG, "📖 DOCX extracted.");
         return text;
     }
 
@@ -366,7 +349,6 @@ public class HomeFragment extends Fragment {
         while ((line = r.readLine()) != null) {
             sb.append(line).append("\n");
         }
-        Log.d(TAG, "📖 TXT extracted.");
         return sb.toString();
     }
 
@@ -380,9 +362,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Refresh history when returning
         loadRecentHistory();
-        // Refresh user name in case profile was updated
         loadUserName();
     }
 

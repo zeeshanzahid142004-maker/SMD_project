@@ -6,17 +6,16 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget. TextView;
-import android.widget. Toast;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx. fragment.app.Fragment;
+import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,13 +25,21 @@ public class FavouritesFragment extends Fragment {
     private static final String TAG = "FavouritesFragment";
 
     private RecyclerView rvFavourites;
-    private LinearLayout llEmptyFavourites;
-    private TextView tvEmptyMessage;
+    private LinearLayout layoutEmpty;
+    private ProgressBar progressBar;
+
     private HistoryAdapter adapter;
-    private List<QuizAttempt> favouritesList = new ArrayList<>();
+    private List<QuizAttempt> favoriteAttempts = new ArrayList<>();
 
     private QuizAttemptRepository attemptRepository;
-    private FirebaseAuth auth;
+    private FirebaseFirestore db;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        attemptRepository = new QuizAttemptRepository();
+        db = FirebaseFirestore.getInstance();
+    }
 
     @Nullable
     @Override
@@ -44,123 +51,125 @@ public class FavouritesFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Log.d(TAG, "❤️ FavouritesFragment created");
-
-        attemptRepository = new QuizAttemptRepository();
-        auth = FirebaseAuth.getInstance();
-
-        // Initialize views
         rvFavourites = view.findViewById(R.id.rv_favourites);
-        llEmptyFavourites = view.findViewById(R.id. ll_empty_favourites);
-        tvEmptyMessage = view. findViewById(R.id.tv_empty_message);
+        layoutEmpty = view.findViewById(R.id.layout_empty);
+        progressBar = view.findViewById(R.id.progress_bar);
 
-        // Setup RecyclerView
         rvFavourites.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // ⭐ CREATE ADAPTER CORRECTLY
-        adapter = new HistoryAdapter(favouritesList, new HistoryAdapter.OnHistoryActionListener() {
+        // ⭐ CRITICAL: Setting up the adapter with the Download Listener
+        adapter = new HistoryAdapter(favoriteAttempts, new HistoryAdapter.OnHistoryActionListener() {
             @Override
             public void onDownload(QuizAttempt attempt, int position) {
-                Toast.makeText(getContext(), "Opening History to download", Toast.LENGTH_SHORT). show();
+                // Call the download logic
+                downloadQuiz(attempt, position);
             }
 
             @Override
             public void onToggleFavorite(QuizAttempt attempt, int position) {
-                toggleFavorite(attempt, position);
+                // Handle unfavoriting (remove from list)
+                removeFavorite(attempt, position);
             }
         });
+
         rvFavourites.setAdapter(adapter);
 
-        // Load favourite quizzes
-        loadFavourites();
+        loadFavorites();
     }
 
-    /**
-     * Load all favourite quizzes from Firebase
-     */
-    private void loadFavourites() {
-        Log.d(TAG, "📥 Loading favourite quizzes.. .");
+    private void loadFavorites() {
+        progressBar.setVisibility(View.VISIBLE);
 
-        FirebaseUser user = auth.getCurrentUser();
-        if (user == null) {
-            showEmptyState("Please log in to view favourites");
-            Log.e(TAG, "❌ User not authenticated");
-            return;
-        }
-
-        // Get all quiz attempts and filter by favourite
+        // Fetch all attempts and filter for favorites
         attemptRepository.getAllAttempts(new QuizAttemptRepository.OnAttemptsLoadedListener() {
             @Override
             public void onAttemptsLoaded(List<QuizAttempt> attempts) {
-                favouritesList.clear();
+                if (getContext() == null) return;
 
-                // Filter only favourite quizzes
+                favoriteAttempts.clear();
                 for (QuizAttempt attempt : attempts) {
-                    if (attempt.isFavorite) {
-                        favouritesList. add(attempt);
-                        Log.d(TAG, "❤️ Found favourite: " + attempt.quizTitle);
+                    if (attempt.isFavorite()) {
+                        favoriteAttempts.add(attempt);
                     }
                 }
 
-                if (favouritesList.isEmpty()) {
-                    showEmptyState("No favourite quizzes yet.\nMark quizzes as favourite!");
-                    Log.d(TAG, "📭 No favourites found");
+                progressBar.setVisibility(View.GONE);
+
+                if (favoriteAttempts.isEmpty()) {
+                    layoutEmpty.setVisibility(View.VISIBLE);
+                    rvFavourites.setVisibility(View.GONE);
                 } else {
-                    showContent();
+                    layoutEmpty.setVisibility(View.GONE);
+                    rvFavourites.setVisibility(View.VISIBLE);
                     adapter.notifyDataSetChanged();
-                    Log.d(TAG, "✅ Loaded " + favouritesList.size() + " favourite quizzes");
                 }
             }
 
             @Override
             public void onError(Exception e) {
-                Log.e(TAG, "❌ Failed to load favourites", e);
-                showEmptyState("Failed to load favourites");
-                Toast.makeText(getContext(), "Error: " + e.getMessage(), Toast. LENGTH_SHORT).show();
+                if (getContext() == null) return;
+                progressBar.setVisibility(View.GONE);
+                Log.e(TAG, "Error loading favorites", e);
             }
         });
     }
 
-    /**
-     * Toggle favourite status
-     */
-    private void toggleFavorite(QuizAttempt attempt, int position) {
-        attempt.isFavorite = !attempt.isFavorite;
+    // ✅ THE MISSING LOGIC: Fetch Quiz Data + Save to Downloads
+    private void downloadQuiz(QuizAttempt attempt, int position) {
+        Toast.makeText(getContext(), "Downloading...", Toast.LENGTH_SHORT).show();
 
-        Log.d(TAG, "❤️ Toggling favourite: " + attempt.isFavorite);
+        // 1. Fetch the full quiz data (questions) from "quizzes" collection
+        db.collection("quizzes").document(attempt.getQuizId())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Quiz quiz = documentSnapshot.toObject(Quiz.class);
+                        if (quiz != null) {
 
-        attemptRepository.markAsFavorite(attempt. attemptId, attempt.isFavorite);
+                            // 2. Save to "Downloads" via Repository
+                            attemptRepository.markAsDownloaded(
+                                    attempt.getAttemptId(),
+                                    attempt.getQuizId(),
+                                    attempt.getQuizTitle(),
+                                    quiz.getQuestions()
+                            );
 
-        if (! attempt.isFavorite) {
-            // Remove from list if unfavourited
-            favouritesList.remove(position);
+                            // 3. Update UI
+                            attempt.setDownloaded(true);
+                            adapter.updateItem(position, attempt);
+                            Toast.makeText(getContext(), "✅ Downloaded!", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "Quiz data not found", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Download failed", e);
+                    Toast.makeText(getContext(), "Download failed", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void removeFavorite(QuizAttempt attempt, int position) {
+        // 1. Update Repository
+        attemptRepository.markAsFavorite(attempt.getAttemptId(), false);
+
+        // 2. Remove from UI list immediately
+        if (position >= 0 && position < favoriteAttempts.size()) {
+            favoriteAttempts.remove(position);
             adapter.notifyItemRemoved(position);
-
-            if (favouritesList.isEmpty()) {
-                showEmptyState("No favourite quizzes yet");
-            }
-        } else {
-            adapter.updateItem(position, attempt);
+            adapter.notifyItemRangeChanged(position, favoriteAttempts.size());
         }
 
-        String message = attempt.isFavorite ? "❤️ Added to favourites" : "Removed from favourites";
-        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
-    }
+        if (favoriteAttempts.isEmpty()) {
+            layoutEmpty.setVisibility(View.VISIBLE);
+        }
 
-    private void showEmptyState(String message) {
-        llEmptyFavourites.setVisibility(View.VISIBLE);
-        rvFavourites.setVisibility(View.GONE);
-        tvEmptyMessage.setText(message);
-    }
-
-    private void showContent() {
-        llEmptyFavourites.setVisibility(View.GONE);
-        rvFavourites.setVisibility(View.VISIBLE);
+        Toast.makeText(getContext(), "Removed from favorites", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        loadFavourites(); // Refresh when returning
+        loadFavorites(); // Refresh in case changed elsewhere
     }
 }

@@ -30,7 +30,7 @@ public class UserActionRepository {
         return db.collection("users").document(user.getUid());
     }
 
-    // --- HISTORY SAVING WITH LOGS ---
+
     public void saveHistoryEntry(String quizId, int score, int totalMarks, String title) {
         Log.d(TAG, "⚡ saveHistoryEntry called");
         Log.d(TAG, "   📝 Data: QuizID=" + quizId + ", Title='" + title + "', Score=" + score + "/" + totalMarks);
@@ -46,15 +46,14 @@ public class UserActionRepository {
         historyEntry.put("title", title);
         historyEntry.put("dateTaken", new Date());
 
-        // Write to Firestore
+
         userDocRef.update("history", FieldValue.arrayUnion(historyEntry))
                 .addOnSuccessListener(aVoid -> Log.d(TAG, "✅ SUCCESS: History entry written to Firestore!"))
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "❌ FAILURE: Could not write history", e);
-                    // Fallback: If document doesn't exist yet, creating it might be needed (advanced case),
-                    // but usually 'users' doc exists upon sign-up.
+
                 });
     }
 
-    // ... (Keep toggleFavoriteStatus and toggleDownloadStatus as is) ...
+
 }

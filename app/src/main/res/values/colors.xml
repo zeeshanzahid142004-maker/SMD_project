@@ -28,10 +28,10 @@
     <color name="figma_purple_main">#6A32F9</color>
     <color name="gray">#D1D1D1</color>
     <color name="black">#000000</color>
-
+    <color name="figma_purple_light">#E1BEE7</color>
     <color name="text_hint_gray_light">#C2C2C2</color>
     <color name="text_link_blue">#4B65ED</color>
-
+    <color name="text_secondary">#666666</color>
     <color name="illustration_bg_cream_light">#FFFAF1</color>
     <color name="illustration_bg_pink_light">#FFF3F3</color>
     <color name="illustration_lavender_light">#F0F1FC</color>

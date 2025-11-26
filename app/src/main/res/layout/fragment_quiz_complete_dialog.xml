@@ -48,6 +48,7 @@
                 android:layout_marginTop="24dp"
                 android:layout_marginBottom="24dp"/>
 
+            <!-- Button 1: View Results -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_view_results"
                 android:layout_width="match_parent"
@@ -59,6 +60,7 @@
                 app:cornerRadius="12dp"
                 android:text="View Results"/>
 
+            <!-- Button 2: Regenerate Quiz -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_regenerate_quiz"
                 android:layout_width="match_parent"
@@ -71,12 +73,16 @@
                 android:layout_marginTop="12dp"
                 android:text="Regenerate Quiz"/>
 
+            <!-- Button 3: Retake Quiz (UPDATED) -->
+            <!-- Changed style to match others and added a distinct gradient background -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_retake_quiz"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="56dp"
-                style="@style/Widget.App.Button.Stroked"
+                style="@style/TextAppearance.Button.Large"
+                android:background="@drawable/bg_gradient_lime_purple"
+                app:backgroundTint="@null"
                 app:cornerRadius="12dp"
                 android:layout_marginTop="12dp"
                 android:text="Retake Quiz"/>
