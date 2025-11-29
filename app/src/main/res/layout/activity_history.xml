@@ -13,7 +13,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
-        app:title="📜 Quiz History"
+        app:title="Quiz History"
+        app:subtitleTextAppearance="@color/text_primary_dark"
+
         app:navigationIcon="@drawable/ic_back_button"
         app:elevation="4dp" />
 
