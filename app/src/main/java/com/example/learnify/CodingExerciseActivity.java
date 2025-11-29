@@ -1,15 +1,16 @@
 package com.example.learnify;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget. TextView;
+import android.widget.ProgressBar;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
@@ -22,7 +23,13 @@ public class CodingExerciseActivity extends BaseActivity {
     private TextView tvExercisePrompt;
     private EditText etCodeInput;
     private MaterialButton btnSubmit;
-    private MaterialButton btnSkip; // ⭐ ADD SKIP BUTTON
+    private MaterialButton btnSkip;
+    
+    // New UI components for code execution
+    private Spinner spinnerLanguage;
+    private TextView tvOutput;
+    private ProgressBar progressBar;
+    private CodeExecutionService codeService;
 
     private QuizQuestion question;
 
@@ -45,11 +52,23 @@ public class CodingExerciseActivity extends BaseActivity {
         }
 
         // Initialize views
-        toolbar = findViewById(R. id.toolbar);
+        toolbar = findViewById(R.id.toolbar);
         tvExercisePrompt = findViewById(R.id.tv_exercise_prompt);
         etCodeInput = findViewById(R.id.et_code_input);
         btnSubmit = findViewById(R.id.btn_submit_exercise);
         btnSkip = findViewById(R.id.btn_skip_coding);
+        
+        // Initialize new UI components
+        spinnerLanguage = findViewById(R.id.spinner_language);
+        tvOutput = findViewById(R.id.tv_output);
+        progressBar = findViewById(R.id.progress_execution);
+        codeService = new CodeExecutionService();
+        
+        // Setup language spinner
+        String[] languages = {"Python", "Java", "C++", "JavaScript"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item, languages);
+        spinnerLanguage.setAdapter(adapter);
 
         // Setup toolbar with back button to skip
         setSupportActionBar(toolbar);
@@ -72,14 +91,14 @@ public class CodingExerciseActivity extends BaseActivity {
 
         // ⭐ SUBMIT BUTTON
         btnSubmit.setOnClickListener(v -> {
-            Log. d(TAG, "📤 Submit button clicked");
+            Log.d(TAG, "📤 Submit button clicked");
             submitCode();
         });
 
         // ⭐ SKIP BUTTON (explicit)
         if (btnSkip != null) {
             btnSkip.setOnClickListener(v -> {
-                Log. d(TAG, "⏭️ Skip button clicked");
+                Log.d(TAG, "⏭️ Skip button clicked");
                 setResult(RESULT_CANCELED);
                 finish();
             });
@@ -87,26 +106,70 @@ public class CodingExerciseActivity extends BaseActivity {
     }
 
     private void submitCode() {
-        String code = etCodeInput.getText(). toString().trim();
+        String code = etCodeInput.getText().toString().trim();
 
         if (code.isEmpty()) {
             Toast.makeText(this, "Please write some code first!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Log.d(TAG, "📝 User submitted code: " + code. substring(0, Math.min(50, code.length())));
+        String language = spinnerLanguage.getSelectedItem().toString();
+        Log.d(TAG, "📝 User submitted code in " + language + ": " + code.substring(0, Math.min(50, code.length())));
 
-        boolean hasRelevantCode = validateCode(code);
+        // Show loading state
+        progressBar.setVisibility(View.VISIBLE);
+        btnSubmit.setEnabled(false);
+        tvOutput.setText("Running code...");
 
-        if (hasRelevantCode) {
-            showSuccessDialog(code);
-        } else {
-            showHintDialog();
-        }
+        // Try API execution first
+        codeService.executeCode(code, language, new CodeExecutionService.ExecutionCallback() {
+            @Override
+            public void onSuccess(String output) {
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    btnSubmit.setEnabled(true);
+                    tvOutput.setText("Output:\n" + output);
+
+                    // Check if output matches expected (if we have expected output)
+                    if (question.correctAnswer != null && output.trim().contains(question.correctAnswer.trim())) {
+                        showSuccessDialog(code);
+                    } else if (question.expectedOutput != null && output.trim().contains(question.expectedOutput.trim())) {
+                        showSuccessDialog(code);
+                    } else {
+                        // If no expected output match, use offline validation
+                        if (validateCodeOffline(code, language)) {
+                            showSuccessDialog(code);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                runOnUiThread(() -> {
+                    progressBar.setVisibility(View.GONE);
+                    btnSubmit.setEnabled(true);
+                    
+                    // If API not configured or failed, use offline validation
+                    if (error.contains("API not configured") || error.contains("Network error")) {
+                        tvOutput.setText("Offline mode: Validating code structure...");
+                        if (validateCodeOffline(code, language)) {
+                            tvOutput.setText("✅ Code structure looks good!");
+                            showSuccessDialog(code);
+                        } else {
+                            tvOutput.setText("❌ " + error + "\nTry adding more code structure.");
+                            showHintDialog();
+                        }
+                    } else {
+                        tvOutput.setText("Error:\n" + error);
+                    }
+                });
+            }
+        });
     }
 
     private void showSuccessDialog(String code) {
-        View dialogView = getLayoutInflater().inflate(R. layout.dialog_success, null);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_success, null);
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -117,8 +180,8 @@ public class CodingExerciseActivity extends BaseActivity {
             dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
 
-        TextView tvTitle = dialogView.findViewById(R. id.tv_dialog_title);
-        TextView tvMessage = dialogView.findViewById(R. id.tv_dialog_message);
+        TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_title);
+        TextView tvMessage = dialogView.findViewById(R.id.tv_dialog_message);
         MaterialButton btnDone = dialogView.findViewById(R.id.btn_dialog_positive);
 
         tvTitle.setText("Great Job! 🎉");
@@ -135,18 +198,18 @@ public class CodingExerciseActivity extends BaseActivity {
     }
 
     private void showHintDialog() {
-        View dialogView = getLayoutInflater(). inflate(R.layout.dialog_hint, null);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_hint, null);
 
-        androidx. appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setView(dialogView)
                 .create();
 
         if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new android.graphics. drawable.ColorDrawable(android. graphics.Color.TRANSPARENT));
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
         }
 
         TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_title);
-        TextView tvMessage = dialogView. findViewById(R.id.tv_dialog_message);
+        TextView tvMessage = dialogView.findViewById(R.id.tv_dialog_message);
         MaterialButton btnTryAgain = dialogView.findViewById(R.id.btn_dialog_positive);
         MaterialButton btnShowSolution = dialogView.findViewById(R.id.btn_dialog_negative);
 
@@ -166,15 +229,70 @@ public class CodingExerciseActivity extends BaseActivity {
         dialog.show();
     }
 
-    private boolean validateCode(String code) {
+    /**
+     * Offline validation when JDoodle API is not available.
+     * Validates code structure based on question type and language.
+     */
+    private boolean validateCodeOffline(String code, String language) {
         String lowerCode = code.toLowerCase();
+        String questionLower = question.questionText != null ? question.questionText.toLowerCase() : "";
 
-        return lowerCode.contains("for") ||
+        // Check for loops
+        if (questionLower.contains("loop") || questionLower.contains("iterate") || questionLower.contains("repeat")) {
+            return lowerCode.contains("for") || lowerCode.contains("while");
+        }
+
+        // Check for conditionals
+        if (questionLower.contains("if") || questionLower.contains("condition") || questionLower.contains("check")) {
+            return lowerCode.contains("if");
+        }
+
+        // Check for functions
+        if (questionLower.contains("function") || questionLower.contains("method") || questionLower.contains("define")) {
+            return lowerCode.contains("def ") || lowerCode.contains("function ") ||
+                    lowerCode.contains("void ") || lowerCode.contains("public ") ||
+                    lowerCode.contains("private ") || lowerCode.contains("=>") ||
+                    lowerCode.contains("int ") || lowerCode.contains("string ");
+        }
+
+        // Check for print statements
+        if (questionLower.contains("print") || questionLower.contains("output") || questionLower.contains("display")) {
+            return lowerCode.contains("print") || lowerCode.contains("console.log") ||
+                    lowerCode.contains("system.out") || lowerCode.contains("cout");
+        }
+
+        // Check for array/list operations
+        if (questionLower.contains("array") || questionLower.contains("list")) {
+            return lowerCode.contains("[") || lowerCode.contains("array") || 
+                    lowerCode.contains("list") || lowerCode.contains("vector");
+        }
+
+        // Language-specific basic structure validation
+        switch (language.toLowerCase()) {
+            case "python":
+                return lowerCode.contains("def ") || lowerCode.contains("print") || 
+                        lowerCode.contains("for") || lowerCode.contains("while") ||
+                        lowerCode.contains("if") || lowerCode.contains("class");
+            case "java":
+                return lowerCode.contains("public") || lowerCode.contains("class") ||
+                        lowerCode.contains("void") || lowerCode.contains("int") ||
+                        lowerCode.contains("system.out");
+            case "c++":
+                return lowerCode.contains("cout") || lowerCode.contains("cin") ||
+                        lowerCode.contains("#include") || lowerCode.contains("int main");
+            case "javascript":
+                return lowerCode.contains("function") || lowerCode.contains("const") ||
+                        lowerCode.contains("let") || lowerCode.contains("var") ||
+                        lowerCode.contains("console.log") || lowerCode.contains("=>");
+        }
+
+        // Default: check minimum length and basic structure
+        return code.length() >= 20 && (
+                lowerCode.contains("for") ||
                 lowerCode.contains("while") ||
                 lowerCode.contains("if") ||
-                lowerCode. contains("function") ||
-                lowerCode. contains("def") ||
-                lowerCode. contains("return") ||
-                code.length() > 20;
+                lowerCode.contains("function") ||
+                lowerCode.contains("def") ||
+                lowerCode.contains("return"));
     }
 }

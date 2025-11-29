@@ -83,6 +83,29 @@
                 android:layout_marginBottom="8dp"
                 android:layout_marginStart="4dp"/>
 
+            <!-- Language Selector -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Language: "
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary_gray"/>
+
+                <Spinner
+                    android:id="@+id/spinner_language"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_code_editor"
+                    android:padding="8dp"/>
+            </LinearLayout>
+
             <EditText
                 android:id="@+id/et_code_input"
                 android:layout_width="match_parent"
@@ -98,6 +121,43 @@
                 android:inputType="textMultiLine|textNoSuggestions"
                 android:scrollbars="vertical"
                 android:lineSpacingMultiplier="1.2"/>
+
+            <!-- Output Area -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="OUTPUT"
+                android:textSize="12sp"
+                android:letterSpacing="0.1"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary_gray"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginStart="4dp"/>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_output"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="100dp"
+                    android:padding="12dp"
+                    android:background="#1E1E1E"
+                    android:textColor="#00FF00"
+                    android:fontFamily="monospace"
+                    android:textSize="12sp"
+                    android:text="Output will appear here..."/>
+
+                <ProgressBar
+                    android:id="@+id/progress_execution"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone"/>
+            </FrameLayout>
 
             <View
                 android:layout_width="match_parent"
