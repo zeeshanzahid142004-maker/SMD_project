@@ -79,7 +79,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:text="🔄 Retake Quiz"
+            android:text="Retake Quiz"
             android:textColor="@color/white"
             android:background="@drawable/bg_sign_up_gradient"
             app:backgroundTint="@null"

@@ -21,7 +21,10 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("apiKey")}\"")
+
+        // ✅ ADD THIS LINE - Secure API key from local.properties
+        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("GROQ_API_KEY", "")}\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
@@ -109,4 +112,5 @@ dependencies {
     //taking notes
     implementation("jp.wasabeef:richeditor-android:2.0.0")
 }
+
 
