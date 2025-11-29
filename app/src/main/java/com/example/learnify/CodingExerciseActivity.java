@@ -18,6 +18,10 @@ import com.google.android.material.button.MaterialButton;
 public class CodingExerciseActivity extends BaseActivity {
 
     private static final String TAG = "CodingExerciseActivity";
+    
+    // Minimum code length threshold for offline validation
+    // Code should have at least this many characters to be considered meaningful
+    private static final int MIN_CODE_LENGTH_FOR_VALIDATION = 20;
 
     private MaterialToolbar toolbar;
     private TextView tvExercisePrompt;
@@ -130,10 +134,15 @@ public class CodingExerciseActivity extends BaseActivity {
                     btnSubmit.setEnabled(true);
                     tvOutput.setText("Output:\n" + output);
 
-                    // Check if output matches expected (if we have expected output)
-                    if (question.correctAnswer != null && output.trim().contains(question.correctAnswer.trim())) {
-                        showSuccessDialog(code);
-                    } else if (question.expectedOutput != null && output.trim().contains(question.expectedOutput.trim())) {
+                    // Check if output matches expected using normalized comparison
+                    boolean outputMatches = false;
+                    if (question.correctAnswer != null && !question.correctAnswer.isEmpty()) {
+                        outputMatches = normalizedOutputMatch(output, question.correctAnswer);
+                    } else if (question.expectedOutput != null && !question.expectedOutput.isEmpty()) {
+                        outputMatches = normalizedOutputMatch(output, question.expectedOutput);
+                    }
+                    
+                    if (outputMatches) {
                         showSuccessDialog(code);
                     } else {
                         // If no expected output match, use offline validation
@@ -230,69 +239,111 @@ public class CodingExerciseActivity extends BaseActivity {
     }
 
     /**
+     * Compares actual output with expected output using normalized comparison.
+     * Trims whitespace and compares line by line for more accurate matching.
+     */
+    private boolean normalizedOutputMatch(String actual, String expected) {
+        if (actual == null || expected == null) return false;
+        
+        // Normalize both strings: trim and standardize line endings
+        String normalizedActual = actual.trim().replaceAll("\\r\\n", "\n").replaceAll("\\r", "\n");
+        String normalizedExpected = expected.trim().replaceAll("\\r\\n", "\n").replaceAll("\\r", "\n");
+        
+        // Try exact match first
+        if (normalizedActual.equals(normalizedExpected)) {
+            return true;
+        }
+        
+        // Try matching ignoring trailing whitespace on each line
+        String[] actualLines = normalizedActual.split("\n");
+        String[] expectedLines = normalizedExpected.split("\n");
+        
+        if (actualLines.length != expectedLines.length) {
+            // Check if expected output is contained as a substring (for partial matches)
+            return normalizedActual.contains(normalizedExpected);
+        }
+        
+        for (int i = 0; i < expectedLines.length; i++) {
+            if (!actualLines[i].trim().equals(expectedLines[i].trim())) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Checks if code contains a keyword as a complete word (not part of another word).
+     * Uses word boundary matching to avoid false positives like 'forward' matching 'for'.
+     */
+    private boolean containsKeyword(String code, String keyword) {
+        // Pattern matches keyword as a complete word (with word boundaries)
+        String pattern = "\\b" + java.util.regex.Pattern.quote(keyword) + "\\b";
+        return java.util.regex.Pattern.compile(pattern, java.util.regex.Pattern.CASE_INSENSITIVE)
+                .matcher(code).find();
+    }
+
+    /**
      * Offline validation when JDoodle API is not available.
      * Validates code structure based on question type and language.
      */
     private boolean validateCodeOffline(String code, String language) {
-        String lowerCode = code.toLowerCase();
         String questionLower = question.questionText != null ? question.questionText.toLowerCase() : "";
 
-        // Check for loops
+        // Check for loops - use word boundary matching
         if (questionLower.contains("loop") || questionLower.contains("iterate") || questionLower.contains("repeat")) {
-            return lowerCode.contains("for") || lowerCode.contains("while");
+            return containsKeyword(code, "for") || containsKeyword(code, "while");
         }
 
         // Check for conditionals
-        if (questionLower.contains("if") || questionLower.contains("condition") || questionLower.contains("check")) {
-            return lowerCode.contains("if");
+        if (questionLower.contains("condition") || questionLower.contains("check")) {
+            return containsKeyword(code, "if");
         }
 
         // Check for functions
         if (questionLower.contains("function") || questionLower.contains("method") || questionLower.contains("define")) {
-            return lowerCode.contains("def ") || lowerCode.contains("function ") ||
-                    lowerCode.contains("void ") || lowerCode.contains("public ") ||
-                    lowerCode.contains("private ") || lowerCode.contains("=>") ||
-                    lowerCode.contains("int ") || lowerCode.contains("string ");
+            return containsKeyword(code, "def") || containsKeyword(code, "function") ||
+                    containsKeyword(code, "void") || containsKeyword(code, "public") ||
+                    containsKeyword(code, "private") || code.contains("=>");
         }
 
         // Check for print statements
         if (questionLower.contains("print") || questionLower.contains("output") || questionLower.contains("display")) {
-            return lowerCode.contains("print") || lowerCode.contains("console.log") ||
-                    lowerCode.contains("system.out") || lowerCode.contains("cout");
+            return containsKeyword(code, "print") || code.contains("console.log") ||
+                    code.contains("System.out") || code.contains("cout");
         }
 
         // Check for array/list operations
         if (questionLower.contains("array") || questionLower.contains("list")) {
-            return lowerCode.contains("[") || lowerCode.contains("array") || 
-                    lowerCode.contains("list") || lowerCode.contains("vector");
+            return code.contains("[") || containsKeyword(code, "array") || 
+                    containsKeyword(code, "list") || containsKeyword(code, "vector");
         }
 
         // Language-specific basic structure validation
         switch (language.toLowerCase()) {
             case "python":
-                return lowerCode.contains("def ") || lowerCode.contains("print") || 
-                        lowerCode.contains("for") || lowerCode.contains("while") ||
-                        lowerCode.contains("if") || lowerCode.contains("class");
+                return containsKeyword(code, "def") || containsKeyword(code, "print") || 
+                        containsKeyword(code, "for") || containsKeyword(code, "while") ||
+                        containsKeyword(code, "if") || containsKeyword(code, "class");
             case "java":
-                return lowerCode.contains("public") || lowerCode.contains("class") ||
-                        lowerCode.contains("void") || lowerCode.contains("int") ||
-                        lowerCode.contains("system.out");
+                return containsKeyword(code, "public") || containsKeyword(code, "class") ||
+                        containsKeyword(code, "void") || containsKeyword(code, "int") ||
+                        code.contains("System.out");
             case "c++":
-                return lowerCode.contains("cout") || lowerCode.contains("cin") ||
-                        lowerCode.contains("#include") || lowerCode.contains("int main");
+                return code.contains("cout") || code.contains("cin") ||
+                        code.contains("#include") || code.contains("int main");
             case "javascript":
-                return lowerCode.contains("function") || lowerCode.contains("const") ||
-                        lowerCode.contains("let") || lowerCode.contains("var") ||
-                        lowerCode.contains("console.log") || lowerCode.contains("=>");
+                return containsKeyword(code, "function") || containsKeyword(code, "const") ||
+                        containsKeyword(code, "let") || containsKeyword(code, "var") ||
+                        code.contains("console.log") || code.contains("=>");
         }
 
         // Default: check minimum length and basic structure
-        return code.length() >= 20 && (
-                lowerCode.contains("for") ||
-                lowerCode.contains("while") ||
-                lowerCode.contains("if") ||
-                lowerCode.contains("function") ||
-                lowerCode.contains("def") ||
-                lowerCode.contains("return"));
+        return code.length() >= MIN_CODE_LENGTH_FOR_VALIDATION && (
+                containsKeyword(code, "for") ||
+                containsKeyword(code, "while") ||
+                containsKeyword(code, "if") ||
+                containsKeyword(code, "function") ||
+                containsKeyword(code, "def") ||
+                containsKeyword(code, "return"));
     }
 }

@@ -10,9 +10,14 @@ public class CodeExecutionService {
     private static final String TAG = "CodeExecutionService";
     private static final String JDOODLE_URL = "https://api.jdoodle.com/v1/execute";
     
-    // Free tier credentials - users can replace with their own
-    private static final String CLIENT_ID = ""; // User adds their own
-    private static final String CLIENT_SECRET = ""; // User adds their own
+    // API credentials - should be configured via BuildConfig or local.properties
+    // To enable JDoodle API:
+    // 1. Sign up at https://www.jdoodle.com/compiler-api
+    // 2. Add to local.properties: JDOODLE_CLIENT_ID=your_client_id
+    //                            JDOODLE_CLIENT_SECRET=your_client_secret
+    // 3. Update build.gradle.kts to include these as BuildConfig fields
+    private final String clientId;
+    private final String clientSecret;
     
     private static final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -23,10 +28,22 @@ public class CodeExecutionService {
         void onSuccess(String output);
         void onError(String error);
     }
+    
+    public CodeExecutionService() {
+        // Try to load from BuildConfig, default to empty if not configured
+        this.clientId = getConfigValue("JDOODLE_CLIENT_ID", "");
+        this.clientSecret = getConfigValue("JDOODLE_CLIENT_SECRET", "");
+    }
+    
+    private String getConfigValue(String key, String defaultValue) {
+        // BuildConfig approach - credentials should be added to build.gradle.kts
+        // For now, return default as credentials are not configured
+        return defaultValue;
+    }
 
     public void executeCode(String code, String language, ExecutionCallback callback) {
         // Check if API credentials are configured
-        if (CLIENT_ID.isEmpty() || CLIENT_SECRET.isEmpty()) {
+        if (clientId == null || clientId.isEmpty() || clientSecret == null || clientSecret.isEmpty()) {
             // Use offline validation if no API credentials
             callback.onError("API not configured. Using offline validation.");
             return;
@@ -38,8 +55,8 @@ public class CodeExecutionService {
         
         try {
             JSONObject json = new JSONObject();
-            json.put("clientId", CLIENT_ID);
-            json.put("clientSecret", CLIENT_SECRET);
+            json.put("clientId", clientId);
+            json.put("clientSecret", clientSecret);
             json.put("script", code);
             json.put("language", langCode);
             json.put("versionIndex", versionIndex);
@@ -64,8 +81,14 @@ public class CodeExecutionService {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     try {
-                        String responseBody = response.body().string();
-                        JSONObject result = new JSONObject(responseBody);
+                        ResponseBody responseBody = response.body();
+                        if (responseBody == null) {
+                            callback.onError("Empty response from server");
+                            return;
+                        }
+                        
+                        String bodyString = responseBody.string();
+                        JSONObject result = new JSONObject(bodyString);
                         
                         if (result.has("error")) {
                             callback.onError(result.getString("error"));
