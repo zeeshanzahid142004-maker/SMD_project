@@ -135,7 +135,10 @@ public class CodingExerciseActivity extends BaseActivity {
                     tvOutput.setText("Output:\n" + output);
 
                     // Check if output matches expected using normalized comparison
+                    boolean hasExpectedOutput = (question.correctAnswer != null && !question.correctAnswer.isEmpty()) ||
+                            (question.expectedOutput != null && !question.expectedOutput.isEmpty());
                     boolean outputMatches = false;
+                    
                     if (question.correctAnswer != null && !question.correctAnswer.isEmpty()) {
                         outputMatches = normalizedOutputMatch(output, question.correctAnswer);
                     } else if (question.expectedOutput != null && !question.expectedOutput.isEmpty()) {
@@ -143,12 +146,14 @@ public class CodingExerciseActivity extends BaseActivity {
                     }
                     
                     if (outputMatches) {
-                        showSuccessDialog(code);
-                    } else {
-                        // If no expected output match, use offline validation
-                        if (validateCodeOffline(code, language)) {
-                            showSuccessDialog(code);
-                        }
+                        showSuccessDialog(code, true);
+                    } else if (!hasExpectedOutput && validateCodeOffline(code, language)) {
+                        // No expected output defined, use offline validation
+                        showSuccessDialog(code, false);
+                    } else if (hasExpectedOutput && validateCodeOffline(code, language)) {
+                        // Has expected output but didn't match - show partial success
+                        tvOutput.setText("Output:\n" + output + "\n\n⚠️ Code structure looks good, but output may differ from expected.");
+                        showPartialSuccessDialog(code);
                     }
                 });
             }
@@ -159,14 +164,26 @@ public class CodingExerciseActivity extends BaseActivity {
                     progressBar.setVisibility(View.GONE);
                     btnSubmit.setEnabled(true);
                     
-                    // If API not configured or failed, use offline validation
-                    if (error.contains("API not configured") || error.contains("Network error")) {
+                    // Handle different error types
+                    boolean isConfigError = error.startsWith("API not configured");
+                    boolean isNetworkError = error.startsWith("Network error");
+                    boolean isServerError = error.startsWith("Server error");
+                    
+                    if (isConfigError || isNetworkError) {
                         tvOutput.setText("Offline mode: Validating code structure...");
                         if (validateCodeOffline(code, language)) {
                             tvOutput.setText("✅ Code structure looks good!");
-                            showSuccessDialog(code);
+                            showSuccessDialog(code, false);
                         } else {
                             tvOutput.setText("❌ " + error + "\nTry adding more code structure.");
+                            showHintDialog();
+                        }
+                    } else if (isServerError) {
+                        tvOutput.setText("⚠️ " + error + "\nFalling back to offline validation...");
+                        if (validateCodeOffline(code, language)) {
+                            tvOutput.setText("✅ Code structure looks good! (Server was unavailable)");
+                            showSuccessDialog(code, false);
+                        } else {
                             showHintDialog();
                         }
                     } else {
@@ -178,6 +195,10 @@ public class CodingExerciseActivity extends BaseActivity {
     }
 
     private void showSuccessDialog(String code) {
+        showSuccessDialog(code, true);
+    }
+    
+    private void showSuccessDialog(String code, boolean outputVerified) {
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_success, null);
 
         androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
@@ -194,11 +215,47 @@ public class CodingExerciseActivity extends BaseActivity {
         MaterialButton btnDone = dialogView.findViewById(R.id.btn_dialog_positive);
 
         tvTitle.setText("Great Job! 🎉");
-        tvMessage.setText("Your code looks good! You've completed this exercise.");
+        if (outputVerified) {
+            tvMessage.setText("Your code output matches the expected result! Exercise completed.");
+        } else {
+            tvMessage.setText("Your code structure looks good! You've completed this exercise.");
+        }
         btnDone.setText("Continue");
         btnDone.setOnClickListener(v -> {
             dialog.dismiss();
             Log.d(TAG, "✅ Code accepted - returning OK");
+            setResult(RESULT_OK);
+            finish();
+        });
+
+        dialog.show();
+    }
+    
+    /**
+     * Shows a partial success dialog when code structure is valid but output doesn't match expected.
+     */
+    private void showPartialSuccessDialog(String code) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_success, null);
+
+        androidx.appcompat.app.AlertDialog dialog = new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        TextView tvTitle = dialogView.findViewById(R.id.tv_dialog_title);
+        TextView tvMessage = dialogView.findViewById(R.id.tv_dialog_message);
+        MaterialButton btnDone = dialogView.findViewById(R.id.btn_dialog_positive);
+
+        tvTitle.setText("Good Progress! 👍");
+        tvMessage.setText("Your code structure is correct, but the output may differ from expected. Review your logic and try again, or continue to the next exercise.");
+        btnDone.setText("Continue");
+        btnDone.setOnClickListener(v -> {
+            dialog.dismiss();
+            Log.d(TAG, "✅ Code accepted (partial) - returning OK");
             setResult(RESULT_OK);
             finish();
         });

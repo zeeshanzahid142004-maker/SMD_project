@@ -81,6 +81,12 @@ public class CodeExecutionService {
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
                     try {
+                        // Check HTTP status code first
+                        if (!response.isSuccessful()) {
+                            callback.onError("Server error: HTTP " + response.code());
+                            return;
+                        }
+                        
                         ResponseBody responseBody = response.body();
                         if (responseBody == null) {
                             callback.onError("Empty response from server");
@@ -123,12 +129,18 @@ public class CodeExecutionService {
         }
     }
     
+    /**
+     * Get the version index for a language. JDoodle uses version indices to specify
+     * which compiler/interpreter version to use. Higher numbers generally mean newer versions.
+     * @param langCode The JDoodle language code
+     * @return Version index string for the JDoodle API
+     */
     private String getVersionIndex(String langCode) {
         switch (langCode) {
-            case "python3": return "4";
-            case "java": return "4";
-            case "cpp17": return "0";
-            case "nodejs": return "4";
+            case "python3": return "4";  // Python 3.x (latest stable)
+            case "java": return "4";     // JDK 17.x
+            case "cpp17": return "0";    // GCC with C++17 support
+            case "nodejs": return "4";   // Node.js 18.x
             default: return "0";
         }
     }
