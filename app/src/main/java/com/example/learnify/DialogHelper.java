@@ -250,7 +250,48 @@ public class DialogHelper {
     /**
      * Show a confirmation dialog with two options
      */
+    /**
+     * Callback interface for image source selection
+     */
+    public interface ImageSourceCallback {
+        void onCameraSelected();
+        void onGallerySelected();
+    }
 
+    /**
+     * Show Camera/Gallery picker dialog
+     */
+    public static void showImageSourceDialog(Context context, ImageSourceCallback callback) {
+        Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+
+        View view = LayoutInflater.from(context).inflate(R.layout.dialog_image_source, null);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow(). setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams. WRAP_CONTENT);
+        }
+
+        View btnClose = view.findViewById(R.id.btn_close);
+        View optionCamera = view.findViewById(R.id.option_camera);
+        View optionGallery = view. findViewById(R.id.option_gallery);
+
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+
+        optionCamera.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (callback != null) callback.onCameraSelected();
+        });
+
+        optionGallery.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (callback != null) callback.onGallerySelected();
+        });
+
+        dialog.show();
+    }
     public interface LanguageSelectionListener {
         void onLanguageSelected(LanguageManager.Language language);
     }
@@ -367,14 +408,7 @@ public class DialogHelper {
     /**
      * Callback interface for image source selection
      */
-    public interface ImageSourceCallback {
-        void onCameraSelected();
-        void onGallerySelected();
-    }
 
-    /**
-     * Create a dialog for selecting image source (Camera or Gallery)
-     */
     public static Dialog createImageSourceDialog(Context context, ImageSourceCallback callback) {
         Dialog dialog = new Dialog(context);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);

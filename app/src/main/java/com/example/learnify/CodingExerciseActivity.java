@@ -39,7 +39,7 @@ public class CodingExerciseActivity extends BaseActivity {
             Log.d(TAG, "✅ Received coding question: " + question.questionText);
         } else {
             Log.e(TAG, "❌ No question provided!");
-            Toast.makeText(this, "No exercise provided", Toast.LENGTH_SHORT). show();
+            CustomToast.warning(this, "No exercise provided");
             finish();
             return;
         }
