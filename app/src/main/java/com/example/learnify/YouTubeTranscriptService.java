@@ -3,13 +3,14 @@ package com.example.learnify;
 import android.util.Log;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
+import org. json.JSONObject;
 
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java. util.regex.Matcher;
-import java. util.regex.Pattern;
+import java. util.concurrent.TimeUnit;
+import java.util.regex. Matcher;
+import java.util. regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -20,7 +21,11 @@ import okhttp3.Response;
 public class YouTubeTranscriptService {
 
     private static final String TAG = "YouTubeTranscript";
-    private static final OkHttpClient client = new OkHttpClient();
+
+    private static final OkHttpClient client = new OkHttpClient.Builder()
+            . connectTimeout(30, TimeUnit. SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build();
 
     public interface TranscriptCallback {
         void onSuccess(String transcript);
@@ -39,16 +44,16 @@ public class YouTubeTranscriptService {
         }
 
         Log.d(TAG, "Fetching transcript for: " + videoId);
-        fetchFromVideoPage(videoId, targetLanguage, callback);
+        fetchTranscript(videoId, targetLanguage, callback);
     }
 
-    private void fetchFromVideoPage(String videoId, String targetLang, TranscriptCallback callback) {
-        String url = "https://www.youtube.com/watch?v=" + videoId;
+    private void fetchTranscript(String videoId, String targetLang, TranscriptCallback callback) {
+        String url = "https://www.youtube. com/watch?v=" + videoId;
 
         Request request = new Request.Builder()
                 .url(url)
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                . header("Accept-Language", "en-US,en;q=0.9")
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
@@ -60,8 +65,8 @@ public class YouTubeTranscriptService {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    callback.onError("Failed to load video");
+                if (! response.isSuccessful()) {
+                    callback.onError("HTTP error: " + response.code());
                     return;
                 }
 
@@ -69,30 +74,109 @@ public class YouTubeTranscriptService {
                 String captionUrl = extractCaptionUrl(html);
                 String sourceLang = extractLanguage(html);
 
+                Log.d(TAG, "Caption URL found: " + (captionUrl != null));
+                Log.d(TAG, "Source language: " + sourceLang);
+
                 if (captionUrl != null) {
                     fetchCaptions(captionUrl, sourceLang, targetLang, callback);
                 } else {
-                    callback.onError("No captions available");
+                    // Try alternate method - timedtext API
+                    tryTimedTextApi(videoId, targetLang, callback);
                 }
+            }
+        });
+    }
+
+    private void tryTimedTextApi(String videoId, String targetLang, TranscriptCallback callback) {
+        String[] languages = {"en", "hi", "es", "ar", "fr", "de", "pt", "ru", "ja", "ko"};
+        tryNextLanguage(videoId, languages, 0, targetLang, callback);
+    }
+
+    private void tryNextLanguage(String videoId, String[] languages, int index, String targetLang, TranscriptCallback callback) {
+        if (index >= languages.length) {
+            callback.onError("No captions available for this video");
+            return;
+        }
+
+        String lang = languages[index];
+
+        // Try manual captions first, then auto-generated
+        String url = "https://www.youtube. com/api/timedtext?v=" + videoId + "&lang=" + lang + "&fmt=json3";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .header("User-Agent", "Mozilla/5.0")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                tryNextLanguage(videoId, languages, index + 1, targetLang, callback);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    String body = response.body().string();
+                    if (body.contains("events")) {
+                        String transcript = parseJson3Format(body);
+                        if (transcript != null && !transcript.isEmpty()) {
+                            handleResult(transcript, lang, targetLang, callback);
+                            return;
+                        }
+                    }
+                }
+                // Try auto-generated captions
+                tryAutoGeneratedCaptions(videoId, lang, languages, index, targetLang, callback);
+            }
+        });
+    }
+
+    private void tryAutoGeneratedCaptions(String videoId, String lang, String[] languages, int index, String targetLang, TranscriptCallback callback) {
+        String url = "https://www.youtube.com/api/timedtext?v=" + videoId + "&lang=" + lang + "&kind=asr&fmt=json3";
+
+        Request request = new Request.Builder()
+                .url(url)
+                .header("User-Agent", "Mozilla/5.0")
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                tryNextLanguage(videoId, languages, index + 1, targetLang, callback);
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful() && response.body() != null) {
+                    String body = response.body().string();
+                    if (body.contains("events")) {
+                        String transcript = parseJson3Format(body);
+                        if (transcript != null && !transcript.isEmpty()) {
+                            handleResult(transcript, lang, targetLang, callback);
+                            return;
+                        }
+                    }
+                }
+                tryNextLanguage(videoId, languages, index + 1, targetLang, callback);
             }
         });
     }
 
     private String extractCaptionUrl(String html) {
         try {
-            Pattern pattern = Pattern.compile("\"captionTracks\":\\s*\\[(.*?)\\]");
+            // Pattern to find captionTracks
+            Pattern pattern = Pattern. compile("\"captionTracks\":\\s*\\[(\\{.*?\\})\\]", Pattern.DOTALL);
             Matcher matcher = pattern.matcher(html);
 
             if (matcher.find()) {
-                String json = "[" + matcher.group(1) + "]";
-                JSONArray tracks = new JSONArray(json);
-
-                for (int i = 0; i < tracks.length(); i++) {
-                    JSONObject track = tracks.getJSONObject(i);
-                    String baseUrl = track.optString("baseUrl");
-                    if (baseUrl != null && ! baseUrl.isEmpty()) {
-                        return URLDecoder.decode(baseUrl, "UTF-8");
-                    }
+                String trackJson = matcher.group(1);
+                Pattern urlPattern = Pattern.compile("\"baseUrl\":\\s*\"([^\"]+)\"");
+                Matcher urlMatcher = urlPattern.matcher(trackJson);
+                if (urlMatcher.find()) {
+                    String url = urlMatcher.group(1);
+                    url = url.replace("\\u0026", "&"). replace("\\/", "/");
+                    return url;
                 }
             }
         } catch (Exception e) {
@@ -115,8 +199,13 @@ public class YouTubeTranscriptService {
     }
 
     private void fetchCaptions(String captionUrl, String sourceLang, String targetLang, TranscriptCallback callback) {
+        String url = captionUrl;
+        if (! url.contains("fmt=")) {
+            url += (url.contains("?") ? "&" : "?") + "fmt=json3";
+        }
+
         Request request = new Request.Builder()
-                .url(captionUrl)
+                .url(url)
                 .header("User-Agent", "Mozilla/5.0")
                 .build();
 
@@ -129,15 +218,16 @@ public class YouTubeTranscriptService {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 String body = response.body().string();
-                String transcript = parseXmlCaptions(body);
+                String transcript = null;
+
+                if (body.trim().startsWith("{")) {
+                    transcript = parseJson3Format(body);
+                } else if (body.contains("<text")) {
+                    transcript = parseXmlFormat(body);
+                }
 
                 if (transcript != null && !transcript.isEmpty()) {
-                    // Translate if needed
-                    if (targetLang != null && ! targetLang.equals(sourceLang)) {
-                        translateText(transcript, sourceLang, targetLang, callback);
-                    } else {
-                        callback.onSuccess(transcript);
-                    }
+                    handleResult(transcript, sourceLang, targetLang, callback);
                 } else {
                     callback.onError("Could not parse captions");
                 }
@@ -145,50 +235,95 @@ public class YouTubeTranscriptService {
         });
     }
 
-    private String parseXmlCaptions(String xml) {
-        StringBuilder sb = new StringBuilder();
+    private String parseJson3Format(String json) {
+        StringBuilder transcript = new StringBuilder();
+        try {
+            JSONObject root = new JSONObject(json);
+            JSONArray events = root.optJSONArray("events");
+
+            if (events != null) {
+                for (int i = 0; i < events.length(); i++) {
+                    JSONObject event = events.getJSONObject(i);
+                    JSONArray segs = event.optJSONArray("segs");
+
+                    if (segs != null) {
+                        for (int j = 0; j < segs.length(); j++) {
+                            JSONObject seg = segs.getJSONObject(j);
+                            String text = seg.optString("utf8", "");
+                            if (!text.isEmpty() && !text.equals("\n")) {
+                                transcript. append(text);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing JSON3", e);
+        }
+        return cleanTranscript(transcript.toString());
+    }
+
+    private String parseXmlFormat(String xml) {
+        StringBuilder transcript = new StringBuilder();
         try {
             Pattern pattern = Pattern.compile("<text[^>]*>([^<]*)</text>");
-            Matcher matcher = pattern.matcher(xml);
+            Matcher matcher = pattern. matcher(xml);
 
             while (matcher.find()) {
-                String text = matcher.group(1)
-                        .replace("&amp;", "&")
-                        .replace("&lt;", "<")
-                        .replace("&gt;", ">")
-                        .replace("&quot;", "\"")
-                        .replace("&#39;", "'")
-                        .replace("&nbsp;", " ");
-                sb.append(text). append(" ");
+                String text = matcher.group(1);
+                text = decodeHtmlEntities(text);
+                transcript.append(text). append(" ");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error parsing XML", e);
         }
+        return cleanTranscript(transcript.toString());
+    }
 
-        return sb.toString()
+    private String decodeHtmlEntities(String text) {
+        if (text == null) return "";
+        return text
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                . replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                . replace("&#39;", "'")
+                .replace("&nbsp;", " ");
+    }
+
+    private String cleanTranscript(String transcript) {
+        if (transcript == null) return "";
+        return transcript
                 .replaceAll("\\s+", " ")
                 .replaceAll("\\[.*?\\]", "")
                 .trim();
     }
 
+    private void handleResult(String transcript, String sourceLang, String targetLang, TranscriptCallback callback) {
+        if (targetLang != null && !targetLang.isEmpty() && ! targetLang.equalsIgnoreCase(sourceLang)) {
+            Log.d(TAG, "Translating from " + sourceLang + " to " + targetLang);
+            translateText(transcript, sourceLang, targetLang, callback);
+        } else {
+            callback.onSuccess(transcript);
+        }
+    }
+
     private void translateText(String text, String from, String to, TranscriptCallback callback) {
         try {
-            // Limit text length for API
-            String limitedText = text.length() > 4000 ? text.substring(0, 4000) : text;
+            String limitedText = text.length() > 4500 ? text.substring(0, 4500) : text;
             String encoded = URLEncoder.encode(limitedText, "UTF-8");
-            String url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="
-                    + from + "&tl=" + to + "&dt=t&q=" + encoded;
+            String url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" + from + "&tl=" + to + "&dt=t&q=" + encoded;
 
             Request request = new Request.Builder()
-                    . url(url)
-                    . header("User-Agent", "Mozilla/5.0")
+                    .url(url)
+                    .header("User-Agent", "Mozilla/5.0")
                     .build();
 
-            client.newCall(request).enqueue(new Callback() {
+            final String originalText = text;
+            client. newCall(request).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    // Return original on failure
-                    callback.onSuccess(text);
+                    callback.onSuccess(originalText);
                 }
 
                 @Override
@@ -200,11 +335,16 @@ public class YouTubeTranscriptService {
 
                         StringBuilder result = new StringBuilder();
                         for (int i = 0; i < translations.length(); i++) {
-                            result.append(translations.getJSONArray(i).getString(0));
+                            JSONArray translation = translations.getJSONArray(i);
+                            if (translation.length() > 0) {
+                                result.append(translation.getString(0));
+                            }
                         }
-                        callback.onSuccess(result.toString());
+
+                        String translated = result.toString();
+                        callback.onSuccess(translated. isEmpty() ? originalText : translated);
                     } catch (Exception e) {
-                        callback.onSuccess(text); // Return original on error
+                        callback.onSuccess(originalText);
                     }
                 }
             });
