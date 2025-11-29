@@ -188,17 +188,20 @@ public class VideoNotesFragment extends Fragment {
     }
 
     private void loadYouTubeVideo(String videoId) {
+        // Additional URL encoding for the video ID to prevent XSS
+        String encodedVideoId = android.net.Uri.encode(videoId);
+        
         String html = "<!DOCTYPE html>" +
             "<html><head>" +
             "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>" +
             "<style>*{margin:0;padding:0;overflow:hidden}html,body{height:100%;background:#000}" +
             "iframe{width:100%;height:100%;border:none}</style>" +
             "</head><body>" +
-            "<iframe src='https://www.youtube.com/embed/" + videoId + "?autoplay=0&rel=0&showinfo=0&modestbranding=1&playsinline=1' " +
-            "frameborder='0' allowfullscreen allow='autoplay; encrypted-media'></iframe>" +
+            "<iframe src='https://www.youtube.com/embed/" + encodedVideoId + "?autoplay=0&amp;rel=0&amp;showinfo=0&amp;modestbranding=1&amp;playsinline=1' " +
+            "allowfullscreen allow='autoplay; encrypted-media'></iframe>" +
             "</body></html>";
         
-        webYouTube.loadData(html, "text/html", "utf-8");
+        webYouTube.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "utf-8", null);
     }
 
     /**
