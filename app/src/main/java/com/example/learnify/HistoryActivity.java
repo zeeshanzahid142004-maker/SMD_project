@@ -14,7 +14,6 @@ import android.widget. TextView;
 import android.widget. Toast;
 
 import androidx.annotation. Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -30,7 +29,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
-public class HistoryActivity extends AppCompatActivity {
+public class HistoryActivity extends BaseActivity {
 
     private static final String TAG = "HistoryActivity";
 

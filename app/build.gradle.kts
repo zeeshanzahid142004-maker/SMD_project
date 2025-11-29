@@ -111,6 +111,9 @@ dependencies {
 
     //taking notes
     implementation("jp.wasabeef:richeditor-android:2.0.0")
+
+    // Lottie Animations
+    implementation("com.airbnb.android:lottie:6.1.0")
 }
 
 

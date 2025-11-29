@@ -4,10 +4,9 @@ import android.content.Intent;
 import android.content.SharedPreferences; // Keep this import
 import android.os.Bundle;
 
-import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 
-public class Welcome_Page_Activity extends AppCompatActivity {
+public class Welcome_Page_Activity extends BaseActivity {
 
     MaterialButton signInBtn;
     MaterialButton signUpBtn;

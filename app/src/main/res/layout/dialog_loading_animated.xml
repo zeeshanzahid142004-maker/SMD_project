@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="24dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="16dp"
+    app:strokeColor="#F0F0F0"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingVertical="40dp"
+        android:paddingHorizontal="32dp">
+
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/lottie_loading"
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            app:lottie_rawRes="@raw/quiz_loading"
+            app:lottie_loop="true"
+            app:lottie_autoPlay="true" />
+
+        <TextView
+            android:id="@+id/tv_loading_title"
+            style="@style/TextAppearance.Header.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="Getting Ready..."
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/tv_loading_subtitle"
+            style="@style/TextAppearance.Body.Small.Medium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="Analyzing content and crafting questions just for you."
+            android:textColor="@color/text_secondary_gray"
+            android:lineSpacingMultiplier="1.2" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

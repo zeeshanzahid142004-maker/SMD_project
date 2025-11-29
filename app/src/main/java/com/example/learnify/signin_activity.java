@@ -36,7 +36,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 
-public class signin_activity extends AppCompatActivity {
+public class signin_activity extends BaseActivity {
 
     private static final String TAG = "SignInActivity";
 

@@ -19,7 +19,7 @@ import com.google.android.material.button.MaterialButton;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RecommendationsActivity extends AppCompatActivity {
+public class RecommendationsActivity extends BaseActivity {
 
     private static final String TAG = "RecommendationsActivity";
 

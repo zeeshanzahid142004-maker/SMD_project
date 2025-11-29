@@ -26,7 +26,7 @@ import java.util.List;
 import java.util. Locale;
 import java.util.concurrent.TimeUnit;
 
-public class QuizActivity extends AppCompatActivity implements QuizCompleteDialogFragment.QuizCompleteDialogListener {
+public class QuizActivity extends BaseActivity implements QuizCompleteDialogFragment.QuizCompleteDialogListener {
 
     private static final String TAG = "QuizActivity";
     private static final int REQUEST_CODE_CODING_EXERCISE = 100;
@@ -326,7 +326,7 @@ public class QuizActivity extends AppCompatActivity implements QuizCompleteDialo
         int total = questions.size();
         String scoreMessage = "Your score: " + correctCount + "/" + total;
 
-        QuizCompleteDialogFragment dialog = QuizCompleteDialogFragment.newInstance(scoreMessage);
+        QuizCompleteDialogFragment dialog = QuizCompleteDialogFragment.newInstance(scoreMessage, correctCount, total);
         dialog.setCancelable(false);
         dialog.show(getSupportFragmentManager(), "QuizCompleteDialogFragment");
     }

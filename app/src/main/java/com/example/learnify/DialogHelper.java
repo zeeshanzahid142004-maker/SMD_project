@@ -7,16 +7,18 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup; // <--- Added
+import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.RadioButton; // <--- Added
-import android.widget.RadioGroup; // <--- Added
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 
+import com.airbnb.lottie.LottieAnimationView;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.radiobutton.MaterialRadioButton;
 
 import java.util.List;
@@ -28,6 +30,13 @@ public class DialogHelper {
      */
     public interface ThemeSelectionListener {
         void onThemeSelected(int mode);
+    }
+
+    /**
+     * Callback interface for feedback dialog action
+     */
+    public interface FeedbackDialogListener {
+        void onAction();
     }
 
     /**
@@ -64,6 +73,104 @@ public class DialogHelper {
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             // Fix layout width
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        return dialog;
+    }
+
+    /**
+     * Create an animated loading dialog with Lottie animation
+     */
+    public static Dialog createAnimatedLoadingDialog(Context context, String title, String subtitle) {
+        Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(false);
+
+        View view = LayoutInflater.from(context).inflate(R.layout.dialog_loading_animated, null);
+
+        LottieAnimationView lottieView = view.findViewById(R.id.lottie_loading);
+        TextView tvTitle = view.findViewById(R.id.tv_loading_title);
+        TextView tvSubtitle = view.findViewById(R.id.tv_loading_subtitle);
+
+        if (title != null) {
+            tvTitle.setText(title);
+        }
+
+        if (subtitle != null && !subtitle.isEmpty()) {
+            tvSubtitle.setText(subtitle);
+            tvSubtitle.setVisibility(View.VISIBLE);
+        } else {
+            tvSubtitle.setVisibility(View.GONE);
+        }
+
+        // Start animation
+        lottieView.playAnimation();
+
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        return dialog;
+    }
+
+    /**
+     * Create a success feedback dialog with Lottie animation
+     */
+    public static Dialog createSuccessDialog(Context context, String title, String message, 
+                                             String buttonText, FeedbackDialogListener listener) {
+        return createFeedbackDialog(context, title, message, buttonText, R.raw.success_check, listener);
+    }
+
+    /**
+     * Create an error feedback dialog with Lottie animation
+     */
+    public static Dialog createErrorDialog(Context context, String title, String message, 
+                                           String buttonText, FeedbackDialogListener listener) {
+        return createFeedbackDialog(context, title, message, buttonText, R.raw.error_alert, listener);
+    }
+
+    /**
+     * Create a generic feedback dialog with custom Lottie animation
+     */
+    private static Dialog createFeedbackDialog(Context context, String title, String message,
+                                               String buttonText, int animationRes, 
+                                               FeedbackDialogListener listener) {
+        Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+
+        View view = LayoutInflater.from(context).inflate(R.layout.dialog_feedback, null);
+
+        LottieAnimationView lottieView = view.findViewById(R.id.lottie_feedback);
+        TextView tvTitle = view.findViewById(R.id.tv_feedback_title);
+        TextView tvMessage = view.findViewById(R.id.tv_feedback_message);
+        MaterialButton btnAction = view.findViewById(R.id.btn_feedback_action);
+
+        // Set animation
+        lottieView.setAnimation(animationRes);
+        lottieView.playAnimation();
+
+        // Set content
+        tvTitle.setText(title);
+        tvMessage.setText(message);
+        btnAction.setText(buttonText != null ? buttonText : "OK");
+
+        // Set button listener
+        btnAction.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (listener != null) {
+                listener.onAction();
+            }
+        });
+
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
 

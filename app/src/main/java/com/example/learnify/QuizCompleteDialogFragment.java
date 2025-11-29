@@ -15,6 +15,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
+import com.airbnb.lottie.LottieAnimationView;
+
 public class QuizCompleteDialogFragment extends DialogFragment {
 
     public interface QuizCompleteDialogListener {
@@ -25,11 +27,23 @@ public class QuizCompleteDialogFragment extends DialogFragment {
 
     private QuizCompleteDialogListener listener;
     private String scoreText;
+    private int score;
+    private int totalQuestions;
 
     public static QuizCompleteDialogFragment newInstance(String score) {
         QuizCompleteDialogFragment fragment = new QuizCompleteDialogFragment();
         Bundle args = new Bundle();
         args.putString("SCORE_TEXT", score);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static QuizCompleteDialogFragment newInstance(String scoreText, int score, int totalQuestions) {
+        QuizCompleteDialogFragment fragment = new QuizCompleteDialogFragment();
+        Bundle args = new Bundle();
+        args.putString("SCORE_TEXT", scoreText);
+        args.putInt("SCORE", score);
+        args.putInt("TOTAL_QUESTIONS", totalQuestions);
         fragment.setArguments(args);
         return fragment;
     }
@@ -49,6 +63,8 @@ public class QuizCompleteDialogFragment extends DialogFragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             scoreText = getArguments().getString("SCORE_TEXT");
+            score = getArguments().getInt("SCORE", 0);
+            totalQuestions = getArguments().getInt("TOTAL_QUESTIONS", 1);
         }
     }
 
@@ -84,9 +100,19 @@ public class QuizCompleteDialogFragment extends DialogFragment {
         Button btnViewResults = view.findViewById(R.id.btn_view_results);
         Button btnRegenerate = view.findViewById(R.id.btn_regenerate_quiz);
         Button btnRetake = view.findViewById(R.id.btn_retake_quiz);
+        LottieAnimationView lottieConfetti = view.findViewById(R.id.lottie_confetti);
 
         // Set the score text
         tvScore.setText(scoreText);
+
+        // Show confetti animation if score is > 70%
+        if (totalQuestions > 0) {
+            float percentage = (float) score / totalQuestions * 100;
+            if (percentage >= 70 && lottieConfetti != null) {
+                lottieConfetti.setVisibility(View.VISIBLE);
+                lottieConfetti.playAnimation();
+            }
+        }
 
         // Set click listeners
         btnViewResults.setOnClickListener(v -> {

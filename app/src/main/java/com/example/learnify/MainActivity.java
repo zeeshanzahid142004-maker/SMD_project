@@ -3,13 +3,12 @@ package com.example.learnify;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 
-public class MainActivity extends AppCompatActivity implements HomeFragment.OnHomeFragmentInteractionListener {
+public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFragmentInteractionListener {
 
     private static final String TAG = "MainActivity";
     private BottomNavigationView bottomNavigationView;
