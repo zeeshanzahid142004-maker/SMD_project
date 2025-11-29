@@ -1,7 +1,6 @@
 package com.example.learnify;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,7 +25,6 @@ public class linkFragment extends Fragment {
     private View enterLinkContainer;
     private View loadingContainer;
     private View confirmationContainer;
-    private TextView loadingMessage;
     private MaterialButton pasteButton, rewatchButton, quizButton;
     private EditText linkInput;
 
@@ -71,13 +68,6 @@ public class linkFragment extends Fragment {
         pasteButton = view.findViewById(R.id.pasteButton);
         rewatchButton = view.findViewById(R.id.rewatch_button);
         quizButton = view.findViewById(R.id.quiz_button);
-
-        // Get loading message TextView
-        loadingMessage = loadingContainer.findViewById(R.id.tv_loading_subtitle);
-        if (loadingMessage == null) {
-            // Fallback: try to find any TextView in loading container
-            loadingMessage = loadingContainer.findViewById(R.id.tv_loading_title);
-        }
 
         updateUiState();
 
@@ -173,13 +163,21 @@ public class linkFragment extends Fragment {
     }
 
     private void showLoadingState(String message) {
-        enterLinkContainer.setVisibility(View.GONE);
-        loadingContainer.setVisibility(View.VISIBLE);
+        // Keep enter link container visible but disable interaction
+        enterLinkContainer.setVisibility(View.VISIBLE);
+        pasteButton.setEnabled(false);
+        pasteButton.setText(message);
+        linkInput.setEnabled(false);
+        
+        // Hide the full-screen loading overlay - just show inline progress
+        loadingContainer.setVisibility(View.GONE);
         confirmationContainer.setVisibility(View.GONE);
+    }
 
-        if (loadingMessage != null) {
-            loadingMessage.setText(message);
-        }
+    private void resetLoadingState() {
+        pasteButton.setEnabled(true);
+        pasteButton.setText(R.string.go);
+        linkInput.setEnabled(true);
     }
 
     private void updateUiState() {
@@ -187,6 +185,7 @@ public class linkFragment extends Fragment {
             enterLinkContainer.setVisibility(View.GONE);
             loadingContainer.setVisibility(View.GONE);
             confirmationContainer.setVisibility(View.VISIBLE);
+            resetLoadingState();
 
             // Update button text based on content type
             if (isYouTubeVideo) {
@@ -201,6 +200,7 @@ public class linkFragment extends Fragment {
             enterLinkContainer.setVisibility(View.VISIBLE);
             loadingContainer.setVisibility(View.GONE);
             confirmationContainer.setVisibility(View.GONE);
+            resetLoadingState();
         }
     }
 

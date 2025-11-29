@@ -46,18 +46,14 @@ public class LibraryFragment extends Fragment {
         new TabLayoutMediator(tabLayout, viewPager, (tab, position) -> {
             switch (position) {
                 case 0:
-                    tab.setText(R.string.history);
-                    tab.setIcon(R.drawable.ic_history);
-                    break;
-                case 1:
                     tab.setText(R.string.favourites);
                     tab.setIcon(R.drawable.ic_favorite);
                     break;
-                case 2:
+                case 1:
                     tab.setText(R.string.notes);
                     tab.setIcon(R.drawable.ic_notes);
                     break;
-                case 3:
+                case 2:
                     tab.setText(R.string.nav_downloads);
                     tab.setIcon(R.drawable.ic_download);
                     break;

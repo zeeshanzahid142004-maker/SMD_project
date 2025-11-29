@@ -21,6 +21,7 @@ public class YouTubeTranscriptService {
 
     private static final String TAG = "YouTubeTranscript";
     private static final String YOUTUBE_URL = "https://www.youtube.com";
+    private static final String[] SUPPORTED_LANGUAGES = {"en", "hi", "es", "ar", "fr", "de", "pt", "ru", "ja", "ko", "zh"};
 
     private static final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -81,13 +82,15 @@ public class YouTubeTranscriptService {
     }
 
     private void tryApi(String videoId, String targetLang, TranscriptCallback callback) {
-        String[] langs = {"en", "hi", "es", "ar", "fr", "de"};
-        tryLang(videoId, langs, 0, targetLang, callback);
+        // Try manual captions first, then fallback to auto-generated
+        tryLangManual(videoId, SUPPORTED_LANGUAGES, 0, targetLang, callback);
     }
 
-    private void tryLang(String videoId, String[] langs, int i, String targetLang, TranscriptCallback cb) {
+    private void tryLangManual(String videoId, String[] langs, int i, String targetLang, TranscriptCallback cb) {
         if (i >= langs.length) {
-            cb.onError("No captions available");
+            // Manual captions exhausted, try auto-generated captions
+            Log.d(TAG, "Manual captions not found, trying auto-generated captions");
+            tryLangAsr(videoId, langs, 0, targetLang, cb);
             return;
         }
 
@@ -98,7 +101,7 @@ public class YouTubeTranscriptService {
         client.newCall(req).enqueue(new Callback() {
             @Override
             public void onFailure(Call c, IOException e) {
-                tryLang(videoId, langs, i + 1, targetLang, cb);
+                tryLangManual(videoId, langs, i + 1, targetLang, cb);
             }
 
             @Override
@@ -113,7 +116,42 @@ public class YouTubeTranscriptService {
                         }
                     }
                 }
-                tryLang(videoId, langs, i + 1, targetLang, cb);
+                tryLangManual(videoId, langs, i + 1, targetLang, cb);
+            }
+        });
+    }
+
+    private void tryLangAsr(String videoId, String[] langs, int i, String targetLang, TranscriptCallback cb) {
+        if (i >= langs.length) {
+            cb.onError("No captions available");
+            return;
+        }
+
+        // Add kind=asr parameter for auto-generated captions
+        String url = YOUTUBE_URL + "/api/timedtext?v=" + videoId + "&lang=" + langs[i] + "&kind=asr&fmt=json3";
+
+        Request req = new Request.Builder().url(url).header("User-Agent", "Mozilla/5.0").build();
+
+        client.newCall(req).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call c, IOException e) {
+                tryLangAsr(videoId, langs, i + 1, targetLang, cb);
+            }
+
+            @Override
+            public void onResponse(Call c, Response r) throws IOException {
+                if (r.isSuccessful()) {
+                    String body = r.body().string();
+                    if (body.contains("events")) {
+                        String text = parseJson(body);
+                        if (text.length() > 50) {
+                            Log.d(TAG, "Found auto-generated captions in: " + langs[i]);
+                            finish(text, langs[i], targetLang, cb);
+                            return;
+                        }
+                    }
+                }
+                tryLangAsr(videoId, langs, i + 1, targetLang, cb);
             }
         });
     }

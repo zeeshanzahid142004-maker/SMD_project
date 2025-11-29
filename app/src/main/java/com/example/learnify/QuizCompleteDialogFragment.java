@@ -95,15 +95,48 @@ public class QuizCompleteDialogFragment extends DialogFragment {
         // Find views
         TextView tvScore = view.findViewById(R.id.dialog_score);
         Button btnViewResults = view.findViewById(R.id.btn_view_results);
-        Button btnRegenerate = view.findViewById(R. id.btn_regenerate_quiz);
-        Button btnRetake = view.findViewById(R.id. btn_retake_quiz);
+        Button btnRegenerate = view.findViewById(R.id.btn_regenerate_quiz);
+        Button btnRetake = view.findViewById(R.id.btn_retake_quiz);
         ImageView btnClose = view.findViewById(R.id.btn_close);
         Button btnGoHome = view.findViewById(R.id.btn_go_home);
         LottieAnimationView lottieConfetti = view.findViewById(R.id.lottie_confetti);
 
-        // Set the score text
+        // Set the score text with colored correct/wrong counts
         if (tvScore != null) {
-            tvScore.setText(scoreText);
+            int wrongCount = totalQuestions - score;
+            
+            // Build rich text with colors
+            android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+            sb.append("Your score: ");
+            
+            // Add correct count in green
+            int startCorrect = sb.length();
+            sb.append(String.valueOf(score));
+            sb.setSpan(new android.text.style.ForegroundColorSpan(Color.parseColor("#4CAF50")), 
+                      startCorrect, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 
+                      startCorrect, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            
+            sb.append("/");
+            sb.append(String.valueOf(totalQuestions));
+            sb.append("\n\n");
+            
+            // Add correct label in green
+            int startCorrectLabel = sb.length();
+            sb.append("✓ Correct: " + score);
+            sb.setSpan(new android.text.style.ForegroundColorSpan(Color.parseColor("#4CAF50")), 
+                      startCorrectLabel, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            
+            sb.append("    ");
+            
+            // Add wrong label in red
+            int startWrongLabel = sb.length();
+            sb.append("✗ Wrong: " + wrongCount);
+            sb.setSpan(new android.text.style.ForegroundColorSpan(Color.parseColor("#F44336")), 
+                      startWrongLabel, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            
+            tvScore.setText(sb);
+            tvScore.setTextSize(20);
         }
 
         // Close button (X) - navigate to home
@@ -148,7 +181,7 @@ public class QuizCompleteDialogFragment extends DialogFragment {
 
         if (btnRetake != null) {
             btnRetake.setOnClickListener(v -> {
-                if (listener != null) listener. onRetakeQuiz();
+                if (listener != null) listener.onRetakeQuiz();
                 dismiss();
             });
         }

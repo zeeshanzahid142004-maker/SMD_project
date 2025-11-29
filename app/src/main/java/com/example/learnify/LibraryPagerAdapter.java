@@ -13,7 +13,7 @@ public class LibraryPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        // 4 sub-tabs: History, Favourites, Notes, Downloads
+        // 3 sub-tabs: Favourites, Notes, Downloads
         switch (position) {
             case 0:
                 return new FavouritesFragment();
@@ -21,7 +21,6 @@ public class LibraryPagerAdapter extends FragmentStateAdapter {
                 return new NotesListFragment();
             case 2:
                 return new DownloadsFragment();
-
             default:
                 return new FavouritesFragment();
         }
@@ -29,6 +28,6 @@ public class LibraryPagerAdapter extends FragmentStateAdapter {
 
     @Override
     public int getItemCount() {
-        return 3; // 4 tabs: History, Favourites, Notes, Downloads
+        return 3; // 3 tabs: Favourites, Notes, Downloads
     }
 }
