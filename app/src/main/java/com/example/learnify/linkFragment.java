@@ -1,7 +1,6 @@
 package com.example.learnify;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,7 +25,6 @@ public class linkFragment extends Fragment {
     private View enterLinkContainer;
     private View loadingContainer;
     private View confirmationContainer;
-    private TextView loadingMessage;
     private MaterialButton pasteButton, rewatchButton, quizButton;
     private EditText linkInput;
 
@@ -71,13 +68,6 @@ public class linkFragment extends Fragment {
         pasteButton = view.findViewById(R.id.pasteButton);
         rewatchButton = view.findViewById(R.id.rewatch_button);
         quizButton = view.findViewById(R.id.quiz_button);
-
-        // Get loading message TextView
-        loadingMessage = loadingContainer.findViewById(R.id.tv_loading_subtitle);
-        if (loadingMessage == null) {
-            // Fallback: try to find any TextView in loading container
-            loadingMessage = loadingContainer.findViewById(R.id.tv_loading_title);
-        }
 
         updateUiState();
 

@@ -21,6 +21,7 @@ public class YouTubeTranscriptService {
 
     private static final String TAG = "YouTubeTranscript";
     private static final String YOUTUBE_URL = "https://www.youtube.com";
+    private static final String[] SUPPORTED_LANGUAGES = {"en", "hi", "es", "ar", "fr", "de", "pt", "ru", "ja", "ko", "zh"};
 
     private static final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -81,9 +82,8 @@ public class YouTubeTranscriptService {
     }
 
     private void tryApi(String videoId, String targetLang, TranscriptCallback callback) {
-        String[] langs = {"en", "hi", "es", "ar", "fr", "de", "pt", "ru", "ja", "ko", "zh"};
         // Try manual captions first, then fallback to auto-generated
-        tryLangManual(videoId, langs, 0, targetLang, callback);
+        tryLangManual(videoId, SUPPORTED_LANGUAGES, 0, targetLang, callback);
     }
 
     private void tryLangManual(String videoId, String[] langs, int i, String targetLang, TranscriptCallback cb) {
