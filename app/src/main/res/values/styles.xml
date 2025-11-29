@@ -233,6 +233,112 @@
         <item name="android:letterSpacing">0.002</item>
     </style>
 
+    <!-- =========================== -->
+    <!-- Modern Typography System    -->
+    <!-- =========================== -->
+
+    <!-- Headline Styles -->
+    <style name="TextAppearance.App.Headline1" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:lineSpacingExtra">8sp</item>
+    </style>
+
+    <style name="TextAppearance.App.Headline2" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:lineSpacingExtra">6sp</item>
+    </style>
+
+    <style name="TextAppearance.App.Title" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:lineSpacingExtra">4sp</item>
+    </style>
+
+    <style name="TextAppearance.App.Subtitle" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:lineSpacingExtra">4sp</item>
+    </style>
+
+    <style name="TextAppearance.App.Body" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:lineSpacingExtra">4sp</item>
+    </style>
+
+    <style name="TextAppearance.App.Caption" parent="Widget.AppCompat.TextView">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/text_tertiary</item>
+        <item name="android:lineSpacingExtra">2sp</item>
+    </style>
+
+    <!-- =========================== -->
+    <!-- Modern Button Styles        -->
+    <!-- =========================== -->
+
+    <style name="Widget.App.Button.Primary" parent="Widget.MaterialComponents.Button">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:background">@drawable/bg_sign_up_gradient</item>
+        <item name="backgroundTint">@null</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="rippleColor">@color/ripple_color</item>
+    </style>
+
+    <style name="Widget.App.Button.Secondary" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/purple_main</item>
+        <item name="strokeColor">@color/purple_main</item>
+        <item name="strokeWidth">2dp</item>
+        <item name="cornerRadius">12dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="rippleColor">@color/ripple_color</item>
+    </style>
+
+    <style name="Widget.App.Button.Text" parent="Widget.MaterialComponents.Button.TextButton">
+        <item name="android:fontFamily">@font/manrope_font_family</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/purple_main</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="rippleColor">@color/ripple_color</item>
+    </style>
+
+    <!-- =========================== -->
+    <!-- Modern TextInputLayout      -->
+    <!-- =========================== -->
+
+    <style name="Widget.App.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxCornerRadiusTopStart">12dp</item>
+        <item name="boxCornerRadiusTopEnd">12dp</item>
+        <item name="boxCornerRadiusBottomStart">12dp</item>
+        <item name="boxCornerRadiusBottomEnd">12dp</item>
+        <item name="boxStrokeColor">@color/border_light</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="hintTextColor">@color/text_secondary</item>
+        <item name="android:textColorHint">@color/text_hint_gray_light</item>
+    </style>
+
     <style name="Widget.App.BottomNavigationView" parent="Widget.MaterialComponents.BottomNavigationView">
         <item name="android:background">@android:color/transparent</item>
         <item name="itemBackground">@android:color/transparent</item>
@@ -254,16 +360,21 @@
     <style name="Divider">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">1dp</item>
-        <item name="android:background">#1A000000</item>
+        <item name="android:background">@color/divider</item>
         <item name="android:layout_marginStart">16dp</item>
         <item name="android:layout_marginEnd">16dp</item>
     </style>
 
 
     <style name="ThemeOverlay.App.BottomNavigationView" parent="">
-        <item name="colorSecondaryContainer">#1A6A00FF</item> <item name="colorOnSecondaryContainer">@color/figma_purple_main</item>
+        <item name="colorSecondaryContainer">#1A6A00FF</item>
+        <item name="colorOnSecondaryContainer">@color/figma_purple_main</item>
     </style>
 
     <style name="Widget.App.BottomNavigationView.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
-        <item name="android:width">48dp</item> <item name="android:height">48dp</item> <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item> </style>
+        <item name="android:width">56dp</item>
+        <item name="android:height">32dp</item>
+        <item name="android:color">@color/purple_soft</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
+    </style>
 </resources>

@@ -45,10 +45,12 @@ public class HomeFragment extends Fragment {
     private OnHomeFragmentInteractionListener mListener;
     private CardView uploadFileButton;
     private CardView uploadLinkButton;
+    private CardView uploadImageButton;
     private CardView profileCard;
     private TextView viewMoreButton;
     private TextView profileNameView;
     private ActivityResultLauncher<String[]> filePickerLauncher;
+    private ActivityResultLauncher<String[]> imagePickerLauncher;
 
     // History views
     private RecyclerView rvRecentHistory;
@@ -59,6 +61,9 @@ public class HomeFragment extends Fragment {
     private QuizAttemptRepository attemptRepository;
     private FirebaseAuth auth;
     private FirebaseFirestore db;
+    
+    // OCR Text Extractor
+    private ImageTextExtractor imageTextExtractor;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -93,7 +98,22 @@ public class HomeFragment extends Fragment {
                 }
         );
 
+        // Image picker for OCR
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(),
+                uri -> {
+                    if (uri != null) {
+                        extractTextFromImage(uri);
+                    } else {
+                        Toast.makeText(getContext(), "No image selected", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
+
         attemptRepository = new QuizAttemptRepository();
+        
+        // Initialize OCR text extractor
+        imageTextExtractor = new ImageTextExtractor(requireContext());
     }
 
     @Nullable
@@ -109,6 +129,7 @@ public class HomeFragment extends Fragment {
         // Initialize views
         uploadFileButton = view.findViewById(R.id.upload_file_button);
         uploadLinkButton = view.findViewById(R.id.upload_link_button);
+        uploadImageButton = view.findViewById(R.id.upload_image_button);
         profileCard = view.findViewById(R.id.profile_card);
         viewMoreButton = view.findViewById(R.id.view_more_button);
         profileNameView = view.findViewById(R.id.profile_name);
@@ -142,6 +163,18 @@ public class HomeFragment extends Fragment {
                 mListener.onUploadLinkClicked();
             }
         });
+        
+        // Image upload button for OCR
+        if (uploadImageButton != null) {
+            uploadImageButton.setOnClickListener(v -> {
+                String[] mimeTypes = {
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                };
+                imagePickerLauncher.launch(mimeTypes);
+            });
+        }
 
         viewMoreButton.setOnClickListener(v -> {
             startActivity(new Intent(getActivity(), HistoryActivity.class));
@@ -352,6 +385,41 @@ public class HomeFragment extends Fragment {
         return sb.toString();
     }
 
+    /**
+     * Extract text from image using OCR (ML Kit Text Recognition)
+     */
+    private void extractTextFromImage(Uri imageUri) {
+        Log.d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
+        Toast.makeText(getContext(), "Scanning image for text...", Toast.LENGTH_SHORT).show();
+
+        if (imageTextExtractor == null) {
+            imageTextExtractor = new ImageTextExtractor(requireContext());
+        }
+
+        imageTextExtractor.extractTextFromUri(imageUri, new ImageTextExtractor.ExtractionCallback() {
+            @Override
+            public void onSuccess(String extractedText) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Log.d(TAG, "✅ OCR Success: " + extractedText.length() + " characters extracted");
+                        Toast.makeText(getContext(), "✅ Text extracted successfully!", Toast.LENGTH_SHORT).show();
+                        launchGenerateQuizFragment(extractedText);
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        Log.e(TAG, "❌ OCR Error: " + error);
+                        Toast.makeText(getContext(), "OCR failed: " + error, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }
+        });
+    }
+
     public interface OnHomeFragmentInteractionListener {
         void onViewMoreHistoryClicked();
         void onGoToVideoFragment(String url);
@@ -371,5 +439,15 @@ public class HomeFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // Clean up OCR resources
+        if (imageTextExtractor != null) {
+            imageTextExtractor.close();
+            imageTextExtractor = null;
+        }
     }
 }

@@ -104,6 +104,12 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:5.2.3")
     implementation("nl.dionsegijn:konfetti-xml:2.0.2")
 
+    // ML Kit Text Recognition (OCR)
+    implementation("com.google.mlkit:text-recognition:16.0.0")
+
+    // Shimmer Loading Effects
+    implementation("com.facebook.shimmer:shimmer:0.5.0")
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)

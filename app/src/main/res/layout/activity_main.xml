@@ -20,12 +20,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-
-        android:background="@drawable/bg_bottom_nav_border"
-        app:elevation="8dp"
+        android:background="@drawable/bottom_nav_background"
+        android:clipToOutline="true"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        app:elevation="16dp"
         app:itemIconSize="24dp"
         app:itemIconTint="@color/bottom_nav_colors"
         app:itemTextColor="@color/bottom_nav_colors"
+        app:itemActiveIndicatorStyle="@style/Widget.App.BottomNavigationView.ActiveIndicator"
         app:labelVisibilityMode="labeled"
         app:menu="@menu/bottom_app_bar_menu" />
 

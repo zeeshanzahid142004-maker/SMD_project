@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shimmer placeholder for history item loading -->
+<com.facebook.shimmer.ShimmerFrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/shimmer_history_item"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:shimmer_auto_start="true"
+    app:shimmer_duration="1200">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white"
+        android:layout_margin="8dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <!-- Icon placeholder -->
+            <View
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/shimmer_placeholder"/>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="16dp">
+
+                <!-- Title placeholder -->
+                <View
+                    android:layout_width="160dp"
+                    android:layout_height="18dp"
+                    android:background="@drawable/shimmer_placeholder"/>
+
+                <!-- Date placeholder -->
+                <View
+                    android:layout_width="100dp"
+                    android:layout_height="14dp"
+                    android:background="@drawable/shimmer_placeholder"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+
+            <!-- Score placeholder -->
+            <View
+                android:layout_width="50dp"
+                android:layout_height="24dp"
+                android:background="@drawable/shimmer_placeholder"/>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+</com.facebook.shimmer.ShimmerFrameLayout>

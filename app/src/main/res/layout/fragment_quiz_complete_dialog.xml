@@ -22,6 +22,19 @@
             android:orientation="vertical"
             android:padding="24dp">
 
+            <!-- Close Button (X) -->
+            <ImageView
+                android:id="@+id/btn_close"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="end"
+                android:src="@drawable/ic_close_white"
+                android:background="@drawable/bg_button_soft_purple"
+                android:padding="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="Close dialog"/>
+
             <TextView
                 android:id="@+id/dialog_title"
                 android:layout_width="wrap_content"
@@ -86,6 +99,17 @@
                 app:cornerRadius="12dp"
                 android:layout_marginTop="12dp"
                 android:text="Retake Quiz"/>
+
+            <!-- Button 4: Go Home -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_go_home"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                style="@style/Widget.App.Button.Stroked"
+                app:cornerRadius="12dp"
+                android:layout_marginTop="12dp"
+                android:text="Go Home"/>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

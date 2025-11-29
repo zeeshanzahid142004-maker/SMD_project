@@ -1,6 +1,7 @@
 package com.example.learnify; // Or your package name
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -84,9 +86,27 @@ public class QuizCompleteDialogFragment extends DialogFragment {
         Button btnViewResults = view.findViewById(R.id.btn_view_results);
         Button btnRegenerate = view.findViewById(R.id.btn_regenerate_quiz);
         Button btnRetake = view.findViewById(R.id.btn_retake_quiz);
+        ImageView btnClose = view.findViewById(R.id.btn_close);
+        Button btnGoHome = view.findViewById(R.id.btn_go_home);
 
         // Set the score text
         tvScore.setText(scoreText);
+
+        // Close button (X) - navigate to home
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> {
+                dismiss();
+                navigateToHome();
+            });
+        }
+
+        // Go Home button
+        if (btnGoHome != null) {
+            btnGoHome.setOnClickListener(v -> {
+                dismiss();
+                navigateToHome();
+            });
+        }
 
         // Set click listeners
         btnViewResults.setOnClickListener(v -> {
@@ -103,5 +123,17 @@ public class QuizCompleteDialogFragment extends DialogFragment {
             listener.onRetakeQuiz();
             dismiss();
         });
+    }
+
+    /**
+     * Navigate to MainActivity (Home)
+     */
+    private void navigateToHome() {
+        if (getActivity() != null) {
+            Intent intent = new Intent(getActivity(), MainActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+            getActivity().finish();
+        }
     }
 }
