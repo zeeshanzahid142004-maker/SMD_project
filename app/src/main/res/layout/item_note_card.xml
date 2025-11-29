@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="8dp"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_margin="8dp"
     app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="16dp"
     app:cardElevation="4dp"
@@ -16,64 +14,72 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="12dp">
 
         <ImageView
             android:id="@+id/note_icon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:background="@drawable/bg_icon_gradient_circle"
-            android:padding="10dp"
+            android:padding="8dp"
             android:src="@drawable/ic_edit"
             app:tint="@color/white"
             app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/btn_delete_note"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_close_white"
+            app:tint="#FF5252"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="2dp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:contentDescription="Note Icon"/>
+            android:contentDescription="Delete Note"/>
 
         <TextView
             android:id="@+id/note_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="8dp"
-            android:ellipsize="end"
-            android:maxLines="1"
+            android:layout_marginTop="12dp"
             tools:text="Video Notes"
-            style="@style/TextAppearance.Home.CardTitle"
-            android:textColor="@color/text_primary_dark"
+            style="@style/TextAppearance.Body.Small.Bold"
             android:textSize="16sp"
-            app:layout_constraintEnd_toStartOf="@id/note_date"
-            app:layout_constraintStart_toEndOf="@id/note_icon"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toTopOf="@id/note_preview"
-            app:layout_constraintVertical_chainStyle="packed"/>
-
-        <TextView
-            android:id="@+id/note_date"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            tools:text="Today"
-            style="@style/TextAppearance.Body.Small.Medium"
-            android:textColor="@color/text_secondary_gray"
-            android:textSize="12sp"
-            app:layout_constraintBaseline_toBaselineOf="@id/note_title"
-            app:layout_constraintEnd_toEndOf="parent" />
+            android:maxLines="2"
+            android:ellipsize="end"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/note_icon"/>
 
         <TextView
             android:id="@+id/note_preview"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
+            android:maxLines="3"
             android:ellipsize="end"
-            android:maxLines="2"
-            tools:text="Note content preview goes here..."
+            tools:text="This is a summary of the video about Java programming..."
             style="@style/TextAppearance.Body.Small.Medium"
             android:textColor="@color/text_secondary_gray"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="@id/note_title"
-            app:layout_constraintTop_toBottomOf="@id/note_title"
-            app:layout_constraintBottom_toBottomOf="parent"/>
+            app:layout_constraintTop_toBottomOf="@id/note_title"/>
+
+        <TextView
+            android:id="@+id/note_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            tools:text="Today • 10:30 AM"
+            style="@style/TextAppearance.Body.Small.Medium"
+            android:textColor="@color/text_secondary_gray_dark"
+            android:textSize="10sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/note_preview"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

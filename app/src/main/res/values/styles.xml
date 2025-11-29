@@ -259,4 +259,11 @@
         <item name="android:layout_marginEnd">16dp</item>
     </style>
 
+
+    <style name="ThemeOverlay.App.BottomNavigationView" parent="">
+        <item name="colorSecondaryContainer">#1A6A00FF</item> <item name="colorOnSecondaryContainer">@color/figma_purple_main</item>
+    </style>
+
+    <style name="Widget.App.BottomNavigationView.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:width">48dp</item> <item name="android:height">48dp</item> <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item> </style>
 </resources>

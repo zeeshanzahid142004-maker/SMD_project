@@ -47,6 +47,13 @@
 
 
             />
+        <jp.wasabeef.richeditor.RichEditor
+            android:id="@+id/rich_editor"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/white"
+            android:padding="8dp"/>
 
         <!-- FULLSCREEN BUTTON -->
         <ImageView

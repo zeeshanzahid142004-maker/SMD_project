@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
     @Override
     public void onGoToVideoFragment(String videoUrl, String transcript) {
         // Use the new instance method that accepts transcript
-        VideoNotesFragment fragment = VideoNotesFragment.newInstance(videoUrl, transcript);
+        VideoNotesFragment fragment = VideoNotesFragment.newInstance(videoUrl,transcript);
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)

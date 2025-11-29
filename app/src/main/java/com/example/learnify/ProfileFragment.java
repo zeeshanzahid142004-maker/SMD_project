@@ -19,7 +19,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
@@ -55,7 +54,9 @@ public class ProfileFragment extends Fragment {
     private TextView tvProfileName, tvProfileEmail;
     private MaterialButton btnSignOut;
     private ImageView btnEditProfile;
-    private TextView rowLanguage, rowNotifications, rowAppearance, rowHelp;
+    private TextView rowLanguage, rowNotifications, rowAppearance, rowHelp, rowDeleteAccount;
+    private View helpExpandableView;
+    private boolean isHelpExpanded = false;
 
     private LanguageManager languageManager;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
@@ -70,9 +71,9 @@ public class ProfileFragment extends Fragment {
         driveManager = new GoogleDriveManager(requireContext());
         languageManager = LanguageManager.getInstance(requireContext());
 
-        // --- 1. Load Language from Preferences immediately ---
+        // 1. Load Saved Language
         SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String savedLangCode = prefs.getString(KEY_LANG_CODE, "en"); // Default English
+        String savedLangCode = prefs.getString(KEY_LANG_CODE, "en");
         String savedLangName = prefs.getString(KEY_LANG_NAME, "English");
         languageManager.setLanguage(requireContext(), savedLangName, savedLangCode);
 
@@ -104,7 +105,7 @@ public class ProfileFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Find views
+        // Init Views
         ivProfileAvatar = view.findViewById(R.id.iv_profile_avatar);
         tvProfileName = view.findViewById(R.id.tv_profile_name);
         tvProfileEmail = view.findViewById(R.id.tv_profile_email);
@@ -115,24 +116,46 @@ public class ProfileFragment extends Fragment {
         rowNotifications = view.findViewById(R.id.row_notifications);
         rowAppearance = view.findViewById(R.id.row_appearance);
         rowHelp = view.findViewById(R.id.row_help);
+        rowDeleteAccount = view.findViewById(R.id.row_delete_account);
+        helpExpandableView = view.findViewById(R.id.help_expandable_view);
 
-        // Listeners
+        // Set Listeners
         btnSignOut.setOnClickListener(v -> signOut());
         btnEditProfile.setOnClickListener(v -> selectProfilePhoto());
         ivProfileAvatar.setOnClickListener(v -> selectProfilePhoto());
+
         rowLanguage.setOnClickListener(v -> showLanguageDialog());
-
         rowAppearance.setOnClickListener(v -> showThemeDialog());
-
         rowNotifications.setOnClickListener(v -> showToast("Notifications clicked"));
-        rowHelp.setOnClickListener(v -> showToast("Help Center clicked"));
+
+        // Help Toggle Logic
+        rowHelp.setOnClickListener(v -> toggleHelpSection());
+
+        // Delete Account Logic
+        rowDeleteAccount.setOnClickListener(v -> showDeleteConfirmation());
 
         loadUserProfile();
     }
 
+    private void toggleHelpSection() {
+        if (isHelpExpanded) {
+            helpExpandableView.animate()
+                    .alpha(0.0f)
+                    .translationY(-20)
+                    .setDuration(200)
+                    .withEndAction(() -> helpExpandableView.setVisibility(View.GONE))
+                    .start();
+        } else {
+            helpExpandableView.setVisibility(View.VISIBLE);
+            helpExpandableView.setAlpha(0.0f);
+            helpExpandableView.setTranslationY(-20);
+            helpExpandableView.animate().alpha(1.0f).translationY(0).setDuration(200).start();
+        }
+        isHelpExpanded = !isHelpExpanded;
+    }
+
     private void showThemeDialog() {
         int currentMode = AppCompatDelegate.getDefaultNightMode();
-
         DialogHelper.showThemeSelectionDialog(requireContext(), currentMode, (selectedMode) -> {
             AppCompatDelegate.setDefaultNightMode(selectedMode);
             saveThemePreference(selectedMode);
@@ -141,18 +164,11 @@ public class ProfileFragment extends Fragment {
 
     private void saveThemePreference(int mode) {
         SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(KEY_THEME, mode);
-        editor.apply();
+        prefs.edit().putInt(KEY_THEME, mode).apply();
     }
 
-    /**
-     * Show styled language selection dialog
-     */
     private void showLanguageDialog() {
         List<LanguageManager.Language> languages = LanguageManager.getSupportedLanguages();
-
-        // Get current language code from Preferences (source of truth)
         SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String currentCode = prefs.getString(KEY_LANG_CODE, "en");
 
@@ -161,36 +177,49 @@ public class ProfileFragment extends Fragment {
         });
     }
 
-    /**
-     * Update app language - Saves to BOTH Prefs and Firestore
-     */
     private void updateLanguage(String languageName, String languageCode) {
-        // 1. Save to SharedPreferences (Local Persistence)
+        // 1. Save Local
         SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(KEY_LANG_CODE, languageCode);
-        editor.putString(KEY_LANG_NAME, languageName);
-        editor.apply();
+        prefs.edit()
+                .putString(KEY_LANG_CODE, languageCode)
+                .putString(KEY_LANG_NAME, languageName)
+                .apply();
 
-        // 2. Apply immediately
+        // 2. Apply
         languageManager.setLanguage(requireContext(), languageName, languageCode);
 
-        // 3. Save to Firestore (Cloud Sync)
+        // 3. Sync Cloud
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
-            String userId = user.getUid();
             Map<String, Object> updates = new HashMap<>();
             updates.put("language", languageName);
             updates.put("languageCode", languageCode);
-
-            db.collection("users").document(userId).update(updates)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "✅ Language updated", Toast.LENGTH_SHORT).show();
-                    });
+            db.collection("users").document(user.getUid()).update(updates);
         }
 
-        // 4. Restart Activity to apply changes
         requireActivity().recreate();
+    }
+
+    private void showDeleteConfirmation() {
+        DialogHelper.showConfirmation(requireContext(),
+                "Delete Account?",
+                "This action is permanent.",
+                "Delete", this::deleteUserAccount,
+                "Cancel", null);
+    }
+
+    private void deleteUserAccount() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            db.collection("users").document(user.getUid()).delete();
+            user.delete().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    Intent intent = new Intent(getActivity(), signin_activity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                }
+            });
+        }
     }
 
     private void loadUserProfile() {
@@ -200,43 +229,25 @@ public class ProfileFragment extends Fragment {
         String name = user.getDisplayName();
         String email = user.getEmail();
 
-        if (name != null && !name.isEmpty()) {
-            tvProfileName.setText(name);
-        } else {
-            tvProfileName.setText("Welcome");
-        }
+        tvProfileName.setText(name != null && !name.isEmpty() ? name : "Welcome");
         tvProfileEmail.setText(email);
 
-        String userId = user.getUid();
-        db.collection("users").document(userId)
-                .get()
+        db.collection("users").document(user.getUid()).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         String drivePhotoUrl = documentSnapshot.getString("drivePhotoUrl");
-                        if (drivePhotoUrl != null && !drivePhotoUrl.isEmpty()) {
-                            loadProfilePhoto(drivePhotoUrl);
-                        } else {
-                            loadDefaultPhoto();
-                        }
-
-                        // Note: We rely on local prefs for language primarily for speed,
-                        // but you could sync here if needed.
+                        if (drivePhotoUrl != null) loadProfilePhoto(drivePhotoUrl);
+                        else loadDefaultPhoto();
                     } else {
                         loadDefaultPhoto();
                     }
                 })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Failed to load profile", e);
-                    loadDefaultPhoto();
-                });
+                .addOnFailureListener(e -> loadDefaultPhoto());
     }
-
-    // ... (loadProfilePhoto, loadDefaultPhoto, selectProfilePhoto, uploadProfilePhotoToDrive, signOut, showToast remain unchanged) ...
-    // Keep them exactly as they were in your previous code.
 
     private void loadProfilePhoto(String driveUrl) {
         if (getContext() == null) return;
-        Glide.with(this).load(driveUrl).circleCrop().placeholder(R.drawable.ic_profile_inactive).error(R.drawable.ic_profile_inactive).into(ivProfileAvatar);
+        Glide.with(this).load(driveUrl).circleCrop().placeholder(R.drawable.ic_profile_inactive).into(ivProfileAvatar);
     }
 
     private void loadDefaultPhoto() {
@@ -246,7 +257,7 @@ public class ProfileFragment extends Fragment {
 
     private void selectProfilePhoto() {
         if (!driveManager.isAvailable()) {
-            Toast.makeText(getContext(), "⚠️ Please sign in with Google to upload photos", Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Sign in with Google to upload photos", Toast.LENGTH_LONG).show();
             return;
         }
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -257,9 +268,9 @@ public class ProfileFragment extends Fragment {
     private void uploadProfilePhotoToDrive(Uri imageUri) {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
-        String userId = user.getUid();
-        Toast.makeText(getContext(), "📤 Uploading to Drive...", Toast.LENGTH_SHORT).show();
-        driveManager.uploadProfilePhoto(imageUri, userId, new GoogleDriveManager.UploadCallback() {
+        Toast.makeText(getContext(), "Uploading...", Toast.LENGTH_SHORT).show();
+
+        driveManager.uploadProfilePhoto(imageUri, user.getUid(), new GoogleDriveManager.UploadCallback() {
             @Override
             public void onSuccess(String driveUrl, String fileId) {
                 if (getActivity() == null) return;
@@ -267,16 +278,14 @@ public class ProfileFragment extends Fragment {
                     Map<String, Object> updates = new HashMap<>();
                     updates.put("drivePhotoUrl", driveUrl);
                     updates.put("driveFileId", fileId);
-                    db.collection("users").document(userId).update(updates).addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "✅ Photo updated!", Toast.LENGTH_SHORT).show();
-                        loadProfilePhoto(driveUrl);
-                    });
+                    db.collection("users").document(user.getUid()).update(updates)
+                            .addOnSuccessListener(a -> loadProfilePhoto(driveUrl));
                 });
             }
             @Override
             public void onError(Exception e) {
                 if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "❌ Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "Upload failed", Toast.LENGTH_SHORT).show());
             }
         });
     }
