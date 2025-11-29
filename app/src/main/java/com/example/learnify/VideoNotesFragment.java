@@ -191,10 +191,13 @@ public class VideoNotesFragment extends Fragment {
 
         // Load the video
         String videoId = getVideoIdFromUrl(videoUrl);
-        if (videoId != null && !videoId.isEmpty()) {
+        if (videoId != null && !videoId.isEmpty() && isValidVideoId(videoId)) {
             Log.d(TAG, "✅ Loading Video ID: " + videoId);
-            String embedUrl = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&playsinline=1&rel=0";
-            String html = "<html><body style='margin:0;padding:0;background:#000;'>" +
+            // Sanitize video ID to prevent XSS - only allow alphanumeric, hyphens and underscores
+            String sanitizedVideoId = videoId.replaceAll("[^a-zA-Z0-9_-]", "");
+            String embedUrl = "https://www.youtube.com/embed/" + sanitizedVideoId + "?autoplay=1&playsinline=1&rel=0";
+            String html = "<html><head><meta http-equiv='Content-Security-Policy' content=\"default-src 'self' https://www.youtube.com; frame-src https://www.youtube.com;\"></head>" +
+                    "<body style='margin:0;padding:0;background:#000;'>" +
                     "<iframe width='100%' height='100%' src='" + embedUrl + "' " +
                     "frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' " +
                     "allowfullscreen></iframe></body></html>";
@@ -207,6 +210,16 @@ public class VideoNotesFragment extends Fragment {
                 loadingOverlay.setVisibility(View.GONE);
             }
         }
+    }
+
+    /**
+     * Validate video ID format - YouTube IDs are 11 characters containing alphanumeric, hyphens, and underscores
+     */
+    private boolean isValidVideoId(String videoId) {
+        if (videoId == null || videoId.isEmpty()) return false;
+        // YouTube video IDs are typically 11 characters but can vary
+        // They contain only alphanumeric characters, hyphens, and underscores
+        return videoId.matches("^[a-zA-Z0-9_-]{10,12}$");
     }
 
     @Override
