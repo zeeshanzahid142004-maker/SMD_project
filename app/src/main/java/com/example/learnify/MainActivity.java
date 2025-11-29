@@ -41,17 +41,14 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
             // Debug log to verify clicks
             Log.d(TAG, "Nav item clicked: " + itemId);
 
-            if (itemId == R.id.navigation_home) {
+            if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
-            } else if (itemId == R.id.navigation_downloads) {
-                // Matches the ID in bottom_app_bar_menu.xml
+            } else if (itemId == R.id.nav_library) {
+                selectedFragment = new LibraryFragment();
+            } else if (itemId == R.id.nav_downloads) {
                 selectedFragment = new DownloadsFragment();
-            } else if (itemId == R.id.navigation_notes) {
-                // Matches the ID in bottom_app_bar_menu.xml
-                selectedFragment = new NotesListFragment();
-            } else if (itemId == R.id.navigation_favourites) {
-                // Matches the ID in bottom_app_bar_menu.xml
-                selectedFragment = new FavouritesFragment();
+            } else if (itemId == R.id.nav_profile) {
+                selectedFragment = new ProfileFragment();
             }
 
             if (selectedFragment != null) {

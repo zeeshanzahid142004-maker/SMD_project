@@ -14,7 +14,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget. TextView;
-import android.widget. Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -120,10 +119,10 @@ public class ProfileFragment extends Fragment {
                             }
                         } catch (ApiException e) {
                             Log.e(TAG, "Re-authentication failed", e);
-                            Toast.makeText(getContext(), "Failed to get Drive access", Toast.LENGTH_SHORT). show();
+                            CustomToast.error(getContext(), "Failed to get Drive access");
                         }
                     } else {
-                        Toast.makeText(getContext(), "Drive access cancelled", Toast.LENGTH_SHORT).show();
+                        CustomToast.info(getContext(), "Drive access cancelled");
                     }
                 }
         );
@@ -220,14 +219,14 @@ public class ProfileFragment extends Fragment {
     private void deleteUserAccount() {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) {
-            Toast.makeText(getContext(), "No user logged in", Toast.LENGTH_SHORT). show();
+            CustomToast.warning(getContext(), "No user logged in");
             return;
         }
 
         String userId = user.getUid();
 
         // Show loading
-        Toast.makeText(getContext(), "Deleting account...", Toast.LENGTH_SHORT).show();
+        CustomToast.info(getContext(), "Deleting account...");
 
         // 1. Delete user data from Firestore
         db. collection("users").document(userId)
@@ -238,7 +237,7 @@ public class ProfileFragment extends Fragment {
                             .addOnCompleteListener(task -> {
                                 if (task.isSuccessful()) {
                                     Log.d(TAG, "✅ Account deleted successfully");
-                                    Toast.makeText(getContext(), "Account deleted", Toast.LENGTH_SHORT).show();
+                                    CustomToast.success(getContext(), "Account deleted");
 
                                     // 3. Sign out from Google
                                     mGoogleSignInClient.signOut(). addOnCompleteListener(signOutTask -> {
@@ -252,13 +251,13 @@ public class ProfileFragment extends Fragment {
                                     });
                                 } else {
                                     Log.e(TAG, "❌ Failed to delete auth account", task.getException());
-                                    Toast.makeText(getContext(), "Failed to delete account.  Please re-login and try again.", Toast.LENGTH_LONG).show();
+                                    CustomToast.error(getContext(), "Failed to delete account. Please re-login and try again.");
                                 }
                             });
                 })
                 .addOnFailureListener(e -> {
                     Log. e(TAG, "❌ Failed to delete Firestore data", e);
-                    Toast. makeText(getContext(), "Failed to delete account data", Toast.LENGTH_SHORT).show();
+                    CustomToast.error(getContext(), "Failed to delete account data");
                 });
     }
 
@@ -301,7 +300,7 @@ public class ProfileFragment extends Fragment {
             updates.put("languageCode", languageCode);
             db.collection("users").document(user.getUid()).update(updates)
                     .addOnSuccessListener(aVoid ->
-                            Toast.makeText(getContext(), "✅ Language updated", Toast.LENGTH_SHORT).show());
+                            CustomToast.success(getContext(), "Language updated"));
         }
 
         requireActivity().recreate();
@@ -359,10 +358,10 @@ public class ProfileFragment extends Fragment {
         if (! driveManager.isAvailable()) {
             GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(requireContext());
             if (account != null) {
-                Toast.makeText(getContext(), "📂 Requesting Drive access.. .", Toast.LENGTH_SHORT).show();
+                CustomToast.info(getContext(), "Requesting Drive access...");
                 triggerDriveReAuthentication();
             } else {
-                Toast.makeText(getContext(), "⚠️ Please sign in with Google to upload photos", Toast.LENGTH_LONG).show();
+                CustomToast.warning(getContext(), "Please sign in with Google to upload photos");
             }
             return;
         }
@@ -389,7 +388,7 @@ public class ProfileFragment extends Fragment {
         }
 
         String userId = user.getUid();
-        Toast.makeText(getContext(), "📤 Uploading to Drive...", Toast.LENGTH_SHORT).show();
+        CustomToast.info(getContext(), "Uploading to Drive...");
 
         driveManager.uploadProfilePhoto(imageUri, userId, new GoogleDriveManager. UploadCallback() {
             @Override
@@ -401,7 +400,7 @@ public class ProfileFragment extends Fragment {
                     updates. put("driveFileId", fileId);
                     db.collection("users").document(userId).update(updates)
                             .addOnSuccessListener(aVoid -> {
-                                Toast.makeText(getContext(), "✅ Photo updated!", Toast.LENGTH_SHORT).show();
+                                CustomToast.success(getContext(), "Photo updated!");
                                 loadProfilePhoto(driveUrl);
                             });
                 });
@@ -411,7 +410,7 @@ public class ProfileFragment extends Fragment {
             public void onError(Exception e) {
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() ->
-                        Toast.makeText(getContext(), "❌ Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                        CustomToast.error(getContext(), "Upload failed: " + e.getMessage()));
             }
         });
     }

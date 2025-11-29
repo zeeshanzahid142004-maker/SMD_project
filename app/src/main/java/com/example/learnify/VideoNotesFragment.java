@@ -28,7 +28,6 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -107,7 +106,7 @@ public class VideoNotesFragment extends Fragment {
                     if (isGranted) {
                         takeScreenshot();
                     } else {
-                        Toast.makeText(getContext(), "Storage permission required for screenshot", Toast.LENGTH_SHORT).show();
+                        CustomToast.warning(getContext(), "Storage permission required for screenshot");
                     }
                 }
         );
@@ -174,7 +173,7 @@ public class VideoNotesFragment extends Fragment {
             });
         } else {
             if (getContext() != null) {
-                Toast.makeText(getContext(), "Invalid Video URL", Toast.LENGTH_SHORT).show();
+                CustomToast.error(getContext(), "Invalid Video URL");
             }
             if (loadingOverlay != null) {
                 loadingOverlay.setVisibility(View.GONE);
@@ -205,7 +204,7 @@ public class VideoNotesFragment extends Fragment {
         if (passedTranscript != null && !passedTranscript.isEmpty()) {
             if (notesEditText.getText().toString().trim().isEmpty()) {
                 notesEditText.setText(passedTranscript);
-                Toast.makeText(getContext(), "✅ Notes auto-filled from transcript!", Toast.LENGTH_SHORT).show();
+                CustomToast.success(getContext(), "Notes auto-filled from transcript!");
             }
         }
         // Try loading from repository
@@ -251,7 +250,7 @@ public class VideoNotesFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         if (notesEditText.getText().toString().trim().isEmpty()) {
                             notesEditText.setText(transcript);
-                            Toast.makeText(getContext(), "✅ Transcript loaded automatically", Toast.LENGTH_SHORT).show();
+                            CustomToast.success(getContext(), "Transcript loaded automatically");
                         }
                     });
                 }
@@ -483,7 +482,7 @@ public class VideoNotesFragment extends Fragment {
         int start = notesEditText.getSelectionStart();
         int end = notesEditText.getSelectionEnd();
         if (start == end) {
-            Toast.makeText(getContext(), "Please select text first", Toast.LENGTH_SHORT).show();
+            CustomToast.info(getContext(), "Please select text first");
             return;
         }
         Spannable spannable = notesEditText.getText();
@@ -534,7 +533,7 @@ public class VideoNotesFragment extends Fragment {
 
         Editable editable = notesEditText.getText();
         if (editable.toString().trim().isEmpty()) {
-            Toast.makeText(getContext(), "Notes are empty", Toast.LENGTH_SHORT).show();
+            CustomToast.warning(getContext(), "Notes are empty");
             return;
         }
 
@@ -551,14 +550,14 @@ public class VideoNotesFragment extends Fragment {
             public void onNoteSaved() {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() ->
-                            Toast.makeText(getContext(), "✅ Notes saved!", Toast.LENGTH_SHORT).show());
+                            CustomToast.success(getContext(), "Notes saved!"));
                 }
             }
             @Override
             public void onError(Exception e) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() ->
-                            Toast.makeText(getContext(), "❌ Failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                            CustomToast.error(getContext(), "Failed: " + e.getMessage()));
                 }
             }
         });
@@ -589,7 +588,7 @@ public class VideoNotesFragment extends Fragment {
         try {
             View notesCard = getView() != null ? getView().findViewById(R.id.notes_card) : null;
             if (notesCard == null) {
-                Toast.makeText(getContext(), "Cannot capture screenshot", Toast.LENGTH_SHORT).show();
+                CustomToast.error(getContext(), "Cannot capture screenshot");
                 return;
             }
 
@@ -616,15 +615,15 @@ public class VideoNotesFragment extends Fragment {
                 try (OutputStream outputStream = requireContext().getContentResolver().openOutputStream(imageUri)) {
                     if (outputStream != null) {
                         bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
-                        Toast.makeText(getContext(), "📸 Screenshot saved to gallery!", Toast.LENGTH_SHORT).show();
+                        CustomToast.success(getContext(), "Screenshot saved to gallery!");
                     }
                 }
             } else {
-                Toast.makeText(getContext(), "Failed to save screenshot", Toast.LENGTH_SHORT).show();
+                CustomToast.error(getContext(), "Failed to save screenshot");
             }
         } catch (Exception e) {
             Log.e(TAG, "Screenshot failed", e);
-            Toast.makeText(getContext(), "Screenshot failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            CustomToast.error(getContext(), "Screenshot failed: " + e.getMessage());
         }
     }
 
@@ -642,7 +641,7 @@ public class VideoNotesFragment extends Fragment {
         try {
             // Capture the YouTubePlayerView content
             if (youTubePlayerView == null) {
-                Toast.makeText(getContext(), "Video not available", Toast.LENGTH_SHORT).show();
+                CustomToast.warning(getContext(), "Video not available");
                 return;
             }
 
@@ -651,7 +650,7 @@ public class VideoNotesFragment extends Fragment {
             Canvas canvas = new Canvas(bitmap);
             youTubePlayerView.draw(canvas);
 
-            Toast.makeText(getContext(), "📸 Capturing screenshot...", Toast.LENGTH_SHORT).show();
+            CustomToast.info(getContext(), "Capturing screenshot...");
 
             // Try to upload to Drive first
             if (driveManager != null && driveManager.isAvailable()) {
@@ -661,7 +660,7 @@ public class VideoNotesFragment extends Fragment {
                         if (getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
                                 insertImageIntoNotes(driveUrl);
-                                Toast.makeText(getContext(), "✅ Screenshot embedded!", Toast.LENGTH_SHORT).show();
+                                CustomToast.success(getContext(), "Screenshot embedded!");
                             });
                         }
                     }
@@ -683,7 +682,7 @@ public class VideoNotesFragment extends Fragment {
             }
         } catch (Exception e) {
             Log.e(TAG, "Embed screenshot failed", e);
-            Toast.makeText(getContext(), "Failed to capture: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            CustomToast.error(getContext(), "Failed to capture: " + e.getMessage());
         }
     }
 
@@ -734,11 +733,11 @@ public class VideoNotesFragment extends Fragment {
             
             notesEditText.setSelection(cursorPosition + imageTag.length());
             
-            Toast.makeText(getContext(), "✅ Screenshot embedded (offline mode)", Toast.LENGTH_SHORT).show();
+            CustomToast.success(getContext(), "Screenshot embedded (offline mode)");
             Log.d(TAG, "✅ Base64 image embedded, size: " + imageBytes.length + " bytes");
         } catch (Exception e) {
             Log.e(TAG, "Failed to embed base64 image", e);
-            Toast.makeText(getContext(), "Failed to embed screenshot", Toast.LENGTH_SHORT).show();
+            CustomToast.error(getContext(), "Failed to embed screenshot");
         }
     }
 

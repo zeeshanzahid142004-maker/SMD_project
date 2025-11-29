@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -86,7 +85,7 @@ public class linkFragment extends Fragment {
         pasteButton.setOnClickListener(v -> {
             String link = linkInput.getText().toString().trim();
             if (link.isEmpty()) {
-                Toast.makeText(getContext(), "Please enter a link", Toast.LENGTH_SHORT).show();
+                CustomToast.warning(getContext(), "Please enter a link");
             } else {
                 processedLink = link;
                 isYouTubeVideo = isYouTubeUrl(link);
@@ -149,7 +148,7 @@ public class linkFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         isConfirmed = true;
                         updateUiState();
-                        Toast.makeText(getContext(), "✅ Video content extracted!", Toast.LENGTH_SHORT).show();
+                        CustomToast.success(getContext(), "Video content extracted!");
                     });
                 }
             }
@@ -161,9 +160,7 @@ public class linkFragment extends Fragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         // Fallback: proceed with URL anyway
-                        Toast.makeText(getContext(),
-                                "⚠️ Could not extract transcript. Using video URL instead.",
-                                Toast.LENGTH_LONG).show();
+                        CustomToast.warning(getContext(), "Could not extract transcript. Using video URL instead.");
 
                         new Handler(Looper.getMainLooper()).postDelayed(() -> {
                             isConfirmed = true;

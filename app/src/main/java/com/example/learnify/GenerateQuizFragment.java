@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx. annotation.Nullable;
@@ -56,7 +55,7 @@ public class GenerateQuizFragment extends Fragment {
 
                 } catch (Exception e) {
                     Log.e(TAG, "❌ Error in success handler", e);
-                    Toast. makeText(getContext(), "Error: " + e.getMessage(), Toast. LENGTH_LONG).show();
+                    CustomToast.error(getContext(), "Error: " + e.getMessage());
                 }
             });
         }
@@ -72,7 +71,7 @@ public class GenerateQuizFragment extends Fragment {
 
             getActivity().runOnUiThread(() -> {
                 dismissLoadingDialog();
-                Toast.makeText(getContext(), "Failed: " + error, Toast.LENGTH_LONG).show();
+                CustomToast.error(getContext(), "Failed: " + error);
 
                 if (getActivity() != null) {
                     getActivity().finish();
@@ -177,7 +176,7 @@ public class GenerateQuizFragment extends Fragment {
         newQuizRef.set(newQuiz)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "✅ Quiz saved to Firestore");
-                    Toast.makeText(getContext(), "Quiz Saved!", Toast.LENGTH_SHORT). show();
+                    CustomToast.success(getContext(), "Quiz Saved!");
 
                     Intent intent = new Intent(getActivity(), QuizActivity.class);
                     intent.putExtra("QUIZ_DATA", (ArrayList) questions);
@@ -192,7 +191,7 @@ public class GenerateQuizFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     Log. e(TAG, "❌ Firestore save failed", e);
-                    Toast.makeText(getContext(), "Save failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    CustomToast.error(getContext(), "Save failed: " + e.getMessage());
                 });
     }
 

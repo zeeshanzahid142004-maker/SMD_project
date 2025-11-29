@@ -14,7 +14,6 @@ import android.view. LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -110,7 +109,7 @@ public class HomeFragment extends Fragment {
                     if (uri != null) {
                         extractAndProcessFile(uri);
                     } else {
-                        Toast. makeText(getContext(), "No file selected", Toast.LENGTH_SHORT).show();
+                        CustomToast.info(getContext(), "No file selected");
                     }
                 }
         );
@@ -124,7 +123,7 @@ public class HomeFragment extends Fragment {
                             extractTextFromImage(cameraPhotoUri);
                         }
                     } else {
-                        Toast.makeText(getContext(), "Camera cancelled", Toast.LENGTH_SHORT).show();
+                        CustomToast.info(getContext(), "Camera cancelled");
                     }
                 }
         );
@@ -139,7 +138,7 @@ public class HomeFragment extends Fragment {
                             extractTextFromImage(selectedImageUri);
                         }
                     } else {
-                        Toast.makeText(getContext(), "No image selected", Toast.LENGTH_SHORT).show();
+                        CustomToast.info(getContext(), "No image selected");
                     }
                 }
         );
@@ -151,7 +150,7 @@ public class HomeFragment extends Fragment {
                     if (isGranted) {
                         launchCamera();
                     } else {
-                        Toast.makeText(getContext(), "Camera permission required", Toast.LENGTH_SHORT).show();
+                        CustomToast.warning(getContext(), "Camera permission required");
                     }
                 }
         );
@@ -269,7 +268,7 @@ public class HomeFragment extends Fragment {
             takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri);
             cameraLauncher.launch(takePictureIntent);
         } else {
-            Toast.makeText(getContext(), "Could not create image file", Toast.LENGTH_SHORT). show();
+            CustomToast.error(getContext(), "Could not create image file");
         }
     }
 
@@ -348,8 +347,11 @@ public class HomeFragment extends Fragment {
                 attempt.isFavorite = !attempt.isFavorite;
                 attemptRepository.markAsFavorite(attempt. attemptId, attempt.isFavorite);
                 historyAdapter.updateItem(position, attempt);
-                String msg = attempt.isFavorite ?  "❤️ Favourited!" : "Removed";
-                Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                if (attempt.isFavorite) {
+                    CustomToast.success(getContext(), "Favourited!");
+                } else {
+                    CustomToast.info(getContext(), "Removed from favourites");
+                }
             }
         });
 
@@ -408,7 +410,7 @@ public class HomeFragment extends Fragment {
 
     private void extractAndProcessFile(Uri uri) {
         Log.d(TAG, "⏳ Starting background extraction for: " + uri);
-        Toast.makeText(getContext(), "Reading file...", Toast.LENGTH_SHORT).show();
+        CustomToast.info(getContext(), "Reading file...");
 
         new Thread(() -> {
             String text = null;
@@ -436,7 +438,7 @@ public class HomeFragment extends Fragment {
                         if (extractedText != null && !extractedText.isEmpty()) {
                             launchGenerateQuizFragment(extractedText);
                         } else {
-                            Toast. makeText(getContext(), "Could not read text from this file.", Toast.LENGTH_SHORT).show();
+                            CustomToast.warning(getContext(), "Could not read text from this file.");
                         }
                     });
                 }
@@ -445,7 +447,7 @@ public class HomeFragment extends Fragment {
                 Log.e(TAG, "❌ FATAL File Extraction Error", e);
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() ->
-                            Toast.makeText(getContext(), "Error reading file: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                            CustomToast.error(getContext(), "Error reading file: " + e.getMessage())
                     );
                 }
             }
@@ -494,7 +496,7 @@ public class HomeFragment extends Fragment {
      */
     private void extractTextFromImage(Uri imageUri) {
         Log. d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
-        Toast.makeText(getContext(), "Scanning image for text...", Toast.LENGTH_SHORT).show();
+        CustomToast.info(getContext(), "Scanning image for text...");
 
         if (imageTextExtractor == null) {
             imageTextExtractor = new ImageTextExtractor(requireContext());
@@ -508,11 +510,11 @@ public class HomeFragment extends Fragment {
                         Log.d(TAG, "✅ OCR Success: " + extractedText. length() + " characters extracted");
 
                         if (extractedText.trim().isEmpty()) {
-                            Toast.makeText(getContext(), "No text found in image", Toast.LENGTH_SHORT).show();
+                            CustomToast.warning(getContext(), "No text found in image");
                             return;
                         }
 
-                        Toast.makeText(getContext(), "✅ Text extracted successfully!", Toast.LENGTH_SHORT).show();
+                        CustomToast.success(getContext(), "Text extracted successfully!");
                         launchGenerateQuizFragment(extractedText);
                     });
                 }
@@ -523,7 +525,7 @@ public class HomeFragment extends Fragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         Log.e(TAG, "❌ OCR Error: " + error);
-                        Toast.makeText(getContext(), "OCR failed: " + error, Toast.LENGTH_SHORT).show();
+                        CustomToast.error(getContext(), "OCR failed: " + error);
                     });
                 }
             }

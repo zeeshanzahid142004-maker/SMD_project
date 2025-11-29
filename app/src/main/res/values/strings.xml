@@ -6,11 +6,16 @@
     
     <!-- Navigation -->
     <string name="nav_home">Home</string>
+    <string name="nav_library">Library</string>
     <string name="nav_favourites">Favourites</string>
     <string name="nav_notes">Notes</string>
     <string name="nav_downloads">Downloads</string>
     <string name="nav_history">History</string>
     <string name="nav_profile">Profile</string>
+    <string name="my_library">My Library</string>
+    <string name="history">History</string>
+    <string name="favourites">Favourites</string>
+    <string name="notes">Notes</string>
     
     <!-- Home Screen -->
     <string name="welcome_user">Welcome, %1$s!</string>
