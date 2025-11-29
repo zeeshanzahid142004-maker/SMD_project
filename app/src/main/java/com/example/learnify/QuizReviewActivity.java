@@ -24,7 +24,7 @@ import java.util.List;
  * Activity for reviewing completed quiz attempts.
  * Shows all questions with user's answers, correct answers, and explanations.
  */
-public class QuizReviewActivity extends AppCompatActivity {
+public class QuizReviewActivity extends BaseActivity {
 
     private static final String TAG = "QuizReviewActivity";
 

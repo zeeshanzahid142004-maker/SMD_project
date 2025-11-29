@@ -1,9 +1,11 @@
 package com.example.learnify;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -62,6 +64,8 @@ public class LanguageManager {
     public static List<Language> getSupportedLanguages() {
         List<Language> languages = new ArrayList<>();
         languages.add(new Language("English", "en", "English"));
+        languages.add(new Language("Urdu", "ur", "اردو"));
+        languages.add(new Language("Arabic", "ar", "العربية"));
         languages.add(new Language("Spanish", "es", "Español"));
         languages.add(new Language("French", "fr", "Français"));
         languages.add(new Language("German", "de", "Deutsch"));
@@ -71,7 +75,6 @@ public class LanguageManager {
         languages.add(new Language("Chinese", "zh", "中文"));
         languages.add(new Language("Japanese", "ja", "日本語"));
         languages.add(new Language("Korean", "ko", "한국어"));
-        languages.add(new Language("Arabic", "ar", "العربية"));
         languages.add(new Language("Hindi", "hi", "हिन्दी"));
         languages.add(new Language("Turkish", "tr", "Türkçe"));
         languages.add(new Language("Dutch", "nl", "Nederlands"));
@@ -80,21 +83,27 @@ public class LanguageManager {
     }
 
     /**
-     * Set the app language
+     * Set the app language and save to preferences
      */
     public void setLanguage(Context context, String languageName, String languageCode) {
         currentLanguage = languageName;
         currentLanguageCode = languageCode;
 
+        // Save to SharedPreferences
         prefs.edit()
                 .putString(KEY_LANGUAGE, languageName)
                 .putString(KEY_LANGUAGE_CODE, languageCode)
-                .apply();
-
-        // Update app locale
-        updateLocale(context, languageCode);
+                .commit(); // Use commit() for immediate persistence
 
         Log.d(TAG, "🌍 Language changed to: " + languageName + " (" + languageCode + ")");
+    }
+
+    /**
+     * Set language and recreate activity to apply changes
+     */
+    public void setLanguageAndRecreate(Activity activity, String languageName, String languageCode) {
+        setLanguage(activity, languageName, languageCode);
+        activity.recreate();
     }
 
     /**
@@ -112,15 +121,32 @@ public class LanguageManager {
     }
 
     /**
-     * Update app locale
+     * Wrap context with the selected locale configuration.
+     * Use this in attachBaseContext() of activities.
+     */
+    public Context wrapContext(Context context) {
+        String languageCode = prefs.getString(KEY_LANGUAGE_CODE, "en");
+        Locale locale = new Locale(languageCode);
+        Locale.setDefault(locale);
+
+        Configuration config = new Configuration(context.getResources().getConfiguration());
+        config.setLocale(locale);
+        config.setLayoutDirection(locale);
+
+        return context.createConfigurationContext(config);
+    }
+
+    /**
+     * Update app locale (legacy method for compatibility)
      */
     public void updateLocale(Context context, String languageCode) {
         Locale locale = new Locale(languageCode);
         Locale.setDefault(locale);
 
         Resources resources = context.getResources();
-        Configuration config = resources.getConfiguration();
+        Configuration config = new Configuration(resources.getConfiguration());
         config.setLocale(locale);
+        config.setLayoutDirection(locale);
 
         context.createConfigurationContext(config);
         resources.updateConfiguration(config, resources.getDisplayMetrics());

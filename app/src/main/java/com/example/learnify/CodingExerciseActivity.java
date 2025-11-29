@@ -14,7 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.button.MaterialButton;
 
-public class CodingExerciseActivity extends AppCompatActivity {
+public class CodingExerciseActivity extends BaseActivity {
 
     private static final String TAG = "CodingExerciseActivity";
 

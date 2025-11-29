@@ -44,11 +44,13 @@
         android:padding="32dp"
         android:visibility="gone">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="📭"
-            android:textSize="64sp"
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/lottie_empty"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            app:lottie_rawRes="@raw/empty_box"
+            app:lottie_loop="true"
+            app:lottie_autoPlay="true"
             android:layout_marginBottom="16dp"/>
 
         <TextView

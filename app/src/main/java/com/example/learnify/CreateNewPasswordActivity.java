@@ -6,12 +6,11 @@ import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.button.MaterialButton;
 // Import the new components
 import com.google.android.material.textfield.TextInputEditText;
 
-public class CreateNewPasswordActivity extends AppCompatActivity {
+public class CreateNewPasswordActivity extends BaseActivity {
 
     // Use TextInputEditText for the refactored layout
     TextInputEditText oldPasswordInput, newPasswordInput, confirmPasswordInput;

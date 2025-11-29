@@ -119,7 +119,10 @@ public class GenerateQuizFragment extends Fragment {
         Log.d(TAG, "🚀 Starting quiz generation.. .");
 
         if (getContext() != null) {
-            loadingDialog = DialogHelper.createLoadingDialog(getContext(), "Generating Quiz...");
+            loadingDialog = DialogHelper.createAnimatedLoadingDialog(
+                    getContext(), 
+                    "Getting Ready...", 
+                    "Analyzing content and crafting questions just for you.");
             loadingDialog. show();
         }
 

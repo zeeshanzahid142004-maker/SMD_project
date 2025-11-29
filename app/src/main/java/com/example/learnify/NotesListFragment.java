@@ -31,6 +31,7 @@ public class NotesListFragment extends Fragment {
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private TextView emptyView;
+    private View emptyStateLayout;
     private Chip filterFavorites;
     private SearchView searchView;
     private VideoNotesRepository repository;
@@ -63,6 +64,7 @@ public class NotesListFragment extends Fragment {
         recyclerView = view.findViewById(R.id.notes_recycler_view);
         progressBar = view.findViewById(R.id.loading_progress);
         emptyView = view.findViewById(R.id.empty_view);
+        emptyStateLayout = view.findViewById(R.id.ll_empty_state);
         filterFavorites = view.findViewById(R.id.filter_favorites);
         searchView = view.findViewById(R.id.notes_search_view);
 
@@ -162,7 +164,9 @@ public class NotesListFragment extends Fragment {
         }
 
         if (filteredNotes.isEmpty()) {
-            emptyView.setVisibility(View.VISIBLE);
+            if (emptyStateLayout != null) {
+                emptyStateLayout.setVisibility(View.VISIBLE);
+            }
             recyclerView.setVisibility(View.GONE);
             if (!currentSearchQuery.isEmpty()) {
                 emptyView.setText("No results found for \"" + currentSearchQuery + "\"");
@@ -172,7 +176,9 @@ public class NotesListFragment extends Fragment {
                 emptyView.setText("No notes yet");
             }
         } else {
-            emptyView.setVisibility(View.GONE);
+            if (emptyStateLayout != null) {
+                emptyStateLayout.setVisibility(View.GONE);
+            }
             recyclerView.setVisibility(View.VISIBLE);
             setupAdapter(filteredNotes);
         }
