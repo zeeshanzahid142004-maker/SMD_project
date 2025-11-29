@@ -27,6 +27,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -39,6 +41,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
@@ -176,11 +179,27 @@ public class VideoNotesFragment extends Fragment {
             }
             
             @Override
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) {
+                    Log.e(TAG, "WebView error: " + error.getDescription() + " (code: " + error.getErrorCode() + ")");
+                    if (loadingOverlay != null) {
+                        loadingOverlay.setVisibility(View.GONE);
+                    }
+                }
+            }
+            
+            // Fallback for older API levels
+            @SuppressWarnings("deprecation")
+            @Override
             public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
                 super.onReceivedError(view, errorCode, description, failingUrl);
-                Log.e(TAG, "WebView error: " + description + " (code: " + errorCode + ")");
-                if (loadingOverlay != null) {
-                    loadingOverlay.setVisibility(View.GONE);
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                    Log.e(TAG, "WebView error: " + description + " (code: " + errorCode + ")");
+                    if (loadingOverlay != null) {
+                        loadingOverlay.setVisibility(View.GONE);
+                    }
                 }
             }
         });
