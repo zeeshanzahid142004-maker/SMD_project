@@ -29,7 +29,7 @@
                 android:layout_height="20dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_back_button"
-                android:contentDescription="Back Button" />
+                android:contentDescription="@string/cd_back_button" />
         </FrameLayout>
 
         <!-- Guideline for horizontal centering -->
@@ -64,7 +64,7 @@
             android:id="@+id/title_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Learning at Home Anything"
+            android:text="@string/onboarding_title"
             style="@style/TextAppearance.Title.Onboarding"
             android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/onboarding_illustration"
@@ -76,7 +76,7 @@
             android:id="@+id/body_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="We are Providing the best\nonline courses for you."
+            android:text="@string/onboarding_body"
             style="@style/TextAppearance.Body.Onboarding"
             android:gravity="center"
             app:layout_constraintTop_toBottomOf="@id/title_text"
@@ -137,7 +137,7 @@
                 android:layout_width="84dp"
                 android:layout_height="84dp"
                 android:layout_gravity="center"
-                android:text="Next"
+                android:text="@string/next"
                 android:textColor="@color/white"
                 android:textSize="18sp"
                 android:textStyle="bold"

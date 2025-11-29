@@ -64,7 +64,7 @@
             android:id="@+id/btn_start_coding"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="💻 Start Coding Exercise"
+            android:text="@string/start_coding_exercise"
             android:textColor="@color/white"
             android:background="@drawable/bg_gradient_secondver"
             app:backgroundTint="@null"
@@ -79,7 +79,7 @@
             android:id="@+id/btn_next_question"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="Next Question"
+            android:text="@string/next_question"
             style="@style/Widget.App.Button.Gradient"
             android:enabled="false"/>
 

@@ -12,7 +12,7 @@
         android:id="@+id/history_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="My History"
+        android:text="@string/my_history"
         style="@style/TextAppearance.ScreenSubtitle"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -59,7 +59,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="No History Yet"
+                android:text="@string/no_history_yet"
                 android:textColor="@color/white"
                 style="@style/TextAppearance.Home.CardTitle"/>
 
@@ -67,7 +67,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Complete a quiz to see your scores here."
+                android:text="@string/history_complete_subtitle"
                 android:textColor="#CCFFFFFF"
                 style="@style/TextAppearance.Body.Onboarding"
                 android:layout_marginTop="4dp"/>

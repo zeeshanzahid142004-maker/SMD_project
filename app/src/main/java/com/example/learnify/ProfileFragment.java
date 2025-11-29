@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,7 +60,8 @@ public class ProfileFragment extends Fragment {
     private TextView tvProfileName, tvProfileEmail;
     private MaterialButton btnSignOut;
     private ImageView btnEditProfile;
-    private TextView rowLanguage, rowNotifications, rowAppearance, rowHelp;
+    private TextView rowLanguage, rowAppearance, rowHelp;
+    private LinearLayout helpExpandableView;
 
     private LanguageManager languageManager;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
@@ -144,9 +146,9 @@ public class ProfileFragment extends Fragment {
         btnSignOut = view.findViewById(R.id.btn_sign_out);
 
         rowLanguage = view.findViewById(R.id.row_language);
-        rowNotifications = view.findViewById(R.id.row_notifications);
         rowAppearance = view.findViewById(R.id.row_appearance);
         rowHelp = view.findViewById(R.id.row_help);
+        helpExpandableView = view.findViewById(R.id.help_expandable_view);
 
         // Listeners
         btnSignOut.setOnClickListener(v -> signOut());
@@ -156,8 +158,14 @@ public class ProfileFragment extends Fragment {
 
         rowAppearance.setOnClickListener(v -> showThemeDialog());
 
-        rowNotifications.setOnClickListener(v -> showToast("Notifications clicked"));
-        rowHelp.setOnClickListener(v -> showToast("Help Center clicked"));
+        // Help Center - toggle expandable view
+        rowHelp.setOnClickListener(v -> {
+            if (helpExpandableView.getVisibility() == View.GONE) {
+                helpExpandableView.setVisibility(View.VISIBLE);
+            } else {
+                helpExpandableView.setVisibility(View.GONE);
+            }
+        });
 
         loadUserProfile();
     }

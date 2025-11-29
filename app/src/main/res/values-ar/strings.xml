@@ -2,4 +2,141 @@
 <resources>
     <string name="app_name">ليرنيفاي</string>
     <string name="hello_blank_fragment">مرحبا بالقطعة الفارغة</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_favourites">المفضلة</string>
+    <string name="nav_notes">ملاحظات</string>
+    <string name="nav_downloads">التنزيلات</string>
+    <string name="nav_history">السجل</string>
+    <string name="nav_profile">الملف الشخصي</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_user">مرحباً، %1$s!</string>
+    <string name="ready_to_learn">هل أنت مستعد لتعلم شيء جديد؟</string>
+    <string name="edit">تعديل</string>
+    <string name="start_learning">ابدأ التعلم</string>
+    <string name="recent_papers">الأوراق الحديثة</string>
+    <string name="view_more">عرض المزيد</string>
+    <string name="history_empty_title">سيظهر سجلك هنا!</string>
+    <string name="history_empty_subtitle">قم بتحميل رابط أو ملف للبدء.</string>
+    <string name="upload_file">تحميل ملف</string>
+    <string name="upload_link">تحميل رابط</string>
+    <string name="scan_image_ocr">مسح صورة (OCR)</string>
+    
+    <!-- Auth Screens -->
+    <string name="sign_in">تسجيل الدخول</string>
+    <string name="sign_up">إنشاء حساب</string>
+    <string name="sign_out">تسجيل الخروج</string>
+    <string name="log_in">دخول</string>
+    <string name="email">البريد الإلكتروني</string>
+    <string name="password">كلمة المرور</string>
+    <string name="name">الاسم</string>
+    <string name="forgot_password">نسيت كلمة المرور</string>
+    <string name="sign_in_with_google">تسجيل الدخول بجوجل</string>
+    <string name="sign_up_with_google">إنشاء حساب بجوجل</string>
+    <string name="dont_have_account">ليس لديك حساب؟ </string>
+    <string name="already_have_account">لديك حساب بالفعل؟ </string>
+    <string name="login">دخول</string>
+    <string name="or">أو</string>
+    <string name="welcome">مرحباً</string>
+    <string name="sign_in_to_enter">سجّل الدخول للدخول إلى التطبيق.</string>
+    <string name="forgot_password_instruction">أدخل بريدك الإلكتروني أدناه لإعادة تعيين كلمة المرور</string>
+    <string name="send_email">إرسال بريد</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title">تعلم أي شيء من المنزل</string>
+    <string name="onboarding_body">نحن نقدم لك أفضل\nالدورات عبر الإنترنت.</string>
+    <string name="next">التالي</string>
+    
+    <!-- Quiz Screen -->
+    <string name="next_question">السؤال التالي</string>
+    <string name="start_coding_exercise">💻 ابدأ تمرين البرمجة</string>
+    <string name="generating_quiz">جاري إنشاء الاختبار…</string>
+    <string name="curating_topic">نقوم بإعداد موضوع فريد لك</string>
+    <string name="quiz_complete">اكتمل الاختبار!</string>
+    <string name="your_score">نتيجتك: %1$d/%2$d</string>
+    <string name="view_results">عرض النتائج</string>
+    <string name="regenerate_quiz">إعادة إنشاء الاختبار</string>
+    <string name="retake_same_quiz">إعادة نفس الاختبار</string>
+    <string name="go_to_home">الذهاب للرئيسية</string>
+    <string name="retake_quiz">إعادة الاختبار</string>
+    <string name="quiz_review">📖 مراجعة الاختبار</string>
+    <string name="quiz_title">عنوان الاختبار</string>
+    <string name="score_format">النتيجة: %1$d/%2$d (%3$d%%)</string>
+    
+    <!-- Link Fragment -->
+    <string name="enter_link">أدخل الرابط</string>
+    <string name="paste_link_hint">الصق رابط يوتيوب أو URL هنا…</string>
+    <string name="go">انتقل</string>
+    <string name="processing">جاري المعالجة…</string>
+    <string name="extracting_video">جاري استخراج محتوى الفيديو…</string>
+    <string name="ready">جاهز!</string>
+    <string name="watch_video">مشاهدة الفيديو</string>
+    <string name="take_quiz">خذ الاختبار</string>
+    
+    <!-- Profile/Settings -->
+    <string name="general">عام</string>
+    <string name="language">اللغة</string>
+    <string name="appearance">المظهر</string>
+    <string name="support">الدعم</string>
+    <string name="help_center">مركز المساعدة</string>
+    <string name="need_assistance">تحتاج مساعدة؟ راسلنا على:</string>
+    <string name="support_email">support@learnify.com</string>
+    <string name="account">الحساب</string>
+    <string name="delete_account">حذف الحساب</string>
+    
+    <!-- Theme Dialog -->
+    <string name="choose_appearance">اختر المظهر</string>
+    <string name="light_mode">الوضع الفاتح</string>
+    <string name="dark_mode">الوضع الداكن</string>
+    <string name="system_default">افتراضي النظام</string>
+    
+    <!-- Language Dialog -->
+    <string name="select_language">اختر اللغة</string>
+    
+    <!-- Common Actions -->
+    <string name="cancel">إلغاء</string>
+    <string name="confirm">تأكيد</string>
+    <string name="save">حفظ</string>
+    <string name="delete">حذف</string>
+    <string name="close">إغلاق</string>
+    <string name="ok">موافق</string>
+    
+    <!-- Downloads -->
+    <string name="downloaded_quizzes">📥 الاختبارات المحملة</string>
+    <string name="downloads_subtitle">أعد الاختبارات المحملة وراجعها بدون إنترنت</string>
+    <string name="no_downloads_yet">لا توجد تنزيلات بعد</string>
+    <string name="downloads_empty_subtitle">أكمل اختباراً وحمّله للوصول إليه بدون إنترنت</string>
+    
+    <!-- History -->
+    <string name="my_history">سجلي</string>
+    <string name="no_history_yet">لا يوجد سجل بعد</string>
+    <string name="history_complete_subtitle">أكمل اختباراً لرؤية نتائجك هنا.</string>
+    
+    <!-- Loading States -->
+    <string name="getting_ready">جاري التحضير…</string>
+    <string name="analyzing_content">نحلل المحتوى ونجهز أسئلة مخصصة لك.</string>
+    <string name="saving_quiz">جاري حفظ الاختبار…</string>
+    <string name="storing_quiz">نخزن اختبارك للوصول إليه لاحقاً.</string>
+    
+    <!-- Error Messages -->
+    <string name="error_network">خطأ في الشبكة. يرجى التحقق من اتصالك.</string>
+    <string name="error_loading">فشل التحميل. يرجى المحاولة مرة أخرى.</string>
+    <string name="error_invalid_url">رابط غير صالح. يرجى إدخال رابط صحيح.</string>
+    <string name="error_empty_field">هذا الحقل لا يمكن أن يكون فارغاً.</string>
+    <string name="error_generation_failed">فشل إنشاء الاختبار. يرجى المحاولة مرة أخرى.</string>
+    
+    <!-- Success Messages -->
+    <string name="language_updated">✅ تم تحديث اللغة</string>
+    <string name="photo_updated">✅ تم تحديث الصورة!</string>
+    
+    <!-- Content Descriptions -->
+    <string name="cd_profile_picture">صورة الملف الشخصي</string>
+    <string name="cd_upload_file_icon">أيقونة تحميل ملف</string>
+    <string name="cd_upload_link_icon">أيقونة تحميل رابط</string>
+    <string name="cd_scan_image_icon">أيقونة مسح صورة</string>
+    <string name="cd_back_button">زر العودة</string>
+    <string name="cd_toggle_password">تبديل ظهور كلمة المرور</string>
+    <string name="cd_success">نجاح</string>
 </resources>

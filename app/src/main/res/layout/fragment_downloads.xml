@@ -19,17 +19,17 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="📥 Downloaded Quizzes"
+            android:text="@string/downloaded_quizzes"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:textColor="@color/black"/>
+            android:textColor="@color/text_primary_dark"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Retake and review your downloaded quizzes offline"
+            android:text="@string/downloads_subtitle"
             android:textSize="14sp"
-            android:textColor="@color/gray"
+            android:textColor="@color/text_secondary_gray"
             android:layout_marginTop="4dp"/>
 
     </LinearLayout>
@@ -57,18 +57,18 @@
             android:id="@+id/tv_empty_state"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No Downloaded Quizzes Yet"
+            android:text="@string/no_downloads_yet"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/black"
+            android:textColor="@color/text_primary_dark"
             android:layout_marginBottom="8dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Complete a quiz and download it to access it offline"
+            android:text="@string/downloads_empty_subtitle"
             android:textSize="14sp"
-            android:textColor="@color/gray"
+            android:textColor="@color/text_secondary_gray"
             android:textAlignment="center"/>
 
     </LinearLayout>
