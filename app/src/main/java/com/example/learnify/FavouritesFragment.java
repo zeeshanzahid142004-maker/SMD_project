@@ -15,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class FavouritesFragment extends Fragment {
     private RecyclerView rvFavourites;
     private LinearLayout layoutEmpty;
     private ProgressBar progressBar;
+    private ShimmerFrameLayout shimmerContainer;
 
     private HistoryAdapter adapter;
     private List<QuizAttempt> favoriteAttempts = new ArrayList<>();
@@ -54,6 +56,7 @@ public class FavouritesFragment extends Fragment {
         rvFavourites = view.findViewById(R.id.rv_favourites);
         layoutEmpty = view.findViewById(R.id.layout_empty);
         progressBar = view.findViewById(R.id.progress_bar);
+        shimmerContainer = view.findViewById(R.id.shimmer_container);
 
         rvFavourites.setLayoutManager(new LinearLayoutManager(getContext()));
 
@@ -78,7 +81,8 @@ public class FavouritesFragment extends Fragment {
     }
 
     private void loadFavorites() {
-        progressBar.setVisibility(View.VISIBLE);
+        // Show shimmer before loading
+        showShimmer();
 
         // Fetch all attempts and filter for favorites
         attemptRepository.getAllAttempts(new QuizAttemptRepository.OnAttemptsLoadedListener() {
@@ -86,6 +90,9 @@ public class FavouritesFragment extends Fragment {
             public void onAttemptsLoaded(List<QuizAttempt> attempts) {
                 if (getContext() == null) return;
 
+                // Hide shimmer after data loads
+                hideShimmer();
+                
                 favoriteAttempts.clear();
                 for (QuizAttempt attempt : attempts) {
                     if (attempt.isFavorite()) {
@@ -108,6 +115,10 @@ public class FavouritesFragment extends Fragment {
             @Override
             public void onError(Exception e) {
                 if (getContext() == null) return;
+                
+                // Hide shimmer on error
+                hideShimmer();
+                
                 progressBar.setVisibility(View.GONE);
                 Log.e(TAG, "Error loading favorites", e);
             }
@@ -165,6 +176,23 @@ public class FavouritesFragment extends Fragment {
         }
 
         Toast.makeText(getContext(), "Removed from favorites", Toast.LENGTH_SHORT).show();
+    }
+
+    private void showShimmer() {
+        if (shimmerContainer != null) {
+            shimmerContainer.setVisibility(View.VISIBLE);
+            shimmerContainer.startShimmer();
+            if (rvFavourites != null) rvFavourites.setVisibility(View.GONE);
+            if (layoutEmpty != null) layoutEmpty.setVisibility(View.GONE);
+            if (progressBar != null) progressBar.setVisibility(View.GONE);
+        }
+    }
+
+    private void hideShimmer() {
+        if (shimmerContainer != null) {
+            shimmerContainer.stopShimmer();
+            shimmerContainer.setVisibility(View.GONE);
+        }
     }
 
     @Override

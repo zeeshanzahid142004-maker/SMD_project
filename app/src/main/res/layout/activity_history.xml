@@ -158,6 +158,28 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
+    <!-- Shimmer Loading Container -->
+    <com.facebook.shimmer.ShimmerFrameLayout
+        android:id="@+id/shimmer_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <include layout="@layout/shimmer_history_item"/>
+            <include layout="@layout/shimmer_history_item"/>
+            <include layout="@layout/shimmer_history_item"/>
+            <include layout="@layout/shimmer_history_item"/>
+
+        </LinearLayout>
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
+
     <!-- Empty State -->
     <LinearLayout
         android:id="@+id/ll_empty_state"
