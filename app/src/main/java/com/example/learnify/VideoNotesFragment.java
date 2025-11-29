@@ -1,8 +1,18 @@
 package com.example.learnify;
 
+import android.Manifest;
+import android.content.ContentValues;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Typeface;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.text.Editable;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
@@ -14,19 +24,24 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView;
-
+import java.io.OutputStream;
+import java.util.Date;
 import java.util.Stack;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,11 +53,12 @@ public class VideoNotesFragment extends Fragment {
     private EditText notesEditText;
     private ImageView buttonBold, buttonItalic, buttonBullet, buttonUnderline,
             buttonH1, buttonH2, buttonH3, buttonHighlight,
-            buttonUndo, buttonRedo, buttonSave;
-    private YouTubePlayerView youTubePlayerView;
+            buttonUndo, buttonRedo, buttonSave, buttonScreenshot;
+    private WebView youTubeWebView;
     private String videoUrl;
     private String passedTranscript;
     private View loadingOverlay;
+    private FrameLayout videoPlayerContainer;
 
     // Undo/Redo stacks
     private final Stack<CharSequence> undoStack = new Stack<>();
@@ -55,9 +71,17 @@ public class VideoNotesFragment extends Fragment {
     private boolean isUnderlineActive = false;
     private boolean isHighlightActive = false;
 
+    // Anti-spam protection
+    private long lastSaveClickTime = 0;
+    private long lastScreenshotClickTime = 0;
+    private static final long CLICK_DELAY = 1000; // 1 second
+
     // Repository & Service
     private VideoNotesRepository notesRepository;
     private YouTubeTranscriptService transcriptService;
+
+    // Permission launcher for screenshot
+    private ActivityResultLauncher<String> requestPermissionLauncher;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -69,6 +93,18 @@ public class VideoNotesFragment extends Fragment {
 
         notesRepository = new VideoNotesRepository();
         transcriptService = new YouTubeTranscriptService();
+
+        // Initialize permission launcher for screenshot
+        requestPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        takeScreenshot();
+                    } else {
+                        Toast.makeText(getContext(), "Storage permission required for screenshot", Toast.LENGTH_SHORT).show();
+                    }
+                }
+        );
     }
 
     @Nullable
@@ -96,8 +132,10 @@ public class VideoNotesFragment extends Fragment {
         buttonUndo = view.findViewById(R.id.button_undo);
         buttonRedo = view.findViewById(R.id.button_redo);
         buttonSave = view.findViewById(R.id.button_save);
+        buttonScreenshot = view.findViewById(R.id.button_screenshot);
         loadingOverlay = view.findViewById(R.id.video_loading_overlay);
-        youTubePlayerView = view.findViewById(R.id.youtube_player_view);
+        videoPlayerContainer = view.findViewById(R.id.video_player_container);
+        youTubeWebView = view.findViewById(R.id.youtube_webview);
 
         setupVideoPlayer();
         setupFormattingButtons();
@@ -106,40 +144,77 @@ public class VideoNotesFragment extends Fragment {
     }
 
     private void setupVideoPlayer() {
-        getLifecycle().addObserver(youTubePlayerView);
+        // Configure WebView for YouTube video playback
+        WebSettings webSettings = youTubeWebView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setMediaPlaybackRequiresUserGesture(false);
+        webSettings.setAllowContentAccess(true);
+        webSettings.setAllowFileAccess(true);
+        webSettings.setLoadWithOverviewMode(true);
+        webSettings.setUseWideViewPort(true);
 
-        youTubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
+        youTubeWebView.setWebViewClient(new WebViewClient() {
             @Override
-            public void onReady(@NonNull YouTubePlayer youTubePlayer) {
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
                 if (loadingOverlay != null) {
                     loadingOverlay.setVisibility(View.GONE);
                 }
+            }
+        });
 
-                String videoId = getVideoIdFromUrl(videoUrl);
+        youTubeWebView.setWebChromeClient(new WebChromeClient() {
+            private View customView;
+            private WebChromeClient.CustomViewCallback customViewCallback;
 
-                if (videoId != null && !videoId.isEmpty()) {
-                    Log.d(TAG, "✅ Loading Video ID: " + videoId);
-                    youTubePlayer.loadVideo(videoId, 0);
-                } else {
-                    if (getContext() != null) {
-                        Toast.makeText(getContext(), "Invalid Video URL", Toast.LENGTH_SHORT).show();
-                    }
+            @Override
+            public void onShowCustomView(View view, CustomViewCallback callback) {
+                customView = view;
+                customViewCallback = callback;
+                if (videoPlayerContainer != null) {
+                    videoPlayerContainer.addView(view);
                 }
             }
 
             @Override
-            public void onError(@NonNull YouTubePlayer youTubePlayer, @NonNull com.pierfrancescosoffritti.androidyoutubeplayer.core.player.PlayerConstants.PlayerError error) {
-                super.onError(youTubePlayer, error);
-                Log.e(TAG, "❌ Player Error: " + error.name());
+            public void onHideCustomView() {
+                if (customView != null && videoPlayerContainer != null) {
+                    videoPlayerContainer.removeView(customView);
+                    customView = null;
+                }
+                if (customViewCallback != null) {
+                    customViewCallback.onCustomViewHidden();
+                }
             }
         });
+
+        // Load the video
+        String videoId = getVideoIdFromUrl(videoUrl);
+        if (videoId != null && !videoId.isEmpty()) {
+            Log.d(TAG, "✅ Loading Video ID: " + videoId);
+            String embedUrl = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&playsinline=1&rel=0";
+            String html = "<html><body style='margin:0;padding:0;background:#000;'>" +
+                    "<iframe width='100%' height='100%' src='" + embedUrl + "' " +
+                    "frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' " +
+                    "allowfullscreen></iframe></body></html>";
+            youTubeWebView.loadData(html, "text/html", "utf-8");
+        } else {
+            if (getContext() != null) {
+                Toast.makeText(getContext(), "Invalid Video URL", Toast.LENGTH_SHORT).show();
+            }
+            if (loadingOverlay != null) {
+                loadingOverlay.setVisibility(View.GONE);
+            }
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (youTubePlayerView != null) {
-            youTubePlayerView.release();
+        if (youTubeWebView != null) {
+            youTubeWebView.loadUrl("about:blank");
+            youTubeWebView.destroy();
         }
     }
 
@@ -150,6 +225,34 @@ public class VideoNotesFragment extends Fragment {
                 notesEditText.setText(passedTranscript);
                 Toast.makeText(getContext(), "✅ Notes auto-filled from transcript!", Toast.LENGTH_SHORT).show();
             }
+        }
+        // Try loading from repository
+        else if (videoUrl != null && !videoUrl.isEmpty()) {
+            notesRepository.loadNotes(videoUrl, new VideoNotesRepository.OnNotesLoadedListener() {
+                @Override
+                public void onNotesLoaded(String content, Date updatedAt) {
+                    if (getActivity() != null && content != null && !content.isEmpty()) {
+                        getActivity().runOnUiThread(() -> {
+                            // Load HTML content back as Spannable
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                notesEditText.setText(Html.fromHtml(content, Html.FROM_HTML_MODE_LEGACY));
+                            } else {
+                                notesEditText.setText(Html.fromHtml(content));
+                            }
+                        });
+                    } else if (notesEditText.getText().toString().trim().isEmpty()) {
+                        fetchTranscriptBackground();
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    Log.e(TAG, "Failed to load notes", e);
+                    if (notesEditText.getText().toString().trim().isEmpty()) {
+                        fetchTranscriptBackground();
+                    }
+                }
+            });
         }
         // If empty, try fetching in background
         else if (notesEditText.getText().toString().trim().isEmpty()) {
@@ -195,6 +298,10 @@ public class VideoNotesFragment extends Fragment {
         buttonUndo.setOnClickListener(v -> undo());
         buttonRedo.setOnClickListener(v -> redo());
         buttonSave.setOnClickListener(v -> saveNotes());
+        
+        if (buttonScreenshot != null) {
+            buttonScreenshot.setOnClickListener(v -> requestScreenshotPermission());
+        }
     }
 
     private void setupTextWatcher() {
@@ -381,12 +488,28 @@ public class VideoNotesFragment extends Fragment {
     // ==================== SAVING ====================
 
     private void saveNotes() {
-        String notes = notesEditText.getText().toString();
-        if (notes.trim().isEmpty()) {
+        // Anti-spam protection
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastSaveClickTime < CLICK_DELAY) {
+            return;
+        }
+        lastSaveClickTime = currentTime;
+
+        Editable editable = notesEditText.getText();
+        if (editable.toString().trim().isEmpty()) {
             Toast.makeText(getContext(), "Notes are empty", Toast.LENGTH_SHORT).show();
             return;
         }
-        notesRepository.saveNotes(videoUrl, notes, new VideoNotesRepository.OnNoteSavedListener() {
+
+        // Convert Spannable to HTML to preserve formatting
+        String htmlContent;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            htmlContent = Html.toHtml(editable, Html.TO_HTML_PARAGRAPH_LINES_CONSECUTIVE);
+        } else {
+            htmlContent = Html.toHtml(editable);
+        }
+
+        notesRepository.saveNotes(videoUrl, htmlContent, new VideoNotesRepository.OnNoteSavedListener() {
             @Override
             public void onNoteSaved() {
                 if (getActivity() != null) {
@@ -402,6 +525,70 @@ public class VideoNotesFragment extends Fragment {
                 }
             }
         });
+    }
+
+    // ==================== SCREENSHOT ====================
+
+    private void requestScreenshotPermission() {
+        // Anti-spam protection
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastScreenshotClickTime < CLICK_DELAY) {
+            return;
+        }
+        lastScreenshotClickTime = currentTime;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android 10+ doesn't need permission for MediaStore
+            takeScreenshot();
+        } else if (ContextCompat.checkSelfPermission(requireContext(), 
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            takeScreenshot();
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+    }
+
+    private void takeScreenshot() {
+        try {
+            View notesCard = getView() != null ? getView().findViewById(R.id.notes_card) : null;
+            if (notesCard == null) {
+                Toast.makeText(getContext(), "Cannot capture screenshot", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Create bitmap from the notes card
+            Bitmap bitmap = Bitmap.createBitmap(notesCard.getWidth(), notesCard.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            notesCard.draw(canvas);
+
+            // Save to gallery
+            String fileName = "Learnify_Notes_" + System.currentTimeMillis() + ".png";
+            
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Images.Media.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Learnify");
+            }
+
+            Uri imageUri = requireContext().getContentResolver().insert(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+            if (imageUri != null) {
+                try (OutputStream outputStream = requireContext().getContentResolver().openOutputStream(imageUri)) {
+                    if (outputStream != null) {
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+                        Toast.makeText(getContext(), "📸 Screenshot saved to gallery!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            } else {
+                Toast.makeText(getContext(), "Failed to save screenshot", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Screenshot failed", e);
+            Toast.makeText(getContext(), "Screenshot failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     // ==================== ID EXTRACTION ====================

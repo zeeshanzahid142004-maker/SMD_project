@@ -142,6 +142,35 @@ public class VideoNotesRepository {
     }
 
     /**
+     * Toggle favorite status for a video note
+     */
+    public void toggleFavorite(String videoUrl, boolean isFavorite, OnFavoriteToggledListener listener) {
+        FirebaseUser user = auth.getCurrentUser();
+        if (user == null) {
+            listener.onError(new Exception("User not authenticated"));
+            return;
+        }
+
+        String userId = user.getUid();
+        String noteId = generateNoteId(videoUrl);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("isFavorite", isFavorite);
+
+        db.collection("users").document(userId)
+                .collection("videoNotes").document(noteId)
+                .update(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✅ Favorite toggled successfully");
+                    listener.onFavoriteToggled(isFavorite);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Failed to toggle favorite", e);
+                    listener.onError(e);
+                });
+    }
+
+    /**
      * Generate consistent note ID from video URL
      */
     private String generateNoteId(String videoUrl) {
@@ -171,12 +200,18 @@ public class VideoNotesRepository {
         void onError(Exception e);
     }
 
+    public interface OnFavoriteToggledListener {
+        void onFavoriteToggled(boolean isFavorite);
+        void onError(Exception e);
+    }
+
     // Model class
     public static class VideoNote {
         public String videoUrl;
         public String content;
         public Date updatedAt;
         public String userId;
+        public boolean isFavorite;
 
         public VideoNote() {}
 
@@ -185,6 +220,15 @@ public class VideoNotesRepository {
             this.content = content;
             this.updatedAt = updatedAt;
             this.userId = userId;
+            this.isFavorite = false;
+        }
+
+        public VideoNote(String videoUrl, String content, Date updatedAt, String userId, boolean isFavorite) {
+            this.videoUrl = videoUrl;
+            this.content = content;
+            this.updatedAt = updatedAt;
+            this.userId = userId;
+            this.isFavorite = isFavorite;
         }
     }
 }

@@ -3,6 +3,8 @@ package com.example.learnify;
 import android.view. LayoutInflater;
 import android. view.View;
 import android. view.ViewGroup;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.ImageView;
 import android.widget. TextView;
 
@@ -13,13 +15,20 @@ import androidx. recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
+public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> implements Filterable {
 
-    private final List<QuizAttempt> attempts;
+    private List<QuizAttempt> attempts;
+    private List<QuizAttempt> attemptsFull; // For filtering
     private final OnHistoryActionListener listener;
+
+    // Anti-spam protection
+    private long lastDownloadClickTime = 0;
+    private long lastFavoriteClickTime = 0;
+    private static final long CLICK_DELAY = 1000; // 1 second
 
     public interface OnHistoryActionListener {
         void onDownload(QuizAttempt attempt, int position);
@@ -29,6 +38,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
     // ⭐ CORRECT CONSTRUCTOR - Takes List and Listener
     public HistoryAdapter(List<QuizAttempt> attempts, OnHistoryActionListener listener) {
         this.attempts = attempts;
+        this.attemptsFull = new ArrayList<>(attempts);
         this.listener = listener; // Can be null if you don't need callbacks
     }
 
@@ -78,15 +88,27 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
             holder. btnDownload.setEnabled(true);
         }
 
-        // Favorite button click
+        // Favorite button click with anti-spam
         holder.ivFavorite.setOnClickListener(v -> {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastFavoriteClickTime < CLICK_DELAY) {
+                return;
+            }
+            lastFavoriteClickTime = currentTime;
+
             if (listener != null) {
                 listener.onToggleFavorite(attempt, position);
             }
         });
 
-        // Download button click
+        // Download button click with anti-spam
         holder.btnDownload.setOnClickListener(v -> {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastDownloadClickTime < CLICK_DELAY) {
+                return;
+            }
+            lastDownloadClickTime = currentTime;
+
             if (listener != null) {
                 listener.onDownload(attempt, position);
             }
@@ -103,13 +125,55 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
 
     public void updateItem(int position, QuizAttempt updatedAttempt) {
         attempts.set(position, updatedAttempt);
+        attemptsFull.set(position, updatedAttempt);
         notifyItemChanged(position);
+    }
+
+    public void updateFullList(List<QuizAttempt> newAttempts) {
+        this.attemptsFull = new ArrayList<>(newAttempts);
     }
 
     @Override
     public int getItemCount() {
         return attempts.size();
     }
+
+    @Override
+    public Filter getFilter() {
+        return historyFilter;
+    }
+
+    private final Filter historyFilter = new Filter() {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<QuizAttempt> filteredList = new ArrayList<>();
+
+            if (constraint == null || constraint.length() == 0) {
+                filteredList.addAll(attemptsFull);
+            } else {
+                String filterPattern = constraint.toString().toLowerCase().trim();
+
+                for (QuizAttempt item : attemptsFull) {
+                    if (item.quizTitle != null && 
+                        item.quizTitle.toLowerCase().contains(filterPattern)) {
+                        filteredList.add(item);
+                    }
+                }
+            }
+
+            FilterResults results = new FilterResults();
+            results.values = filteredList;
+            return results;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            attempts.clear();
+            attempts.addAll((List<QuizAttempt>) results.values);
+            notifyDataSetChanged();
+        }
+    };
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvQuizTitle;

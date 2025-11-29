@@ -35,18 +35,15 @@
             <ProgressBar
                 android:layout_width="48dp"
                 android:layout_height="48dp"
+                android:layout_gravity="center"
                 android:indeterminate="true"/>
 
         </FrameLayout>
 
-        <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
-            android:id="@+id/youtube_player_view"
+        <WebView
+            android:id="@+id/youtube_webview"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:autoPlay="false"
-
-
-            />
+            android:layout_height="match_parent" />
 
         <!-- FULLSCREEN BUTTON -->
         <ImageView

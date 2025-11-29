@@ -17,6 +17,38 @@
         app:navigationIcon="@drawable/ic_back_button"
         app:elevation="4dp" />
 
+    <!-- Search Bar -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/white">
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:queryHint="Search quiz history..."
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- No Results Message -->
+    <TextView
+        android:id="@+id/tv_no_results"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:text="No results found"
+        android:textColor="@color/text_secondary_gray"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
     <!-- Empty State -->
     <LinearLayout
         android:id="@+id/ll_empty_state"

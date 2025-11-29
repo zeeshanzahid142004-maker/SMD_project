@@ -1,6 +1,8 @@
 package com.example. learnify;
 
 import android. os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android. util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -9,6 +11,7 @@ import android.widget. Toast;
 
 import androidx.annotation. Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,12 +28,19 @@ public class HistoryActivity extends AppCompatActivity {
     private RecyclerView rvHistory;
     private LinearLayout llEmptyState;
     private TextView tvEmptyMessage;
+    private TextView tvNoResults;
     private MaterialToolbar toolbar;
+    private SearchView searchView;
     private HistoryAdapter adapter;
     private List<QuizAttempt> attempts = new ArrayList<>();
 
     private QuizAttemptRepository attemptRepository;
     private FirebaseFirestore db;
+
+    // Debounce handler for search
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchRunnable;
+    private static final long SEARCH_DEBOUNCE_DELAY = 300; // 300ms
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -47,6 +57,8 @@ public class HistoryActivity extends AppCompatActivity {
         rvHistory = findViewById(R.id.rv_history);
         llEmptyState = findViewById(R.id.ll_empty_state);
         tvEmptyMessage = findViewById(R.id.tv_empty_message);
+        tvNoResults = findViewById(R.id.tv_no_results);
+        searchView = findViewById(R.id.search_view);
 
         // Setup toolbar
         setSupportActionBar(toolbar);
@@ -72,8 +84,67 @@ public class HistoryActivity extends AppCompatActivity {
         });
         rvHistory.setAdapter(adapter);
 
+        // Setup search functionality
+        setupSearch();
+
         // Load all history
         loadAllHistory();
+    }
+
+    private void setupSearch() {
+        if (searchView != null) {
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    performSearch(query);
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    // Debounce search input
+                    if (searchRunnable != null) {
+                        searchHandler.removeCallbacks(searchRunnable);
+                    }
+                    searchRunnable = () -> performSearch(newText);
+                    searchHandler.postDelayed(searchRunnable, SEARCH_DEBOUNCE_DELAY);
+                    return true;
+                }
+            });
+
+            // Handle close button
+            searchView.setOnCloseListener(() -> {
+                if (adapter != null) {
+                    adapter.getFilter().filter("");
+                }
+                hideNoResults();
+                return false;
+            });
+        }
+    }
+
+    private void performSearch(String query) {
+        if (adapter != null) {
+            adapter.getFilter().filter(query, count -> {
+                if (count == 0 && !query.isEmpty()) {
+                    showNoResults();
+                } else {
+                    hideNoResults();
+                }
+            });
+        }
+    }
+
+    private void showNoResults() {
+        if (tvNoResults != null) {
+            tvNoResults.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void hideNoResults() {
+        if (tvNoResults != null) {
+            tvNoResults.setVisibility(View.GONE);
+        }
     }
 
     private void loadAllHistory() {
@@ -89,6 +160,7 @@ public class HistoryActivity extends AppCompatActivity {
                     showEmptyState();
                 } else {
                     showContent();
+                    adapter.updateFullList(loadedAttempts);
                     adapter.notifyDataSetChanged();
                     Log.d(TAG, "✅ Loaded " + attempts.size() + " history items");
                 }

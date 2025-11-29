@@ -25,9 +25,13 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.common.api.Scope;
 import com.google.android.material.button.MaterialButton;
+import com.google.api.services.drive.DriveScopes;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -59,7 +63,9 @@ public class ProfileFragment extends Fragment {
 
     private LanguageManager languageManager;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
+    private ActivityResultLauncher<Intent> driveReAuthLauncher;
     private Uri selectedImageUri;
+    private Uri pendingImageUri; // Store URI when re-auth is needed
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -79,7 +85,7 @@ public class ProfileFragment extends Fragment {
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
-                .requestScopes(new com.google.android.gms.common.api.Scope("https://www.googleapis.com/auth/drive.file"))
+                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
 
@@ -89,6 +95,32 @@ public class ProfileFragment extends Fragment {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         selectedImageUri = result.getData().getData();
                         uploadProfilePhotoToDrive(selectedImageUri);
+                    }
+                }
+        );
+
+        // Re-authentication launcher for Drive scope
+        driveReAuthLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        try {
+                            GoogleSignInAccount account = GoogleSignIn.getSignedInAccountFromIntent(result.getData())
+                                    .getResult(ApiException.class);
+                            Log.d(TAG, "Re-authentication successful with Drive scope");
+                            // Reinitialize Drive manager with new credentials
+                            driveManager = new GoogleDriveManager(requireContext());
+                            // Now try to upload the pending image
+                            if (pendingImageUri != null) {
+                                uploadProfilePhotoToDrive(pendingImageUri);
+                                pendingImageUri = null;
+                            }
+                        } catch (ApiException e) {
+                            Log.e(TAG, "Re-authentication failed", e);
+                            Toast.makeText(getContext(), "Failed to get Drive access", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), "Drive access cancelled", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -246,7 +278,15 @@ public class ProfileFragment extends Fragment {
 
     private void selectProfilePhoto() {
         if (!driveManager.isAvailable()) {
-            Toast.makeText(getContext(), "⚠️ Please sign in with Google to upload photos", Toast.LENGTH_LONG).show();
+            // Check if user needs to re-authenticate with Drive scope
+            GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(requireContext());
+            if (account != null) {
+                // User is signed in but doesn't have Drive scope, trigger re-auth
+                Toast.makeText(getContext(), "📂 Requesting Drive access...", Toast.LENGTH_SHORT).show();
+                triggerDriveReAuthentication();
+            } else {
+                Toast.makeText(getContext(), "⚠️ Please sign in with Google to upload photos", Toast.LENGTH_LONG).show();
+            }
             return;
         }
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -254,9 +294,27 @@ public class ProfileFragment extends Fragment {
         imagePickerLauncher.launch(intent);
     }
 
+    private void triggerDriveReAuthentication() {
+        // First, sign out to clear cached credentials
+        mGoogleSignInClient.signOut().addOnCompleteListener(task -> {
+            // Now sign in again with Drive scope
+            Intent signInIntent = mGoogleSignInClient.getSignInIntent();
+            driveReAuthLauncher.launch(signInIntent);
+        });
+    }
+
     private void uploadProfilePhotoToDrive(Uri imageUri) {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
+        
+        // Check if Drive manager is available
+        if (!driveManager.isAvailable()) {
+            // Store the image URI and trigger re-auth
+            pendingImageUri = imageUri;
+            triggerDriveReAuthentication();
+            return;
+        }
+        
         String userId = user.getUid();
         Toast.makeText(getContext(), "📤 Uploading to Drive...", Toast.LENGTH_SHORT).show();
         driveManager.uploadProfilePhoto(imageUri, userId, new GoogleDriveManager.UploadCallback() {
