@@ -73,9 +73,6 @@ public class VideoNotesFragment extends Fragment {
     private boolean isItalicModeActive = false;
     private boolean isUnderlineModeActive = false;
     private boolean isHighlightModeActive = false;
-    
-    // Track cursor position for applying formatting to new text
-    private int lastCursorPosition = 0;
 
     // Anti-spam protection
     private long lastSaveClickTime = 0;
@@ -334,11 +331,9 @@ public class VideoNotesFragment extends Fragment {
 
     private void setupTextWatcher() {
         notesEditText.addTextChangedListener(new TextWatcher() {
-            private int beforeLength = 0;
-            
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                beforeLength = s.length();
+                // No action needed
             }
             
             @Override

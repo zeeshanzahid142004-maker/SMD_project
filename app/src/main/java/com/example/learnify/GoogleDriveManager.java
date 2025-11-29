@@ -333,8 +333,13 @@ public class GoogleDriveManager {
                 Log.d(TAG, "📤 Uploading note image to Drive");
 
                 // Create a unique filename based on timestamp
-                String sanitizedUrl = videoUrl != null ? 
-                    videoUrl.replaceAll("[^a-zA-Z0-9]", "_").substring(0, Math.min(20, videoUrl.length())) : "note";
+                String sanitizedUrl;
+                if (videoUrl != null && !videoUrl.isEmpty()) {
+                    String sanitized = videoUrl.replaceAll("[^a-zA-Z0-9]", "_");
+                    sanitizedUrl = sanitized.substring(0, Math.min(20, sanitized.length()));
+                } else {
+                    sanitizedUrl = "note";
+                }
                 String fileName = "note_" + sanitizedUrl + "_" + System.currentTimeMillis() + ".jpg";
                 
                 // Save bitmap to temp file

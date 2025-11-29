@@ -26,6 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 public class HistoryActivity extends AppCompatActivity {
@@ -188,20 +189,10 @@ public class HistoryActivity extends AppCompatActivity {
         // Apply sorting
         switch (currentSortOption) {
             case "Newest First":
-                Collections.sort(filteredAttempts, (a, b) -> {
-                    if (b.attemptedAt == null && a.attemptedAt == null) return 0;
-                    if (b.attemptedAt == null) return -1;
-                    if (a.attemptedAt == null) return 1;
-                    return b.attemptedAt.compareTo(a.attemptedAt);
-                });
+                Collections.sort(filteredAttempts, (a, b) -> compareDatesDescending(a.attemptedAt, b.attemptedAt));
                 break;
             case "Oldest First":
-                Collections.sort(filteredAttempts, (a, b) -> {
-                    if (a.attemptedAt == null && b.attemptedAt == null) return 0;
-                    if (a.attemptedAt == null) return -1;
-                    if (b.attemptedAt == null) return 1;
-                    return a.attemptedAt.compareTo(b.attemptedAt);
-                });
+                Collections.sort(filteredAttempts, (a, b) -> compareDatesAscending(a.attemptedAt, b.attemptedAt));
                 break;
             case "Highest Score":
                 Collections.sort(filteredAttempts, (a, b) -> Integer.compare(b.percentage, a.percentage));
@@ -360,5 +351,25 @@ public class HistoryActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadAllHistory(); // Refresh when returning
+    }
+
+    /**
+     * Compare two dates in descending order (newest first), handling nulls
+     */
+    private int compareDatesDescending(Date a, Date b) {
+        if (a == null && b == null) return 0;
+        if (a == null) return 1;
+        if (b == null) return -1;
+        return b.compareTo(a);
+    }
+
+    /**
+     * Compare two dates in ascending order (oldest first), handling nulls
+     */
+    private int compareDatesAscending(Date a, Date b) {
+        if (a == null && b == null) return 0;
+        if (a == null) return 1;
+        if (b == null) return -1;
+        return a.compareTo(b);
     }
 }

@@ -85,7 +85,7 @@ public class QuizReviewAdapter extends RecyclerView.Adapter<QuizReviewAdapter.Vi
             // User's answer
             String userAnswer = "Not answered";
             if (question.isAnswered) {
-                if (question.selectedOptionIndex >= 0 && question.options != null 
+                if (question.options != null && question.selectedOptionIndex >= 0 
                         && question.selectedOptionIndex < question.options.size()) {
                     userAnswer = question.options.get(question.selectedOptionIndex);
                 } else if (question.isCodingQuestion()) {
