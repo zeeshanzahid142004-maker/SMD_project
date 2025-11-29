@@ -3,7 +3,7 @@
     <item android:id="@android:id/background">
         <shape android:shape="rectangle">
             <corners android:radius="4dp" />
-            <solid android:color="#E0E0E0" />
+            <solid android:color="#9E9E9E" />
         </shape>
     </item>
 
@@ -11,12 +11,7 @@
         <clip>
             <shape android:shape="rectangle">
                 <corners android:radius="4dp" />
-                <gradient
-                    android:startColor="@color/figma_green_correct"
-                    android:centerColor="@color/figma_green_correct"
-                    android:endColor="@color/figma_red_error"
-                    android:type="linear"
-                    android:angle="0" />
+                <solid android:color="#4CAF50" />
             </shape>
         </clip>
     </item>

@@ -173,13 +173,21 @@ public class linkFragment extends Fragment {
     }
 
     private void showLoadingState(String message) {
-        enterLinkContainer.setVisibility(View.GONE);
-        loadingContainer.setVisibility(View.VISIBLE);
+        // Keep enter link container visible but disable interaction
+        enterLinkContainer.setVisibility(View.VISIBLE);
+        pasteButton.setEnabled(false);
+        pasteButton.setText(message);
+        linkInput.setEnabled(false);
+        
+        // Hide the full-screen loading overlay - just show inline progress
+        loadingContainer.setVisibility(View.GONE);
         confirmationContainer.setVisibility(View.GONE);
+    }
 
-        if (loadingMessage != null) {
-            loadingMessage.setText(message);
-        }
+    private void resetLoadingState() {
+        pasteButton.setEnabled(true);
+        pasteButton.setText(R.string.go);
+        linkInput.setEnabled(true);
     }
 
     private void updateUiState() {
@@ -187,6 +195,7 @@ public class linkFragment extends Fragment {
             enterLinkContainer.setVisibility(View.GONE);
             loadingContainer.setVisibility(View.GONE);
             confirmationContainer.setVisibility(View.VISIBLE);
+            resetLoadingState();
 
             // Update button text based on content type
             if (isYouTubeVideo) {
@@ -201,6 +210,7 @@ public class linkFragment extends Fragment {
             enterLinkContainer.setVisibility(View.VISIBLE);
             loadingContainer.setVisibility(View.GONE);
             confirmationContainer.setVisibility(View.GONE);
+            resetLoadingState();
         }
     }
 
