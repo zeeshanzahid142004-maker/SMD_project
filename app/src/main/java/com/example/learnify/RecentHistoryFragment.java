@@ -20,13 +20,14 @@ import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import com.google.android.material.card.MaterialCardView;
 public class RecentHistoryFragment extends Fragment {
 
     private static final String TAG = "RecentHistoryFragment";
 
     private RecyclerView rvRecentHistory;
-    private LinearLayout llEmptyHistory;
+    private MaterialCardView llEmptyHistory;
+
     private MaterialButton btnViewMore;
     private HistoryAdapter adapter;
     private List<QuizAttempt> recentAttempts = new ArrayList<>();
