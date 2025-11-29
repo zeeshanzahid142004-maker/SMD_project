@@ -37,7 +37,11 @@
             android:padding="2dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+<<<<<<< HEAD
             android:contentDescription="Delete Note"/>
+=======
+            android:contentDescription="Note Icon"/>
+>>>>>>> origin/copilot/fix-video-player-google-drive-upload
 
         <TextView
             android:id="@+id/note_title"
@@ -47,18 +51,63 @@
             tools:text="Video Notes"
             style="@style/TextAppearance.Body.Small.Bold"
             android:textSize="16sp"
+<<<<<<< HEAD
             android:maxLines="2"
             android:ellipsize="end"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/note_icon"/>
+=======
+            app:layout_constraintEnd_toStartOf="@id/note_favorite"
+            app:layout_constraintStart_toEndOf="@id/note_icon"
+            app:layout_constraintTop_toTopOf="parent"/>
+
+        <ImageView
+            android:id="@+id/note_favorite"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_favorite_border"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Favorite"
+            app:layout_constraintEnd_toStartOf="@id/note_delete"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/note_delete"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_close_white"
+            app:tint="@color/text_secondary_gray"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Delete"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/note_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            tools:text="Today"
+            style="@style/TextAppearance.Body.Small.Medium"
+            android:textColor="@color/text_secondary_gray"
+            android:textSize="12sp"
+            app:layout_constraintStart_toStartOf="@id/note_title"
+            app:layout_constraintTop_toBottomOf="@id/note_title" />
+>>>>>>> origin/copilot/fix-video-player-google-drive-upload
 
         <TextView
             android:id="@+id/note_preview"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+<<<<<<< HEAD
             android:layout_marginTop="4dp"
             android:maxLines="3"
+=======
+            android:layout_marginTop="8dp"
+>>>>>>> origin/copilot/fix-video-player-google-drive-upload
             android:ellipsize="end"
             tools:text="This is a summary of the video about Java programming..."
             style="@style/TextAppearance.Body.Small.Medium"
@@ -66,6 +115,7 @@
             android:textSize="12sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+<<<<<<< HEAD
             app:layout_constraintTop_toBottomOf="@id/note_title"/>
 
         <TextView
@@ -80,6 +130,10 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/note_preview"/>
+=======
+            app:layout_constraintStart_toStartOf="@id/note_title"
+            app:layout_constraintTop_toBottomOf="@id/note_date"/>
+>>>>>>> origin/copilot/fix-video-player-google-drive-upload
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
