@@ -8,6 +8,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.content.ContextCompat;
+
 /**
  * Custom themed toast messages with different types:
  * SUCCESS (green), ERROR (red), INFO (dark), WARNING (yellow)
@@ -81,8 +83,8 @@ public class CustomToast {
                 layout.setBackgroundResource(R.drawable.bg_toast_warning);
                 icon.setImageResource(R.drawable.ic_notification);
                 // Set dark text for warning (yellow background)
-                text.setTextColor(context.getResources().getColor(R.color.text_primary_dark));
-                icon.setColorFilter(context.getResources().getColor(R.color.text_primary_dark));
+                text.setTextColor(ContextCompat.getColor(context, R.color.text_primary_dark));
+                icon.setColorFilter(ContextCompat.getColor(context, R.color.text_primary_dark));
                 break;
         }
 
