@@ -3,7 +3,6 @@ package com.example.learnify;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import com.google.mlkit.vision.common.InputImage;
