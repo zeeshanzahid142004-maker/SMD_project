@@ -49,7 +49,8 @@
                         android:layout_height="match_parent"
                         android:padding="2dp"
                         android:src="@drawable/ic_profile_inactive"
-                        android:scaleType="centerCrop"/>
+                        android:scaleType="centerCrop"
+                        android:contentDescription="Profile Picture"/>
                 </androidx.cardview.widget.CardView>
 
                 <ImageView
@@ -62,7 +63,8 @@
                     app:tint="@color/figma_purple_main"
                     android:elevation="8dp"
                     app:layout_constraintEnd_toEndOf="@id/card_avatar"
-                    app:layout_constraintBottom_toBottomOf="@id/card_avatar"/>
+                    app:layout_constraintBottom_toBottomOf="@id/card_avatar"
+                    android:contentDescription="Edit Profile"/>
 
                 <TextView
                     android:id="@+id/tv_profile_name"
@@ -97,7 +99,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/general"
+            android:text="General"
             style="@style/TextAppearance.Header.Small"
             android:textSize="18sp"
             android:layout_marginTop="32dp"
@@ -123,7 +125,7 @@
                     android:id="@+id/row_language"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/language"
+                    android:text="Language"
                     style="@style/ProfileOptionRow"
                     app:drawableStartCompat="@drawable/ic_help"
                     app:drawableTint="@color/figma_purple_main"/>
@@ -134,7 +136,7 @@
                     android:id="@+id/row_appearance"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/appearance"
+                    android:text="Appearance"
                     style="@style/ProfileOptionRow"
                     app:drawableStartCompat="@drawable/ic_appearance" />
             </LinearLayout>
@@ -143,7 +145,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/support"
+            android:text="Support"
             style="@style/TextAppearance.Header.Small"
             android:textSize="18sp"
             android:layout_marginTop="24dp"
@@ -164,14 +166,40 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
                     android:id="@+id/row_help"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/help_center"
-                    style="@style/ProfileOptionRow"
-                    android:paddingVertical="16dp"
-                    app:drawableStartCompat="@drawable/ic_help" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:padding="16dp"
+                    android:background="?attr/selectableItemBackground">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_help"
+                        app:tint="@color/figma_purple_main"
+                        android:contentDescription="Help Icon"/>
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="16dp"
+                        android:text="Help Center"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary_dark"
+                        android:fontFamily="@font/manrope_medium"/>
+
+                    <ImageView
+                        android:id="@+id/help_arrow"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_chevron_right"
+                        app:tint="@color/text_secondary_gray"
+                        android:contentDescription="Arrow"/>
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/help_expandable_view"
@@ -185,27 +213,28 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/need_assistance"
+                        android:text="Need assistance? Email us at:"
                         android:textSize="14sp"
                         android:textColor="@color/text_secondary_gray"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/support_email"
+                        android:text="support@learnify.com"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:textColor="@color/figma_purple_main"
                         android:layout_marginTop="4dp"
                         android:autoLink="email"/>
                 </LinearLayout>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/account"
+            android:text="Account"
             style="@style/TextAppearance.Header.Small"
             android:textSize="18sp"
             android:layout_marginTop="24dp"
@@ -231,7 +260,7 @@
                     android:id="@+id/row_delete_account"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/delete_account"
+                    android:text="Delete Account"
                     style="@style/ProfileOptionRow"
                     android:textColor="@color/figma_red_error"
                     app:drawableStartCompat="@drawable/ic_wrong_x"
@@ -244,7 +273,7 @@
             android:id="@+id/btn_sign_out"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="@string/sign_out"
+            android:text="Sign Out"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:textColor="@color/figma_red_error"
             app:strokeColor="@color/figma_red_error"

@@ -1,5 +1,6 @@
 package com.example.learnify;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -408,6 +409,7 @@ public class DialogHelper {
     /**
      * Callback interface for image source selection
      */
+// Make sure this method exists in DialogHelper.java
 
     public static Dialog createImageSourceDialog(Context context, ImageSourceCallback callback) {
         Dialog dialog = new Dialog(context);

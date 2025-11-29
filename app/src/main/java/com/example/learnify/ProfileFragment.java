@@ -7,33 +7,32 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
+import android. util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget. TextView;
+import android.widget. Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation. Nullable;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import com.google.android.gms.auth.api.signin.GoogleSignInClient;
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.auth. api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api. signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin. GoogleSignInOptions;
+import com.google.android.gms. common.api.ApiException;
 import com.google.android.gms.common.api.Scope;
 import com.google.android.material.button.MaterialButton;
 import com.google.api.services.drive.DriveScopes;
-import com.google.firebase.auth.FirebaseAuth;
+import com. google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -60,14 +59,19 @@ public class ProfileFragment extends Fragment {
     private TextView tvProfileName, tvProfileEmail;
     private MaterialButton btnSignOut;
     private ImageView btnEditProfile;
-    private TextView rowLanguage, rowAppearance, rowHelp;
+    private TextView rowLanguage, rowAppearance, rowDeleteAccount;
+    private LinearLayout rowHelp;
     private LinearLayout helpExpandableView;
+    private ImageView helpArrow;
+
+    // Help section state
+    private boolean isHelpExpanded = false;
 
     private LanguageManager languageManager;
     private ActivityResultLauncher<Intent> imagePickerLauncher;
     private ActivityResultLauncher<Intent> driveReAuthLauncher;
     private Uri selectedImageUri;
-    private Uri pendingImageUri; // Store URI when re-auth is needed
+    private Uri pendingImageUri;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -78,16 +82,16 @@ public class ProfileFragment extends Fragment {
         driveManager = new GoogleDriveManager(requireContext());
         languageManager = LanguageManager.getInstance(requireContext());
 
-        // --- 1. Load Language from Preferences immediately ---
+        // Load Language from Preferences
         SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String savedLangCode = prefs.getString(KEY_LANG_CODE, "en"); // Default English
+        String savedLangCode = prefs.getString(KEY_LANG_CODE, "en");
         String savedLangName = prefs.getString(KEY_LANG_NAME, "English");
         languageManager.setLanguage(requireContext(), savedLangName, savedLangCode);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
-                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
+                . requestScopes(new Scope(DriveScopes.DRIVE_FILE))
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
 
@@ -101,7 +105,6 @@ public class ProfileFragment extends Fragment {
                 }
         );
 
-        // Re-authentication launcher for Drive scope
         driveReAuthLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -110,16 +113,14 @@ public class ProfileFragment extends Fragment {
                             GoogleSignInAccount account = GoogleSignIn.getSignedInAccountFromIntent(result.getData())
                                     .getResult(ApiException.class);
                             Log.d(TAG, "Re-authentication successful with Drive scope");
-                            // Reinitialize Drive manager with new credentials
                             driveManager = new GoogleDriveManager(requireContext());
-                            // Now try to upload the pending image
                             if (pendingImageUri != null) {
                                 uploadProfilePhotoToDrive(pendingImageUri);
                                 pendingImageUri = null;
                             }
                         } catch (ApiException e) {
                             Log.e(TAG, "Re-authentication failed", e);
-                            Toast.makeText(getContext(), "Failed to get Drive access", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "Failed to get Drive access", Toast.LENGTH_SHORT). show();
                         }
                     } else {
                         Toast.makeText(getContext(), "Drive access cancelled", Toast.LENGTH_SHORT).show();
@@ -139,40 +140,130 @@ public class ProfileFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // Find views
-        ivProfileAvatar = view.findViewById(R.id.iv_profile_avatar);
-        tvProfileName = view.findViewById(R.id.tv_profile_name);
-        tvProfileEmail = view.findViewById(R.id.tv_profile_email);
-        btnEditProfile = view.findViewById(R.id.btn_edit_profile);
+        ivProfileAvatar = view.findViewById(R. id.iv_profile_avatar);
+        tvProfileName = view. findViewById(R.id.tv_profile_name);
+        tvProfileEmail = view.findViewById(R. id.tv_profile_email);
+        btnEditProfile = view.findViewById(R. id.btn_edit_profile);
         btnSignOut = view.findViewById(R.id.btn_sign_out);
 
         rowLanguage = view.findViewById(R.id.row_language);
-        rowAppearance = view.findViewById(R.id.row_appearance);
+        rowAppearance = view.findViewById(R.id. row_appearance);
         rowHelp = view.findViewById(R.id.row_help);
         helpExpandableView = view.findViewById(R.id.help_expandable_view);
+        helpArrow = view.findViewById(R.id. help_arrow);
+        rowDeleteAccount = view.findViewById(R.id.row_delete_account);
 
         // Listeners
         btnSignOut.setOnClickListener(v -> signOut());
         btnEditProfile.setOnClickListener(v -> selectProfilePhoto());
         ivProfileAvatar.setOnClickListener(v -> selectProfilePhoto());
         rowLanguage.setOnClickListener(v -> showLanguageDialog());
-
         rowAppearance.setOnClickListener(v -> showThemeDialog());
 
-        // Help Center - toggle expandable view
-        rowHelp.setOnClickListener(v -> {
-            if (helpExpandableView.getVisibility() == View.GONE) {
-                helpExpandableView.setVisibility(View.VISIBLE);
-            } else {
-                helpExpandableView.setVisibility(View.GONE);
-            }
-        });
+        // Help Center - toggle expandable view with animation
+        rowHelp.setOnClickListener(v -> toggleHelpSection());
+
+        // Delete Account
+        if (rowDeleteAccount != null) {
+            rowDeleteAccount.setOnClickListener(v -> showDeleteConfirmation());
+        }
 
         loadUserProfile();
     }
 
+    /**
+     * Toggle help section with arrow animation
+     */
+    private void toggleHelpSection() {
+        if (isHelpExpanded) {
+            // Collapse - rotate arrow back
+            if (helpArrow != null) {
+                helpArrow.animate().rotation(0f).setDuration(200).start();
+            }
+            helpExpandableView.animate()
+                    .alpha(0.0f)
+                    .translationY(-20)
+                    .setDuration(200)
+                    .withEndAction(() -> helpExpandableView.setVisibility(View.GONE))
+                    . start();
+        } else {
+            // Expand - rotate arrow down
+            if (helpArrow != null) {
+                helpArrow.animate().rotation(180f). setDuration(200).start();
+            }
+            helpExpandableView.setVisibility(View. VISIBLE);
+            helpExpandableView.setAlpha(0.0f);
+            helpExpandableView.setTranslationY(-20);
+            helpExpandableView.animate(). alpha(1.0f).translationY(0).setDuration(200).start();
+        }
+        isHelpExpanded = !isHelpExpanded;
+    }
+
+    /**
+     * Show delete account confirmation dialog
+     */
+    private void showDeleteConfirmation() {
+        DialogHelper.showConfirmation(
+                requireContext(),
+                "Delete Account? ",
+                "This action is permanent and cannot be undone.  All your data will be lost.",
+                "Delete",
+                this::deleteUserAccount,
+                "Cancel",
+                null
+        );
+    }
+
+    /**
+     * Delete user account from Firebase
+     */
+    private void deleteUserAccount() {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) {
+            Toast.makeText(getContext(), "No user logged in", Toast.LENGTH_SHORT). show();
+            return;
+        }
+
+        String userId = user.getUid();
+
+        // Show loading
+        Toast.makeText(getContext(), "Deleting account...", Toast.LENGTH_SHORT).show();
+
+        // 1. Delete user data from Firestore
+        db. collection("users").document(userId)
+                .delete()
+                . addOnSuccessListener(aVoid -> {
+                    // 2. Delete Firebase Auth account
+                    user.delete()
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    Log.d(TAG, "✅ Account deleted successfully");
+                                    Toast.makeText(getContext(), "Account deleted", Toast.LENGTH_SHORT).show();
+
+                                    // 3. Sign out from Google
+                                    mGoogleSignInClient.signOut(). addOnCompleteListener(signOutTask -> {
+                                        // 4. Navigate to sign in
+                                        Intent intent = new Intent(getActivity(), signin_activity.class);
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                        startActivity(intent);
+                                        if (getActivity() != null) {
+                                            getActivity().finish();
+                                        }
+                                    });
+                                } else {
+                                    Log.e(TAG, "❌ Failed to delete auth account", task.getException());
+                                    Toast.makeText(getContext(), "Failed to delete account.  Please re-login and try again.", Toast.LENGTH_LONG).show();
+                                }
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    Log. e(TAG, "❌ Failed to delete Firestore data", e);
+                    Toast. makeText(getContext(), "Failed to delete account data", Toast.LENGTH_SHORT).show();
+                });
+    }
+
     private void showThemeDialog() {
         int currentMode = AppCompatDelegate.getDefaultNightMode();
-
         DialogHelper.showThemeSelectionDialog(requireContext(), currentMode, (selectedMode) -> {
             AppCompatDelegate.setDefaultNightMode(selectedMode);
             saveThemePreference(selectedMode);
@@ -181,55 +272,38 @@ public class ProfileFragment extends Fragment {
 
     private void saveThemePreference(int mode) {
         SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(KEY_THEME, mode);
-        editor.apply();
+        prefs.edit().putInt(KEY_THEME, mode).apply();
     }
 
-    /**
-     * Show styled language selection dialog
-     */
     private void showLanguageDialog() {
         List<LanguageManager.Language> languages = LanguageManager.getSupportedLanguages();
-
-        // Get current language code from Preferences (source of truth)
-        SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences prefs = requireContext(). getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String currentCode = prefs.getString(KEY_LANG_CODE, "en");
 
         DialogHelper.showLanguageSelectionDialog(requireContext(), languages, currentCode, (selectedLang) -> {
-            updateLanguage(selectedLang.name, selectedLang.code);
+            updateLanguage(selectedLang. name, selectedLang.code);
         });
     }
 
-    /**
-     * Update app language - Saves to BOTH Prefs and Firestore
-     */
     private void updateLanguage(String languageName, String languageCode) {
-        // 1. Save to SharedPreferences (Local Persistence)
-        SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(KEY_LANG_CODE, languageCode);
-        editor.putString(KEY_LANG_NAME, languageName);
-        editor.apply();
+        SharedPreferences prefs = requireContext(). getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        prefs. edit()
+                .putString(KEY_LANG_CODE, languageCode)
+                . putString(KEY_LANG_NAME, languageName)
+                .apply();
 
-        // 2. Apply immediately
         languageManager.setLanguage(requireContext(), languageName, languageCode);
 
-        // 3. Save to Firestore (Cloud Sync)
         FirebaseUser user = mAuth.getCurrentUser();
         if (user != null) {
-            String userId = user.getUid();
             Map<String, Object> updates = new HashMap<>();
             updates.put("language", languageName);
             updates.put("languageCode", languageCode);
-
-            db.collection("users").document(userId).update(updates)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "✅ Language updated", Toast.LENGTH_SHORT).show();
-                    });
+            db.collection("users").document(user.getUid()).update(updates)
+                    .addOnSuccessListener(aVoid ->
+                            Toast.makeText(getContext(), "✅ Language updated", Toast.LENGTH_SHORT).show());
         }
 
-        // 4. Restart Activity to apply changes
         requireActivity().recreate();
     }
 
@@ -240,17 +314,12 @@ public class ProfileFragment extends Fragment {
         String name = user.getDisplayName();
         String email = user.getEmail();
 
-        if (name != null && !name.isEmpty()) {
-            tvProfileName.setText(name);
-        } else {
-            tvProfileName.setText("Welcome");
-        }
+        tvProfileName.setText(name != null && !name.isEmpty() ? name : "Welcome");
         tvProfileEmail.setText(email);
 
-        String userId = user.getUid();
-        db.collection("users").document(userId)
+        db.collection("users").document(user.getUid())
                 .get()
-                .addOnSuccessListener(documentSnapshot -> {
+                . addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         String drivePhotoUrl = documentSnapshot.getString("drivePhotoUrl");
                         if (drivePhotoUrl != null && !drivePhotoUrl.isEmpty()) {
@@ -258,9 +327,6 @@ public class ProfileFragment extends Fragment {
                         } else {
                             loadDefaultPhoto();
                         }
-
-                        // Note: We rely on local prefs for language primarily for speed,
-                        // but you could sync here if needed.
                     } else {
                         loadDefaultPhoto();
                     }
@@ -271,26 +337,29 @@ public class ProfileFragment extends Fragment {
                 });
     }
 
-    // ... (loadProfilePhoto, loadDefaultPhoto, selectProfilePhoto, uploadProfilePhotoToDrive, signOut, showToast remain unchanged) ...
-    // Keep them exactly as they were in your previous code.
-
     private void loadProfilePhoto(String driveUrl) {
         if (getContext() == null) return;
-        Glide.with(this).load(driveUrl).circleCrop().placeholder(R.drawable.ic_profile_inactive).error(R.drawable.ic_profile_inactive).into(ivProfileAvatar);
+        Glide.with(this)
+                .load(driveUrl)
+                .circleCrop()
+                .placeholder(R.drawable.ic_profile_inactive)
+                .error(R.drawable.ic_profile_inactive)
+                .into(ivProfileAvatar);
     }
 
     private void loadDefaultPhoto() {
         if (getContext() == null) return;
-        Glide.with(this).load(R.drawable.ic_profile_inactive).circleCrop().into(ivProfileAvatar);
+        Glide.with(this)
+                .load(R.drawable. ic_profile_inactive)
+                .circleCrop()
+                .into(ivProfileAvatar);
     }
 
     private void selectProfilePhoto() {
-        if (!driveManager.isAvailable()) {
-            // Check if user needs to re-authenticate with Drive scope
+        if (! driveManager.isAvailable()) {
             GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(requireContext());
             if (account != null) {
-                // User is signed in but doesn't have Drive scope, trigger re-auth
-                Toast.makeText(getContext(), "📂 Requesting Drive access...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "📂 Requesting Drive access.. .", Toast.LENGTH_SHORT).show();
                 triggerDriveReAuthentication();
             } else {
                 Toast.makeText(getContext(), "⚠️ Please sign in with Google to upload photos", Toast.LENGTH_LONG).show();
@@ -303,9 +372,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void triggerDriveReAuthentication() {
-        // First, sign out to clear cached credentials
         mGoogleSignInClient.signOut().addOnCompleteListener(task -> {
-            // Now sign in again with Drive scope
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
             driveReAuthLauncher.launch(signInIntent);
         });
@@ -314,35 +381,37 @@ public class ProfileFragment extends Fragment {
     private void uploadProfilePhotoToDrive(Uri imageUri) {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
-        
-        // Check if Drive manager is available
-        if (!driveManager.isAvailable()) {
-            // Store the image URI and trigger re-auth
+
+        if (! driveManager.isAvailable()) {
             pendingImageUri = imageUri;
             triggerDriveReAuthentication();
             return;
         }
-        
+
         String userId = user.getUid();
         Toast.makeText(getContext(), "📤 Uploading to Drive...", Toast.LENGTH_SHORT).show();
-        driveManager.uploadProfilePhoto(imageUri, userId, new GoogleDriveManager.UploadCallback() {
+
+        driveManager.uploadProfilePhoto(imageUri, userId, new GoogleDriveManager. UploadCallback() {
             @Override
             public void onSuccess(String driveUrl, String fileId) {
                 if (getActivity() == null) return;
                 getActivity().runOnUiThread(() -> {
                     Map<String, Object> updates = new HashMap<>();
                     updates.put("drivePhotoUrl", driveUrl);
-                    updates.put("driveFileId", fileId);
-                    db.collection("users").document(userId).update(updates).addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "✅ Photo updated!", Toast.LENGTH_SHORT).show();
-                        loadProfilePhoto(driveUrl);
-                    });
+                    updates. put("driveFileId", fileId);
+                    db.collection("users").document(userId).update(updates)
+                            .addOnSuccessListener(aVoid -> {
+                                Toast.makeText(getContext(), "✅ Photo updated!", Toast.LENGTH_SHORT).show();
+                                loadProfilePhoto(driveUrl);
+                            });
                 });
             }
+
             @Override
             public void onError(Exception e) {
                 if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "❌ Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+                getActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "❌ Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
             }
         });
     }
@@ -355,9 +424,5 @@ public class ProfileFragment extends Fragment {
             startActivity(intent);
             if (getActivity() != null) getActivity().finish();
         });
-    }
-
-    private void showToast(String message) {
-        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 }
