@@ -1,10 +1,12 @@
 package com.example.learnify;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
@@ -25,6 +27,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -35,10 +41,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
-import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -55,8 +57,7 @@ public class VideoNotesFragment extends Fragment {
     private ImageView buttonBold, buttonItalic, buttonBullet, buttonUnderline,
             buttonH1, buttonH2, buttonH3, buttonHighlight,
             buttonUndo, buttonRedo, buttonSave, buttonScreenshot, buttonEmbedScreenshot;
-    private YouTubePlayerView youTubePlayerView;
-    private YouTubePlayer youTubePlayer;
+    private WebView webYouTube;
     private String videoUrl;
     private String passedTranscript;
     private View loadingOverlay;
@@ -140,11 +141,9 @@ public class VideoNotesFragment extends Fragment {
         buttonScreenshot = view.findViewById(R.id.button_screenshot);
         loadingOverlay = view.findViewById(R.id.video_loading_overlay);
         videoPlayerContainer = view.findViewById(R.id.video_player_container);
-        youTubePlayerView = view.findViewById(R.id.youtube_player_view);
+        webYouTube = view.findViewById(R.id.web_youtube);
 
-        // Add lifecycle observer for YouTubePlayerView
-        getLifecycle().addObserver(youTubePlayerView);
-
+        setupWebView();
         setupVideoPlayer();
         setupFormattingButtons();
         setupTextWatcher();
@@ -161,16 +160,10 @@ public class VideoNotesFragment extends Fragment {
             // Sanitize video ID to prevent XSS - only allow alphanumeric, hyphens and underscores
             String sanitizedVideoId = videoId.replaceAll("[^a-zA-Z0-9_-]", "");
             
-            youTubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
-                @Override
-                public void onReady(@NonNull YouTubePlayer player) {
-                    youTubePlayer = player;
-                    player.loadVideo(sanitizedVideoId, 0);
-                    if (loadingOverlay != null) {
-                        loadingOverlay.setVisibility(View.GONE);
-                    }
-                }
-            });
+            loadYouTubeVideo(sanitizedVideoId);
+            if (loadingOverlay != null) {
+                loadingOverlay.setVisibility(View.GONE);
+            }
         } else {
             if (getContext() != null) {
                 CustomToast.error(getContext(), "Invalid Video URL");
@@ -179,6 +172,37 @@ public class VideoNotesFragment extends Fragment {
                 loadingOverlay.setVisibility(View.GONE);
             }
         }
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void setupWebView() {
+        WebSettings settings = webYouTube.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setDomStorageEnabled(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        
+        webYouTube.setWebChromeClient(new WebChromeClient());
+        webYouTube.setWebViewClient(new WebViewClient());
+        webYouTube.setBackgroundColor(Color.BLACK);
+    }
+
+    private void loadYouTubeVideo(String videoId) {
+        // Additional URL encoding for the video ID to prevent XSS
+        String encodedVideoId = android.net.Uri.encode(videoId);
+        
+        String html = "<!DOCTYPE html>" +
+            "<html><head>" +
+            "<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'>" +
+            "<style>*{margin:0;padding:0;overflow:hidden}html,body{height:100%;background:#000}" +
+            "iframe{width:100%;height:100%;border:none}</style>" +
+            "</head><body>" +
+            "<iframe src='https://www.youtube.com/embed/" + encodedVideoId + "?autoplay=0&amp;rel=0&amp;showinfo=0&amp;modestbranding=1&amp;playsinline=1' " +
+            "allowfullscreen allow='autoplay; encrypted-media'></iframe>" +
+            "</body></html>";
+        
+        webYouTube.loadDataWithBaseURL("https://www.youtube.com", html, "text/html", "utf-8", null);
     }
 
     /**
@@ -194,8 +218,10 @@ public class VideoNotesFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (youTubePlayerView != null) {
-            youTubePlayerView.release();
+        if (webYouTube != null) {
+            webYouTube.stopLoading();
+            webYouTube.destroy();
+            webYouTube = null;
         }
     }
 
@@ -639,16 +665,16 @@ public class VideoNotesFragment extends Fragment {
         lastEmbedScreenshotClickTime = currentTime;
 
         try {
-            // Capture the YouTubePlayerView content
-            if (youTubePlayerView == null) {
+            // Capture the WebView content
+            if (webYouTube == null) {
                 CustomToast.warning(getContext(), "Video not available");
                 return;
             }
 
-            // Create bitmap from the YouTubePlayerView
-            Bitmap bitmap = Bitmap.createBitmap(youTubePlayerView.getWidth(), youTubePlayerView.getHeight(), Bitmap.Config.ARGB_8888);
+            // Create bitmap from the WebView
+            Bitmap bitmap = Bitmap.createBitmap(webYouTube.getWidth(), webYouTube.getHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
-            youTubePlayerView.draw(canvas);
+            webYouTube.draw(canvas);
 
             CustomToast.info(getContext(), "Capturing screenshot...");
 
