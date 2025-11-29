@@ -70,6 +70,11 @@ public class DownloadsFragment extends Fragment {
             }
 
             @Override
+            public void onReviewQuiz(DownloadedQuizItem quiz) {
+                reviewQuiz(quiz);
+            }
+
+            @Override
             public void onToggleFavorite(DownloadedQuizItem quiz, int position) {
                 toggleFavorite(quiz, position);
             }
@@ -132,6 +137,27 @@ public class DownloadsFragment extends Fragment {
                     Toast.makeText(getContext(), "Failed to load downloads: " + e.getMessage(), Toast. LENGTH_SHORT).show();
                     showEmptyState();
                 });
+    }
+
+    /**
+     * Review a downloaded quiz - opens QuizReviewActivity
+     */
+    private void reviewQuiz(DownloadedQuizItem quiz) {
+        if (quiz.fullQuizData == null || quiz.fullQuizData.isEmpty()) {
+            Toast.makeText(getContext(), "Quiz data not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Log.d(TAG, "📖 Reviewing quiz: " + quiz.quizTitle);
+
+        Intent intent = new Intent(getActivity(), QuizReviewActivity.class);
+        intent.putExtra("QUIZ_ID", quiz.quizId);
+        intent.putExtra("QUIZ_TITLE", quiz.quizTitle);
+        intent.putExtra("SCORE", quiz.lastScore);
+        intent.putExtra("TOTAL_QUESTIONS", quiz.totalQuestions);
+        intent.putExtra("QUESTIONS", new ArrayList<>(quiz.fullQuizData));
+
+        startActivity(intent);
     }
 
     /**

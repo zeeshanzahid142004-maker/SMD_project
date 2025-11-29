@@ -130,6 +130,18 @@
             android:background="@android:color/transparent"
             android:spinnerMode="dropdown" />
 
+        <ImageView
+            android:id="@+id/btn_sort_direction"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Toggle sort direction"
+            android:src="@drawable/ic_arrow_right_white"
+            android:rotation="270"
+            app:tint="@color/figma_purple_main"
+            android:padding="4dp" />
+
     </LinearLayout>
 
     <!-- No Results Message -->

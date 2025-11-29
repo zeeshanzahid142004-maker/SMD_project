@@ -30,7 +30,7 @@ public class GenerateQuizFragment extends Fragment {
 
     private final QuizNetworkService.QuizCallback quizCallback = new QuizNetworkService.QuizCallback() {
         @Override
-        public void onSuccess(List<QuizQuestion> questions) {
+        public void onSuccess(List<QuizQuestion> questions, String aiTopic) {
             Log.d(TAG, "✅ Quiz generated: " + questions.size() + " questions");
 
             if (! isAdded() || isDetached() || getActivity() == null) {
@@ -49,7 +49,9 @@ public class GenerateQuizFragment extends Fragment {
                         totalTime += q.timeLimit;
                     }
 
-                    String autoTitle = generateQuizTitle(questions);
+                    // Use AI-generated topic if available, otherwise fallback to generated title
+                    String autoTitle = (aiTopic != null && !aiTopic.isEmpty()) ? aiTopic : generateQuizTitle(questions);
+                    Log.d(TAG, "📌 Using quiz title: " + autoTitle);
                     saveQuizToFirestore(autoTitle, totalMarks, totalTime, questions);
 
                 } catch (Exception e) {

@@ -7,6 +7,7 @@ import android. util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget. TextView;
@@ -47,9 +48,11 @@ public class HistoryActivity extends AppCompatActivity {
     private ChipGroup filterChipGroup;
     private Chip chipAll, chipFavorites, chipRetaken, chipHighScore, chipNeedsReview;
     
-    // Sort spinner
+    // Sort spinner and direction toggle
     private Spinner sortSpinner;
+    private ImageView btnSortDirection;
     private String currentSortOption = "Newest First";
+    private boolean isAscending = false; // false = descending (newest first), true = ascending (oldest first)
     private int currentFilterChipId = -1;
 
     private QuizAttemptRepository attemptRepository;
@@ -86,8 +89,9 @@ public class HistoryActivity extends AppCompatActivity {
         chipHighScore = findViewById(R.id.chip_high_score);
         chipNeedsReview = findViewById(R.id.chip_needs_review);
         
-        // Sort spinner
+        // Sort spinner and direction toggle
         sortSpinner = findViewById(R.id.sort_spinner);
+        btnSortDirection = findViewById(R.id.btn_sort_direction);
 
         // Setup toolbar
         setSupportActionBar(toolbar);
@@ -119,8 +123,9 @@ public class HistoryActivity extends AppCompatActivity {
         // Setup filter chips
         setupFilterChips();
         
-        // Setup sort spinner
+        // Setup sort spinner and direction toggle
         setupSortSpinner();
+        setupSortDirectionToggle();
 
         // Load all history
         loadAllHistory();
@@ -162,6 +167,23 @@ public class HistoryActivity extends AppCompatActivity {
         });
     }
 
+    private void setupSortDirectionToggle() {
+        // Initial icon state (descending = arrow down at 270 degrees)
+        updateSortDirectionIcon();
+        
+        btnSortDirection.setOnClickListener(v -> {
+            // Toggle direction
+            isAscending = !isAscending;
+            updateSortDirectionIcon();
+            applyFiltersAndSort();
+        });
+    }
+
+    private void updateSortDirectionIcon() {
+        // Arrow up (90 degrees) = ascending, Arrow down (270 degrees) = descending
+        btnSortDirection.setRotation(isAscending ? 90 : 270);
+    }
+
     private void applyFiltersAndSort() {
         filteredAttempts.clear();
         
@@ -186,19 +208,25 @@ public class HistoryActivity extends AppCompatActivity {
             }
         }
         
-        // Apply sorting
+        // Apply sorting with direction toggle
         switch (currentSortOption) {
             case "Newest First":
-                Collections.sort(filteredAttempts, (a, b) -> compareDatesDescending(a.attemptedAt, b.attemptedAt));
-                break;
             case "Oldest First":
-                Collections.sort(filteredAttempts, (a, b) -> compareDatesAscending(a.attemptedAt, b.attemptedAt));
+                // For date-based sorting, apply the direction toggle
+                if (isAscending) {
+                    Collections.sort(filteredAttempts, (a, b) -> compareDatesAscending(a.attemptedAt, b.attemptedAt));
+                } else {
+                    Collections.sort(filteredAttempts, (a, b) -> compareDatesDescending(a.attemptedAt, b.attemptedAt));
+                }
                 break;
             case "Highest Score":
-                Collections.sort(filteredAttempts, (a, b) -> Integer.compare(b.percentage, a.percentage));
-                break;
             case "Lowest Score":
-                Collections.sort(filteredAttempts, (a, b) -> Integer.compare(a.percentage, b.percentage));
+                // For score-based sorting, apply the direction toggle
+                if (isAscending) {
+                    Collections.sort(filteredAttempts, (a, b) -> Integer.compare(a.percentage, b.percentage));
+                } else {
+                    Collections.sort(filteredAttempts, (a, b) -> Integer.compare(b.percentage, a.percentage));
+                }
                 break;
         }
         

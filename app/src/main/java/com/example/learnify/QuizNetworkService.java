@@ -34,7 +34,7 @@ public class QuizNetworkService {
     private final Context context;
 
     public interface QuizCallback {
-        void onSuccess(List<QuizQuestion> quizQuestions);
+        void onSuccess(List<QuizQuestion> quizQuestions, String topic);
         void onError(String error);
     }
 
@@ -104,6 +104,13 @@ public class QuizNetworkService {
                     // Parse wrapper object
                     JsonObject root = JsonParser.parseString(quizJsonText).getAsJsonObject();
 
+                    // Get topic from AI response (if available)
+                    String topic = null;
+                    if (root.has("topic") && !root.get("topic").isJsonNull()) {
+                        topic = root.get("topic").getAsString();
+                        Log.d(TAG, "📌 AI generated topic: " + topic);
+                    }
+
                     // Get questions array
                     JsonArray questionsArray = root.getAsJsonArray("questions");
                     Log.d(TAG, "🔢 Found Questions Array. Size: " + questionsArray.size());
@@ -116,7 +123,8 @@ public class QuizNetworkService {
                             LanguageManager.getInstance(context).getCurrentLanguage() : "English";
                     Log.d(TAG, "✅ Success! Parsed " + questions.size() + " questions in " + language);
 
-                    mainHandler.post(() -> callback.onSuccess(questions));
+                    String finalTopic = topic;
+                    mainHandler.post(() -> callback.onSuccess(questions, finalTopic));
 
                 } catch (Exception e) {
                     Log.e(TAG, "❌ Parsing Fail", e);
@@ -152,6 +160,13 @@ public class QuizNetworkService {
                         "- The JSON MUST match the required structure exactly\n" +
                         "- The value of \"type\" must be either \"MCQ\" or \"CODING\"\n\n" +
 
+                        "🏷️ QUIZ TITLE RULES (IMPORTANT):\n" +
+                        "1. Generate a SHORT topic name (2-4 words max)\n" +
+                        "2. DO NOT include the word 'Quiz' in the topic\n" +
+                        "3. Use general terms like 'Loops' instead of specific syntax like 'For Loop'\n" +
+                        "4. Good examples: 'Newton Laws', 'Python Functions', 'Cell Biology', 'Data Structures'\n" +
+                        "5. Bad examples: 'For Loop Quiz', 'Quiz About Functions', 'The Quiz'\n\n" +
+
                         "🌍 LANGUAGE REQUIREMENT:\n" +
                         "CRITICAL: ALL quiz content MUST be in " + targetLanguage + " ONLY.\n" +
                         "- Even if the input content is in a different language\n" +
@@ -175,6 +190,7 @@ public class QuizNetworkService {
 
                         "RESPONSE FORMAT:\n" +
                         "{\n" +
+                        "  \"topic\": \"Short Topic Name (2-4 words, NO 'Quiz' word)\",\n" +
                         "  \"questions\": [\n" +
                         "    {\n" +
                         "      \"type\": \"MCQ\",\n" +
@@ -195,6 +211,6 @@ public class QuizNetworkService {
                         "  \"difficulty\": \"HARD\"\n" +
                         "}\n\n" +
 
-                        "🎯 REMEMBER: Output ONLY the JSON object. ALL text in " + targetLanguage + ".";
+                        "🎯 REMEMBER: Output ONLY the JSON object. ALL text in " + targetLanguage + ". Include 'topic' field!";
     }
 }

@@ -23,6 +23,7 @@ public class DownloadedQuizAdapter extends RecyclerView.Adapter<DownloadedQuizAd
 
     public interface OnQuizActionListener {
         void onRetakeQuiz(DownloadedQuizItem quiz);
+        void onReviewQuiz(DownloadedQuizItem quiz);
         void onToggleFavorite(DownloadedQuizItem quiz, int position);
         void onDeleteDownload(DownloadedQuizItem quiz, int position);
     }
@@ -74,6 +75,13 @@ public class DownloadedQuizAdapter extends RecyclerView.Adapter<DownloadedQuizAd
 
         // Set favorite icon
         updateFavoriteIcon(holder, quiz.isFavorite);
+
+        // Review button - opens QuizReviewActivity to review answers
+        holder.btnReview.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onReviewQuiz(quiz);
+            }
+        });
 
         // Retake button
         holder.btnRetake.setOnClickListener(v -> {
@@ -128,6 +136,7 @@ public class DownloadedQuizAdapter extends RecyclerView.Adapter<DownloadedQuizAd
         TextView tvLastScore;
         TextView tvAttempts;
         TextView tvDownloadedDate;
+        MaterialButton btnReview;
         MaterialButton btnRetake;
         ImageView ivFavorite;
         ImageView ivDelete;
@@ -141,6 +150,7 @@ public class DownloadedQuizAdapter extends RecyclerView.Adapter<DownloadedQuizAd
             tvLastScore = itemView.findViewById(R.id.tv_last_score);
             tvAttempts = itemView.findViewById(R.id.tv_attempts);
             tvDownloadedDate = itemView.findViewById(R.id.tv_downloaded_date);
+            btnReview = itemView.findViewById(R.id.btn_review);
             btnRetake = itemView.findViewById(R.id.btn_retake);
             ivFavorite = itemView. findViewById(R.id.iv_favorite);
             ivDelete = itemView.findViewById(R.id. iv_delete);

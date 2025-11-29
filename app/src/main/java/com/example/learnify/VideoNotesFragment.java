@@ -159,11 +159,26 @@ public class VideoNotesFragment extends Fragment {
         webSettings.setAllowFileAccess(true);
         webSettings.setLoadWithOverviewMode(true);
         webSettings.setUseWideViewPort(true);
+        
+        // FIX 6: Add mixed content mode and hardware acceleration for white screen fix
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        }
+        youTubeWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         youTubeWebView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                if (loadingOverlay != null) {
+                    loadingOverlay.setVisibility(View.GONE);
+                }
+            }
+            
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                super.onReceivedError(view, errorCode, description, failingUrl);
+                Log.e(TAG, "WebView error: " + description + " (code: " + errorCode + ")");
                 if (loadingOverlay != null) {
                     loadingOverlay.setVisibility(View.GONE);
                 }
@@ -493,8 +508,12 @@ public class VideoNotesFragment extends Fragment {
 
     private void updateButtonTint(ImageView button, boolean isActive) {
         if (isActive) {
-            button.setColorFilter(ContextCompat.getColor(requireContext(), R.color.figma_purple_main));
+            // Set purple background and white icon when active
+            button.setBackgroundResource(R.drawable.formatting_button_active);
+            button.setColorFilter(ContextCompat.getColor(requireContext(), R.color.white));
         } else {
+            // Clear background and icon tint when inactive
+            button.setBackground(null);
             button.clearColorFilter();
         }
     }
