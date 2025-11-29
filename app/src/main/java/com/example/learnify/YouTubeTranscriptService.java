@@ -1,18 +1,15 @@
 package com.example.learnify;
 
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
-
-import androidx.annotation.NonNull;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java. util.regex.Matcher;
+import java. util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -23,223 +20,227 @@ import okhttp3.Response;
 public class YouTubeTranscriptService {
 
     private static final String TAG = "YouTubeTranscript";
-    private final OkHttpClient client;
-    private final Handler mainHandler;
+    private static final OkHttpClient client = new OkHttpClient();
 
     public interface TranscriptCallback {
         void onSuccess(String transcript);
         void onError(String error);
     }
 
-    public YouTubeTranscriptService() {
-        this.client = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .build();
-        this.mainHandler = new Handler(Looper.getMainLooper());
+    public void getTranscript(String videoUrl, TranscriptCallback callback) {
+        getTranscript(videoUrl, null, callback);
     }
 
-    /**
-     * Extract transcript from YouTube video
-     * Works with videos in any language, extracts available captions
-     */
-    public void getTranscript(String videoUrl, TranscriptCallback callback) {
+    public void getTranscript(String videoUrl, String targetLanguage, TranscriptCallback callback) {
         String videoId = extractVideoId(videoUrl);
         if (videoId == null) {
             callback.onError("Invalid YouTube URL");
             return;
         }
 
-        Log.d(TAG, "🎥 Fetching transcript for video ID: " + videoId);
+        Log.d(TAG, "Fetching transcript for: " + videoId);
+        fetchFromVideoPage(videoId, targetLanguage, callback);
+    }
 
-        // First, fetch the video page to get caption tracks
-        String videoPageUrl = "https://www.youtube.com/watch?v=" + videoId;
+    private void fetchFromVideoPage(String videoId, String targetLang, TranscriptCallback callback) {
+        String url = "https://www.youtube.com/watch?v=" + videoId;
 
         Request request = new Request.Builder()
-                .url(videoPageUrl)
-                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                .url(url)
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                .header("Accept-Language", "en-US,en;q=0.9")
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(TAG, "❌ Failed to fetch video page", e);
-                mainHandler.post(() -> callback.onError("Network error: " + e.getMessage()));
+            public void onFailure(Call call, IOException e) {
+                Log.e(TAG, "Failed to fetch video page", e);
+                callback.onError("Network error: " + e.getMessage());
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+            public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
-                    mainHandler.post(() -> callback.onError("Failed to load video page: " + response.code()));
+                    callback.onError("Failed to load video");
                     return;
                 }
 
                 String html = response.body().string();
                 String captionUrl = extractCaptionUrl(html);
+                String sourceLang = extractLanguage(html);
 
-                if (captionUrl == null) {
-                    mainHandler.post(() -> callback.onError("No captions available for this video"));
-                    return;
+                if (captionUrl != null) {
+                    fetchCaptions(captionUrl, sourceLang, targetLang, callback);
+                } else {
+                    callback.onError("No captions available");
                 }
-
-                // Fetch the actual transcript
-                fetchTranscriptFromUrl(captionUrl, callback);
             }
         });
     }
 
-    /**
-     * Extract caption URL from YouTube page HTML
-     */
     private String extractCaptionUrl(String html) {
         try {
-            // Look for captionTracks in the page source
-            Pattern pattern = Pattern.compile("\"captionTracks\":\\[\\{[^\\]]+\\}\\]");
+            Pattern pattern = Pattern.compile("\"captionTracks\":\\s*\\[(.*?)\\]");
             Matcher matcher = pattern.matcher(html);
 
             if (matcher.find()) {
-                String captionJson = matcher.group();
+                String json = "[" + matcher.group(1) + "]";
+                JSONArray tracks = new JSONArray(json);
 
-                // Extract the baseUrl from the first caption track
-                Pattern urlPattern = Pattern.compile("\"baseUrl\":\"([^\"]+)\"");
-                Matcher urlMatcher = urlPattern.matcher(captionJson);
-
-                if (urlMatcher.find()) {
-                    String url = urlMatcher.group(1);
-                    // Unescape the URL
-                    url = url.replace("\\u0026", "&");
-                    Log.d(TAG, "✅ Found caption URL");
-                    return url;
+                for (int i = 0; i < tracks.length(); i++) {
+                    JSONObject track = tracks.getJSONObject(i);
+                    String baseUrl = track.optString("baseUrl");
+                    if (baseUrl != null && ! baseUrl.isEmpty()) {
+                        return URLDecoder.decode(baseUrl, "UTF-8");
+                    }
                 }
             }
-
-            // Alternative: Try to find timedtext URL
-            pattern = Pattern.compile("\"timedtext\"[^}]+\"baseUrl\":\"([^\"]+)\"");
-            matcher = pattern.matcher(html);
-
-            if (matcher.find()) {
-                String url = matcher.group(1);
-                url = url.replace("\\u0026", "&");
-                Log.d(TAG, "✅ Found timedtext URL");
-                return url;
-            }
-
-            Log.w(TAG, "⚠️ No caption URL found in HTML");
-            return null;
-
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error extracting caption URL", e);
-            return null;
+            Log.e(TAG, "Error extracting caption URL", e);
         }
+        return null;
     }
 
-    /**
-     * Fetch and parse the transcript from caption URL
-     */
-    private void fetchTranscriptFromUrl(String captionUrl, TranscriptCallback callback) {
+    private String extractLanguage(String html) {
+        try {
+            Pattern pattern = Pattern.compile("\"languageCode\":\\s*\"([a-z]{2})\"");
+            Matcher matcher = pattern.matcher(html);
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error extracting language", e);
+        }
+        return "en";
+    }
+
+    private void fetchCaptions(String captionUrl, String sourceLang, String targetLang, TranscriptCallback callback) {
         Request request = new Request.Builder()
                 .url(captionUrl)
-                .addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                .header("User-Agent", "Mozilla/5.0")
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                Log.e(TAG, "❌ Failed to fetch transcript", e);
-                mainHandler.post(() -> callback.onError("Failed to fetch transcript: " + e.getMessage()));
+            public void onFailure(Call call, IOException e) {
+                callback.onError("Failed to fetch captions");
             }
 
             @Override
-            public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                if (!response.isSuccessful()) {
-                    mainHandler.post(() -> callback.onError("Failed to load transcript: " + response.code()));
-                    return;
+            public void onResponse(Call call, Response response) throws IOException {
+                String body = response.body().string();
+                String transcript = parseXmlCaptions(body);
+
+                if (transcript != null && !transcript.isEmpty()) {
+                    // Translate if needed
+                    if (targetLang != null && ! targetLang.equals(sourceLang)) {
+                        translateText(transcript, sourceLang, targetLang, callback);
+                    } else {
+                        callback.onSuccess(transcript);
+                    }
+                } else {
+                    callback.onError("Could not parse captions");
                 }
-
-                String xml = response.body().string();
-                String transcript = parseTranscriptXml(xml);
-
-                if (transcript == null || transcript.isEmpty()) {
-                    mainHandler.post(() -> callback.onError("Failed to parse transcript"));
-                    return;
-                }
-
-                Log.d(TAG, "✅ Transcript extracted. Length: " + transcript.length() + " characters");
-                mainHandler.post(() -> callback.onSuccess(transcript));
             }
         });
     }
 
-    /**
-     * Parse XML transcript and extract text
-     */
-    private String parseTranscriptXml(String xml) {
+    private String parseXmlCaptions(String xml) {
+        StringBuilder sb = new StringBuilder();
         try {
-            StringBuilder transcript = new StringBuilder();
-
-            // Extract text from <text> tags
-            Pattern pattern = Pattern.compile("<text[^>]*>([^<]+)</text>");
+            Pattern pattern = Pattern.compile("<text[^>]*>([^<]*)</text>");
             Matcher matcher = pattern.matcher(xml);
 
             while (matcher.find()) {
-                String text = matcher.group(1);
-                // Decode HTML entities
-                text = decodeHtmlEntities(text);
-                transcript.append(text).append(" ");
+                String text = matcher.group(1)
+                        .replace("&amp;", "&")
+                        .replace("&lt;", "<")
+                        .replace("&gt;", ">")
+                        .replace("&quot;", "\"")
+                        .replace("&#39;", "'")
+                        .replace("&nbsp;", " ");
+                sb.append(text). append(" ");
             }
-
-            return transcript.toString().trim();
-
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error parsing transcript XML", e);
-            return null;
+            Log.e(TAG, "Error parsing XML", e);
         }
-    }
 
-    /**
-     * Decode common HTML entities
-     */
-    private String decodeHtmlEntities(String text) {
-        return text
-                .replace("&amp;", "&")
-                .replace("&lt;", "<")
-                .replace("&gt;", ">")
-                .replace("&quot;", "\"")
-                .replace("&#39;", "'")
-                .replace("&nbsp;", " ")
-                .replaceAll("\\[Music\\]", "")
-                .replaceAll("\\[Applause\\]", "")
+        return sb.toString()
+                .replaceAll("\\s+", " ")
+                .replaceAll("\\[.*?\\]", "")
                 .trim();
     }
 
-    /**
-     * Extract video ID from various YouTube URL formats
-     */
-    private String extractVideoId(String url) {
-        if (url == null || url.trim().isEmpty()) {
-            return null;
+    private void translateText(String text, String from, String to, TranscriptCallback callback) {
+        try {
+            // Limit text length for API
+            String limitedText = text.length() > 4000 ? text.substring(0, 4000) : text;
+            String encoded = URLEncoder.encode(limitedText, "UTF-8");
+            String url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="
+                    + from + "&tl=" + to + "&dt=t&q=" + encoded;
+
+            Request request = new Request.Builder()
+                    . url(url)
+                    . header("User-Agent", "Mozilla/5.0")
+                    .build();
+
+            client.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    // Return original on failure
+                    callback.onSuccess(text);
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    try {
+                        String body = response.body().string();
+                        JSONArray arr = new JSONArray(body);
+                        JSONArray translations = arr.getJSONArray(0);
+
+                        StringBuilder result = new StringBuilder();
+                        for (int i = 0; i < translations.length(); i++) {
+                            result.append(translations.getJSONArray(i).getString(0));
+                        }
+                        callback.onSuccess(result.toString());
+                    } catch (Exception e) {
+                        callback.onSuccess(text); // Return original on error
+                    }
+                }
+            });
+        } catch (Exception e) {
+            callback.onSuccess(text);
         }
+    }
 
-        // Patterns for different YouTube URL formats
-        String[] patterns = {
-                "(?<=watch\\?v=)[^#\\&\\?]*",
-                "(?<=youtu.be/)[^#\\&\\?]*",
-                "(?<=embed/)[^#\\&\\?]*",
-                "(?<=v=)[^#\\&\\?]*"
-        };
+    public String extractVideoId(String url) {
+        if (url == null || url.isEmpty()) return null;
 
-        for (String pattern : patterns) {
-            Pattern compiledPattern = Pattern.compile(pattern);
-            Matcher matcher = compiledPattern.matcher(url);
-            if (matcher.find()) {
-                String videoId = matcher.group();
-                Log.d(TAG, "✅ Extracted video ID: " + videoId);
-                return videoId;
+        String videoId = null;
+        url = url.trim();
+
+        try {
+            if (url.contains("youtu.be/")) {
+                videoId = url.split("youtu.be/")[1];
+            } else if (url.contains("/shorts/")) {
+                videoId = url.split("/shorts/")[1];
+            } else if (url.contains("v=")) {
+                videoId = url.split("v=")[1];
+            } else if (url.contains("/embed/")) {
+                videoId = url.split("/embed/")[1];
             }
+
+            if (videoId != null) {
+                if (videoId.contains("&")) videoId = videoId.split("&")[0];
+                if (videoId.contains("?")) videoId = videoId.split("\\?")[0];
+                if (videoId.contains("#")) videoId = videoId.split("#")[0];
+                if (videoId.contains("/")) videoId = videoId.split("/")[0];
+                videoId = videoId.trim();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error extracting video ID", e);
         }
 
-        Log.e(TAG, "❌ Could not extract video ID from: " + url);
-        return null;
+        return videoId;
     }
 }

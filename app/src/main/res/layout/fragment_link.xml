@@ -33,7 +33,7 @@
                 android:orientation="vertical"
                 android:gravity="center"
                 android:padding="28dp"
-                android:background="@drawable/bg_gradient_thirdver">
+                android:background="@drawable/gradient_book_background">
 
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"

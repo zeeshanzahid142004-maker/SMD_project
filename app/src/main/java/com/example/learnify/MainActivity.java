@@ -44,10 +44,8 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
             if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
             } else if (itemId == R.id.nav_library) {
-                selectedFragment = new LibraryFragment();
-            } else if (itemId == R.id.nav_downloads) {
-                selectedFragment = new DownloadsFragment();
-            } else if (itemId == R.id.nav_profile) {
+                selectedFragment = new LibraryFragment();}
+             else if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
             }
 

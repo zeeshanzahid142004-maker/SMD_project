@@ -6,7 +6,7 @@
     
     <!-- Navigation -->
     <string name="nav_home">Home</string>
-    <string name="nav_library">Library</string>
+
     <string name="nav_favourites">Favourites</string>
     <string name="nav_notes">Notes</string>
     <string name="nav_downloads">Downloads</string>
@@ -16,6 +16,7 @@
     <string name="history">History</string>
     <string name="favourites">Favourites</string>
     <string name="notes">Notes</string>
+    <string name="nav_library">Library</string>
     
     <!-- Home Screen -->
     <string name="welcome_user">Welcome, %1$s!</string>
@@ -110,8 +111,8 @@
     <string name="ok">OK</string>
     
     <!-- Downloads -->
-    <string name="downloaded_quizzes">📥 Downloaded Quizzes</string>
-    <string name="downloads_subtitle">Retake and review your downloaded quizzes offline</string>
+    <string name="downloaded_quizzes"> Downloaded Quizzes</string>
+    <string name="downloads_subtitle">Retake or review your downloaded quizzes offline</string>
     <string name="no_downloads_yet">No Downloaded Quizzes Yet</string>
     <string name="downloads_empty_subtitle">Complete a quiz and download it to access it offline</string>
     
