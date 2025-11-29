@@ -1,6 +1,7 @@
 package com.example.learnify;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -173,7 +174,7 @@ public class VideoNotesFragment extends Fragment {
         }
     }
 
-    @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView() {
         WebSettings settings = webYouTube.getSettings();
         settings.setJavaScriptEnabled(true);
