@@ -32,7 +32,7 @@
         android:id="@+id/welcome_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome"
+        android:text="@string/welcome"
         style="@style/TextAppearance.Header.Small"
         android:textColor="@color/text_primary_dark"
         app:layout_constraintTop_toBottomOf="@id/welcome_illustration"
@@ -44,7 +44,7 @@
         android:id="@+id/welcome_body"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Sign in to enter the app."
+        android:text="@string/sign_in_to_enter"
         style="@style/TextAppearance.Body.Onboarding"
         android:gravity="center"
         app:layout_constraintTop_toBottomOf="@id/welcome_title"
@@ -72,7 +72,7 @@
             android:layout_height="60dp"
             android:background="@drawable/bg_button_solid_purple"
             android:elevation="10dp"
-            android:text="Sign in"
+            android:text="@string/sign_in"
             app:backgroundTint="@null" />
 
         <TextView
@@ -81,7 +81,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="OR"
+            android:text="@string/or"
             android:textColor="@color/text_secondary_gray" />
 
         <com.google.android.material.button.MaterialButton
@@ -91,7 +91,7 @@
             android:layout_height="60dp"
             android:layout_marginTop="20dp"
             android:background="@drawable/bg_sign_up_gradient"
-            android:text="Sign up"
+            android:text="@string/sign_up"
             app:backgroundTint="@null" />
 
     </LinearLayout>

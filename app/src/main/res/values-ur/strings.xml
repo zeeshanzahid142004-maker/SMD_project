@@ -2,4 +2,141 @@
 <resources>
     <string name="app_name">لرنیفائی</string>
     <string name="hello_blank_fragment">خالی ٹکڑا ہیلو</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">ہوم</string>
+    <string name="nav_favourites">پسندیدہ</string>
+    <string name="nav_notes">نوٹس</string>
+    <string name="nav_downloads">ڈاؤن لوڈز</string>
+    <string name="nav_history">تاریخ</string>
+    <string name="nav_profile">پروفائل</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_user">خوش آمدید، %1$s!</string>
+    <string name="ready_to_learn">کیا آپ کچھ نیا سیکھنے کے لیے تیار ہیں؟</string>
+    <string name="edit">ترمیم</string>
+    <string name="start_learning">سیکھنا شروع کریں</string>
+    <string name="recent_papers">حالیہ پیپرز</string>
+    <string name="view_more">مزید دیکھیں</string>
+    <string name="history_empty_title">آپ کی تاریخ یہاں نظر آئے گی!</string>
+    <string name="history_empty_subtitle">شروع کرنے کے لیے ایک لنک یا فائل اپ لوڈ کریں۔</string>
+    <string name="upload_file">فائل اپ لوڈ کریں</string>
+    <string name="upload_link">لنک اپ لوڈ کریں</string>
+    <string name="scan_image_ocr">تصویر اسکین کریں (OCR)</string>
+    
+    <!-- Auth Screens -->
+    <string name="sign_in">سائن ان</string>
+    <string name="sign_up">سائن اپ</string>
+    <string name="sign_out">سائن آؤٹ</string>
+    <string name="log_in">لاگ ان</string>
+    <string name="email">ای میل</string>
+    <string name="password">پاس ورڈ</string>
+    <string name="name">نام</string>
+    <string name="forgot_password">پاس ورڈ بھول گئے</string>
+    <string name="sign_in_with_google">گوگل سے سائن ان کریں</string>
+    <string name="sign_up_with_google">گوگل سے سائن اپ کریں</string>
+    <string name="dont_have_account">اکاؤنٹ نہیں ہے؟ </string>
+    <string name="already_have_account">پہلے سے اکاؤنٹ ہے؟ </string>
+    <string name="login">لاگ ان</string>
+    <string name="or">یا</string>
+    <string name="welcome">خوش آمدید</string>
+    <string name="sign_in_to_enter">ایپ میں داخل ہونے کے لیے سائن ان کریں۔</string>
+    <string name="forgot_password_instruction">اپنا پاس ورڈ ری سیٹ کرنے کے لیے نیچے اپنا ای میل ایڈریس درج کریں</string>
+    <string name="send_email">ای میل بھیجیں</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title">گھر بیٹھے کچھ بھی سیکھیں</string>
+    <string name="onboarding_body">ہم آپ کے لیے بہترین\nآن لائن کورسز فراہم کر رہے ہیں۔</string>
+    <string name="next">اگلا</string>
+    
+    <!-- Quiz Screen -->
+    <string name="next_question">اگلا سوال</string>
+    <string name="start_coding_exercise">💻 کوڈنگ مشق شروع کریں</string>
+    <string name="generating_quiz">کوئز بنایا جا رہا ہے…</string>
+    <string name="curating_topic">آپ کے لیے ایک منفرد موضوع تیار کیا جا رہا ہے</string>
+    <string name="quiz_complete">کوئز مکمل!</string>
+    <string name="your_score">آپ کا سکور: %1$d/%2$d</string>
+    <string name="view_results">نتائج دیکھیں</string>
+    <string name="regenerate_quiz">کوئز دوبارہ بنائیں</string>
+    <string name="retake_same_quiz">وہی کوئز دوبارہ دیں</string>
+    <string name="go_to_home">ہوم پر جائیں</string>
+    <string name="retake_quiz">کوئز دوبارہ دیں</string>
+    <string name="quiz_review">📖 کوئز جائزہ</string>
+    <string name="quiz_title">کوئز کا عنوان</string>
+    <string name="score_format">سکور: %1$d/%2$d (%3$d%%)</string>
+    
+    <!-- Link Fragment -->
+    <string name="enter_link">لنک درج کریں</string>
+    <string name="paste_link_hint">یوٹیوب لنک یا URL یہاں پیسٹ کریں…</string>
+    <string name="go">جائیں</string>
+    <string name="processing">پراسیسنگ…</string>
+    <string name="extracting_video">ویڈیو مواد نکالا جا رہا ہے…</string>
+    <string name="ready">تیار!</string>
+    <string name="watch_video">ویڈیو دیکھیں</string>
+    <string name="take_quiz">کوئز دیں</string>
+    
+    <!-- Profile/Settings -->
+    <string name="general">عمومی</string>
+    <string name="language">زبان</string>
+    <string name="appearance">ظاہری شکل</string>
+    <string name="support">سپورٹ</string>
+    <string name="help_center">مدد مرکز</string>
+    <string name="need_assistance">مدد چاہیے؟ ہمیں ای میل کریں:</string>
+    <string name="support_email">support@learnify.com</string>
+    <string name="account">اکاؤنٹ</string>
+    <string name="delete_account">اکاؤنٹ حذف کریں</string>
+    
+    <!-- Theme Dialog -->
+    <string name="choose_appearance">ظاہری شکل منتخب کریں</string>
+    <string name="light_mode">لائٹ موڈ</string>
+    <string name="dark_mode">ڈارک موڈ</string>
+    <string name="system_default">سسٹم ڈیفالٹ</string>
+    
+    <!-- Language Dialog -->
+    <string name="select_language">زبان منتخب کریں</string>
+    
+    <!-- Common Actions -->
+    <string name="cancel">منسوخ</string>
+    <string name="confirm">تصدیق</string>
+    <string name="save">محفوظ کریں</string>
+    <string name="delete">حذف کریں</string>
+    <string name="close">بند کریں</string>
+    <string name="ok">ٹھیک ہے</string>
+    
+    <!-- Downloads -->
+    <string name="downloaded_quizzes">📥 ڈاؤن لوڈ شدہ کوئزز</string>
+    <string name="downloads_subtitle">اپنی ڈاؤن لوڈ کردہ کوئزز آف لائن دوبارہ دیں</string>
+    <string name="no_downloads_yet">ابھی تک کوئی ڈاؤن لوڈز نہیں</string>
+    <string name="downloads_empty_subtitle">کوئز مکمل کریں اور آف لائن رسائی کے لیے ڈاؤن لوڈ کریں</string>
+    
+    <!-- History -->
+    <string name="my_history">میری تاریخ</string>
+    <string name="no_history_yet">ابھی تک کوئی تاریخ نہیں</string>
+    <string name="history_complete_subtitle">اپنے سکور یہاں دیکھنے کے لیے ایک کوئز مکمل کریں۔</string>
+    
+    <!-- Loading States -->
+    <string name="getting_ready">تیار ہو رہا ہے…</string>
+    <string name="analyzing_content">مواد کا تجزیہ اور آپ کے لیے سوالات تیار کیے جا رہے ہیں۔</string>
+    <string name="saving_quiz">کوئز محفوظ ہو رہی ہے…</string>
+    <string name="storing_quiz">بعد میں رسائی کے لیے آپ کی کوئز محفوظ کی جا رہی ہے۔</string>
+    
+    <!-- Error Messages -->
+    <string name="error_network">نیٹ ورک خرابی۔ براہ کرم اپنا کنکشن چیک کریں۔</string>
+    <string name="error_loading">لوڈ کرنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔</string>
+    <string name="error_invalid_url">غلط URL۔ براہ کرم ایک درست لنک درج کریں۔</string>
+    <string name="error_empty_field">یہ فیلڈ خالی نہیں ہو سکتی۔</string>
+    <string name="error_generation_failed">کوئز بنانے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔</string>
+    
+    <!-- Success Messages -->
+    <string name="language_updated">✅ زبان اپ ڈیٹ ہو گئی</string>
+    <string name="photo_updated">✅ تصویر اپ ڈیٹ ہو گئی!</string>
+    
+    <!-- Content Descriptions -->
+    <string name="cd_profile_picture">پروفائل تصویر</string>
+    <string name="cd_upload_file_icon">فائل اپ لوڈ آئیکن</string>
+    <string name="cd_upload_link_icon">لنک اپ لوڈ آئیکن</string>
+    <string name="cd_scan_image_icon">تصویر اسکین آئیکن</string>
+    <string name="cd_back_button">واپس بٹن</string>
+    <string name="cd_toggle_password">پاس ورڈ کی نمائش ٹوگل کریں</string>
+    <string name="cd_success">کامیاب</string>
 </resources>

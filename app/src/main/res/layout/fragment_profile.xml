@@ -97,7 +97,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="General"
+            android:text="@string/general"
             style="@style/TextAppearance.Header.Small"
             android:textSize="18sp"
             android:layout_marginTop="32dp"
@@ -123,7 +123,7 @@
                     android:id="@+id/row_language"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Language"
+                    android:text="@string/language"
                     style="@style/ProfileOptionRow"
                     app:drawableStartCompat="@drawable/ic_help"
                     app:drawableTint="@color/figma_purple_main"/>
@@ -131,20 +131,10 @@
                 <View style="@style/Divider" />
 
                 <TextView
-                    android:id="@+id/row_notifications"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Notifications"
-                    style="@style/ProfileOptionRow"
-                    app:drawableStartCompat="@drawable/ic_notifications" />
-
-                <View style="@style/Divider" />
-
-                <TextView
                     android:id="@+id/row_appearance"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Appearance"
+                    android:text="@string/appearance"
                     style="@style/ProfileOptionRow"
                     app:drawableStartCompat="@drawable/ic_appearance" />
             </LinearLayout>
@@ -153,7 +143,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Support"
+            android:text="@string/support"
             style="@style/TextAppearance.Header.Small"
             android:textSize="18sp"
             android:layout_marginTop="24dp"
@@ -178,7 +168,7 @@
                     android:id="@+id/row_help"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Help Center"
+                    android:text="@string/help_center"
                     style="@style/ProfileOptionRow"
                     android:paddingVertical="16dp"
                     app:drawableStartCompat="@drawable/ic_help" />
@@ -195,14 +185,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Need assistance? Email us at:"
+                        android:text="@string/need_assistance"
                         android:textSize="14sp"
                         android:textColor="@color/text_secondary_gray"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="support@learnify.com"
+                        android:text="@string/support_email"
                         android:textStyle="bold"
                         android:textSize="16sp"
                         android:textColor="@color/figma_purple_main"
@@ -215,7 +205,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Account"
+            android:text="@string/account"
             style="@style/TextAppearance.Header.Small"
             android:textSize="18sp"
             android:layout_marginTop="24dp"
@@ -241,7 +231,7 @@
                     android:id="@+id/row_delete_account"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Delete Account"
+                    android:text="@string/delete_account"
                     style="@style/ProfileOptionRow"
                     android:textColor="@color/figma_red_error"
                     app:drawableStartCompat="@drawable/ic_wrong_x"
@@ -254,7 +244,7 @@
             android:id="@+id/btn_sign_out"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="Sign Out"
+            android:text="@string/sign_out"
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:textColor="@color/figma_red_error"
             app:strokeColor="@color/figma_red_error"

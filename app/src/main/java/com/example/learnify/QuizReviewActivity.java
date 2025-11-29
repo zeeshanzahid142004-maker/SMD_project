@@ -105,12 +105,12 @@ public class QuizReviewActivity extends BaseActivity {
         if (quizTitle != null && !quizTitle.isEmpty()) {
             tvQuizTitle.setText(quizTitle);
         } else {
-            tvQuizTitle.setText("Quiz Review");
+            tvQuizTitle.setText(getString(R.string.quiz_review));
         }
 
         // Set score summary
         int percentage = totalQuestions > 0 ? (score * 100 / totalQuestions) : 0;
-        String scoreSummary = "Score: " + score + "/" + totalQuestions + " (" + percentage + "%)";
+        String scoreSummary = getString(R.string.score_format, score, totalQuestions, percentage);
         tvScoreSummary.setText(scoreSummary);
 
         // Color code score

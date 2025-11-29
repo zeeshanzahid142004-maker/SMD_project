@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
-        app:title="📖 Quiz Review"
+        app:title="@string/quiz_review"
         app:navigationIcon="@drawable/ic_back_button"
         app:elevation="4dp" />
 
@@ -42,7 +42,7 @@
                     android:id="@+id/tv_quiz_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Quiz Title"
+                    android:text="@string/quiz_title"
                     android:textSize="20sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary_dark"
@@ -79,7 +79,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="16dp"
-            android:text="Retake Quiz"
+            android:text="@string/retake_quiz"
             android:textColor="@color/white"
             android:background="@drawable/bg_sign_up_gradient"
             app:backgroundTint="@null"

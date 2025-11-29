@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Learnify</string>
+    <string name="hello_blank_fragment">Hola fragmento vacío</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Inicio</string>
+    <string name="nav_favourites">Favoritos</string>
+    <string name="nav_notes">Notas</string>
+    <string name="nav_downloads">Descargas</string>
+    <string name="nav_history">Historial</string>
+    <string name="nav_profile">Perfil</string>
+    
+    <!-- Home Screen -->
+    <string name="welcome_user">¡Bienvenido, %1$s!</string>
+    <string name="ready_to_learn">¿Listo para aprender algo nuevo?</string>
+    <string name="edit">Editar</string>
+    <string name="start_learning">Comenzar a Aprender</string>
+    <string name="recent_papers">Documentos Recientes</string>
+    <string name="view_more">Ver más</string>
+    <string name="history_empty_title">¡Tu historial aparecerá aquí!</string>
+    <string name="history_empty_subtitle">Sube un enlace o archivo para comenzar.</string>
+    <string name="upload_file">Subir Archivo</string>
+    <string name="upload_link">Subir Enlace</string>
+    <string name="scan_image_ocr">Escanear Imagen (OCR)</string>
+    
+    <!-- Auth Screens -->
+    <string name="sign_in">Iniciar Sesión</string>
+    <string name="sign_up">Registrarse</string>
+    <string name="sign_out">Cerrar Sesión</string>
+    <string name="log_in">Entrar</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="name">Nombre</string>
+    <string name="forgot_password">Olvidé mi contraseña</string>
+    <string name="sign_in_with_google">Iniciar con Google</string>
+    <string name="sign_up_with_google">Registrarse con Google</string>
+    <string name="dont_have_account">¿No tienes cuenta? </string>
+    <string name="already_have_account">¿Ya tienes cuenta? </string>
+    <string name="login">Entrar</string>
+    <string name="or">O</string>
+    <string name="welcome">Bienvenido</string>
+    <string name="sign_in_to_enter">Inicia sesión para entrar a la app.</string>
+    <string name="forgot_password_instruction">Ingresa tu correo electrónico abajo para restablecer tu contraseña</string>
+    <string name="send_email">Enviar Correo</string>
+    
+    <!-- Onboarding -->
+    <string name="onboarding_title">Aprende Cualquier Cosa en Casa</string>
+    <string name="onboarding_body">Te ofrecemos los mejores\ncursos en línea.</string>
+    <string name="next">Siguiente</string>
+    
+    <!-- Quiz Screen -->
+    <string name="next_question">Siguiente Pregunta</string>
+    <string name="start_coding_exercise">💻 Iniciar Ejercicio de Código</string>
+    <string name="generating_quiz">Generando Quiz…</string>
+    <string name="curating_topic">Creando un tema único para ti</string>
+    <string name="quiz_complete">¡Quiz Completado!</string>
+    <string name="your_score">Tu puntuación: %1$d/%2$d</string>
+    <string name="view_results">Ver Resultados</string>
+    <string name="regenerate_quiz">Regenerar Quiz</string>
+    <string name="retake_same_quiz">Repetir el Mismo Quiz</string>
+    <string name="go_to_home">Ir al Inicio</string>
+    <string name="retake_quiz">Repetir Quiz</string>
+    <string name="quiz_review">📖 Revisión del Quiz</string>
+    <string name="quiz_title">Título del Quiz</string>
+    <string name="score_format">Puntuación: %1$d/%2$d (%3$d%%)</string>
+    
+    <!-- Link Fragment -->
+    <string name="enter_link">Ingresar Enlace</string>
+    <string name="paste_link_hint">Pega el enlace de YouTube o URL aquí…</string>
+    <string name="go">Ir</string>
+    <string name="processing">Procesando…</string>
+    <string name="extracting_video">Extrayendo contenido del video…</string>
+    <string name="ready">¡Listo!</string>
+    <string name="watch_video">Ver Video</string>
+    <string name="take_quiz">Hacer Quiz</string>
+    
+    <!-- Profile/Settings -->
+    <string name="general">General</string>
+    <string name="language">Idioma</string>
+    <string name="appearance">Apariencia</string>
+    <string name="support">Soporte</string>
+    <string name="help_center">Centro de Ayuda</string>
+    <string name="need_assistance">¿Necesitas ayuda? Escríbenos a:</string>
+    <string name="support_email">support@learnify.com</string>
+    <string name="account">Cuenta</string>
+    <string name="delete_account">Eliminar Cuenta</string>
+    
+    <!-- Theme Dialog -->
+    <string name="choose_appearance">Elegir Apariencia</string>
+    <string name="light_mode">Modo Claro</string>
+    <string name="dark_mode">Modo Oscuro</string>
+    <string name="system_default">Predeterminado del Sistema</string>
+    
+    <!-- Language Dialog -->
+    <string name="select_language">Seleccionar Idioma</string>
+    
+    <!-- Common Actions -->
+    <string name="cancel">Cancelar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="save">Guardar</string>
+    <string name="delete">Eliminar</string>
+    <string name="close">Cerrar</string>
+    <string name="ok">OK</string>
+    
+    <!-- Downloads -->
+    <string name="downloaded_quizzes">📥 Quizzes Descargados</string>
+    <string name="downloads_subtitle">Repite y revisa tus quizzes descargados sin conexión</string>
+    <string name="no_downloads_yet">Sin Descargas Aún</string>
+    <string name="downloads_empty_subtitle">Completa un quiz y descárgalo para acceder sin conexión</string>
+    
+    <!-- History -->
+    <string name="my_history">Mi Historial</string>
+    <string name="no_history_yet">Sin Historial Aún</string>
+    <string name="history_complete_subtitle">Completa un quiz para ver tus puntuaciones aquí.</string>
+    
+    <!-- Loading States -->
+    <string name="getting_ready">Preparando…</string>
+    <string name="analyzing_content">Analizando contenido y creando preguntas para ti.</string>
+    <string name="saving_quiz">Guardando Quiz…</string>
+    <string name="storing_quiz">Almacenando tu quiz para acceso posterior.</string>
+    
+    <!-- Error Messages -->
+    <string name="error_network">Error de red. Por favor verifica tu conexión.</string>
+    <string name="error_loading">Error al cargar. Por favor intenta de nuevo.</string>
+    <string name="error_invalid_url">URL inválida. Por favor ingresa un enlace válido.</string>
+    <string name="error_empty_field">Este campo no puede estar vacío.</string>
+    <string name="error_generation_failed">Error al generar quiz. Por favor intenta de nuevo.</string>
+    
+    <!-- Success Messages -->
+    <string name="language_updated">✅ Idioma actualizado</string>
+    <string name="photo_updated">✅ ¡Foto actualizada!</string>
+    
+    <!-- Content Descriptions -->
+    <string name="cd_profile_picture">Foto de Perfil</string>
+    <string name="cd_upload_file_icon">Ícono de Subir Archivo</string>
+    <string name="cd_upload_link_icon">Ícono de Subir Enlace</string>
+    <string name="cd_scan_image_icon">Ícono de Escanear Imagen</string>
+    <string name="cd_back_button">Botón de Regresar</string>
+    <string name="cd_toggle_password">Alternar visibilidad de contraseña</string>
+    <string name="cd_success">Éxito</string>
+</resources>

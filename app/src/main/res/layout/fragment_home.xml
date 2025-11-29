@@ -48,13 +48,13 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    android:contentDescription="Profile Picture"/>
+                    android:contentDescription="@string/cd_profile_picture"/>
 
                 <TextView
                     android:id="@+id/profile_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Welcome, David!"
+                    tools:text="Welcome, David!"
                     style="@style/TextAppearance.ProfileCard.Name"
                     android:textColor="@color/white"
                     android:textSize="20sp"
@@ -68,7 +68,7 @@
                     android:id="@+id/profile_role"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ready to learn something new?"
+                    android:text="@string/ready_to_learn"
                     style="@style/TextAppearance.ProfileCard.Role"
                     android:textColor="#E0E0E0"
                     android:textSize="14sp"
@@ -99,7 +99,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Edit"
+                        android:text="@string/edit"
                         android:textColor="@color/white"
                         android:textSize="12sp"
                         android:textStyle="bold"
@@ -113,7 +113,7 @@
             android:id="@+id/screen_subtitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Start Learning"
+            android:text="@string/start_learning"
             style="@style/TextAppearance.ScreenSubtitle"
             app:layout_constraintTop_toBottomOf="@id/profile_card"
             app:layout_constraintStart_toStartOf="parent"
@@ -124,7 +124,7 @@
             android:id="@+id/history_section_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Recent Papers"
+            android:text="@string/recent_papers"
             style="@style/TextAppearance.Home.SectionTitle"
             app:layout_constraintTop_toBottomOf="@id/screen_subtitle"
             app:layout_constraintStart_toStartOf="parent"
@@ -137,7 +137,7 @@
             android:id="@+id/view_more_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="View more"
+            android:text="@string/view_more"
             style="@style/TextAppearance.Home.ViewMore"
             android:clickable="true"
             android:focusable="true"
@@ -196,7 +196,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="Your history will show up here!"
+                        android:text="@string/history_empty_title"
                         android:textColor="@color/white"
                         style="@style/TextAppearance.Home.CardTitle"/>
 
@@ -205,7 +205,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:text="Upload a link or file to get started."
+                        android:text="@string/history_empty_subtitle"
                         android:textColor="#CCFFFFFF"
                         style="@style/TextAppearance.Body.Onboarding"
                         android:layout_marginTop="4dp"/>
@@ -250,12 +250,12 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:src="@drawable/ic_upload_file_themed"
-                        android:contentDescription="Upload File Icon"/>
+                        android:contentDescription="@string/cd_upload_file_icon"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Upload File"
+                        android:text="@string/upload_file"
                         style="@style/TextAppearance.Home.CardTitle"
                         android:textColor="@color/text_primary_dark"
                         android:layout_marginStart="20dp"/>
@@ -288,12 +288,12 @@
                         android:layout_width="40dp"
                         android:layout_height="40dp"
                         android:src="@drawable/ic_upload_link_themed"
-                        android:contentDescription="Upload Link Icon"/>
+                        android:contentDescription="@string/cd_upload_link_icon"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Upload Link"
+                        android:text="@string/upload_link"
                         style="@style/TextAppearance.Home.CardTitle"
                         android:textColor="@color/text_primary_dark"
                         android:layout_marginStart="20dp"/>
@@ -323,17 +323,15 @@
                     android:paddingEnd="24dp">
 
                     <ImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_camera_modern"
-                        android:background="@drawable/bg_icon_gradient_circle"
-                        android:padding="12dp"
-                        app:tint="@color/white"/>
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@drawable/ic_camera"
+                        android:contentDescription="@string/cd_scan_image_icon"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Scan Image (OCR)"
+                        android:text="@string/scan_image_ocr"
                         style="@style/TextAppearance.Home.CardTitle"
                         android:textColor="@color/text_primary_dark"
                         android:layout_marginStart="20dp"/>

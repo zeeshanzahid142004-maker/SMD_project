@@ -1,16 +1,11 @@
 package com.example.learnify;
 
-import android. Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
-import android.util. Log;
-import android.view. LayoutInflater;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -21,33 +16,27 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.LinearSnapHelper;
+import androidx.recyclerview.widget.LinearSnapHelper; // Import for Snapping
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview. widget.SnapHelper;
+import androidx.recyclerview.widget.SnapHelper;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
-import com.tom_roush. pdfbox.pdmodel.PDDocument;
+import com.tom_roush.pdfbox.pdmodel.PDDocument;
 import com.tom_roush.pdfbox.text.PDFTextStripper;
 
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
-import org.apache. poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io. InputStream;
-import java.io. InputStreamReader;
-import java. text.SimpleDateFormat;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 public class HomeFragment extends Fragment {
 
@@ -61,9 +50,7 @@ public class HomeFragment extends Fragment {
     private TextView viewMoreButton;
     private TextView profileNameView;
     private ActivityResultLauncher<String[]> filePickerLauncher;
-    private ActivityResultLauncher<Intent> cameraLauncher;
-    private ActivityResultLauncher<Intent> galleryLauncher;
-    private ActivityResultLauncher<String> cameraPermissionLauncher;
+    private ActivityResultLauncher<String[]> imagePickerLauncher;
 
     // History views
     private RecyclerView rvRecentHistory;
@@ -74,12 +61,9 @@ public class HomeFragment extends Fragment {
     private QuizAttemptRepository attemptRepository;
     private FirebaseAuth auth;
     private FirebaseFirestore db;
-
+    
     // OCR Text Extractor
     private ImageTextExtractor imageTextExtractor;
-
-    // Camera photo URI
-    private Uri cameraPhotoUri;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -95,7 +79,7 @@ public class HomeFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         auth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore. getInstance();
+        db = FirebaseFirestore.getInstance();
 
         try {
             PDFBoxResourceLoader.init(requireContext());
@@ -103,7 +87,6 @@ public class HomeFragment extends Fragment {
             Log.e(TAG, "❌ PDFBox Init Failed", e);
         }
 
-        // File picker launcher
         filePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.OpenDocument(),
                 uri -> {
@@ -115,49 +98,20 @@ public class HomeFragment extends Fragment {
                 }
         );
 
-        // Camera launcher
-        cameraLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result. getResultCode() == Activity. RESULT_OK) {
-                        if (cameraPhotoUri != null) {
-                            extractTextFromImage(cameraPhotoUri);
-                        }
-                    } else {
-                        Toast.makeText(getContext(), "Camera cancelled", Toast.LENGTH_SHORT).show();
-                    }
-                }
-        );
-
-        // Gallery launcher
-        galleryLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result. getResultCode() == Activity. RESULT_OK && result.getData() != null) {
-                        Uri selectedImageUri = result.getData().getData();
-                        if (selectedImageUri != null) {
-                            extractTextFromImage(selectedImageUri);
-                        }
+        // Image picker for OCR
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.OpenDocument(),
+                uri -> {
+                    if (uri != null) {
+                        extractTextFromImage(uri);
                     } else {
                         Toast.makeText(getContext(), "No image selected", Toast.LENGTH_SHORT).show();
                     }
                 }
         );
 
-        // Camera permission launcher
-        cameraPermissionLauncher = registerForActivityResult(
-                new ActivityResultContracts. RequestPermission(),
-                isGranted -> {
-                    if (isGranted) {
-                        launchCamera();
-                    } else {
-                        Toast.makeText(getContext(), "Camera permission required", Toast.LENGTH_SHORT).show();
-                    }
-                }
-        );
-
         attemptRepository = new QuizAttemptRepository();
-
+        
         // Initialize OCR text extractor
         imageTextExtractor = new ImageTextExtractor(requireContext());
     }
@@ -175,12 +129,12 @@ public class HomeFragment extends Fragment {
         // Initialize views
         uploadFileButton = view.findViewById(R.id.upload_file_button);
         uploadLinkButton = view.findViewById(R.id.upload_link_button);
-        uploadImageButton = view.findViewById(R.id. upload_image_button);
+        uploadImageButton = view.findViewById(R.id.upload_image_button);
         profileCard = view.findViewById(R.id.profile_card);
         viewMoreButton = view.findViewById(R.id.view_more_button);
         profileNameView = view.findViewById(R.id.profile_name);
         rvRecentHistory = view.findViewById(R.id.history_recycler_view);
-        emptyHistoryCard = view. findViewById(R.id.empty_history_view);
+        emptyHistoryCard = view.findViewById(R.id.empty_history_view);
 
         if (rvRecentHistory == null || emptyHistoryCard == null) return;
 
@@ -190,7 +144,7 @@ public class HomeFragment extends Fragment {
             if (mListener != null) {
                 getParentFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, new ProfileFragment())
-                        . addToBackStack(null)
+                        .addToBackStack(null)
                         .commit();
             }
         });
@@ -206,13 +160,20 @@ public class HomeFragment extends Fragment {
 
         uploadLinkButton.setOnClickListener(v -> {
             if (mListener != null) {
-                mListener. onUploadLinkClicked();
+                mListener.onUploadLinkClicked();
             }
         });
-
-        // Image upload button - Show Camera/Gallery dialog
+        
+        // Image upload button for OCR
         if (uploadImageButton != null) {
-            uploadImageButton.setOnClickListener(v -> showImageSourceDialog());
+            uploadImageButton.setOnClickListener(v -> {
+                String[] mimeTypes = {
+                        "image/jpeg",
+                        "image/png",
+                        "image/webp"
+                };
+                imagePickerLauncher.launch(mimeTypes);
+            });
         }
 
         viewMoreButton.setOnClickListener(v -> {
@@ -220,81 +181,6 @@ public class HomeFragment extends Fragment {
         });
 
         setupRecentHistory();
-    }
-
-    /**
-     * Show dialog to choose between Camera and Gallery
-     */
-    private void showImageSourceDialog() {
-        DialogHelper.showImageSourceDialog(requireContext(), new DialogHelper. ImageSourceCallback() {
-            @Override
-            public void onCameraSelected() {
-                openCamera();
-            }
-
-            @Override
-            public void onGallerySelected() {
-                openGallery();
-            }
-        });
-    }
-
-    /**
-     * Open camera to take photo
-     */
-    private void openCamera() {
-        // Check camera permission
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission. CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            cameraPermissionLauncher.launch(Manifest.permission.CAMERA);
-            return;
-        }
-        launchCamera();
-    }
-
-    /**
-     * Actually launch the camera
-     */
-    private void launchCamera() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        // Create file to save the photo
-        File photoFile = createImageFile();
-        if (photoFile != null) {
-            cameraPhotoUri = FileProvider. getUriForFile(
-                    requireContext(),
-                    requireContext().getPackageName() + ".fileprovider",
-                    photoFile
-            );
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri);
-            cameraLauncher.launch(takePictureIntent);
-        } else {
-            Toast.makeText(getContext(), "Could not create image file", Toast.LENGTH_SHORT). show();
-        }
-    }
-
-    /**
-     * Create a temporary file for camera photo
-     */
-    private File createImageFile() {
-        try {
-            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            String imageFileName = "JPEG_" + timeStamp + "_";
-            File storageDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-            return File.createTempFile(imageFileName, ".jpg", storageDir);
-        } catch (Exception e) {
-            Log.e(TAG, "Error creating image file", e);
-            return null;
-        }
-    }
-
-    /**
-     * Open gallery to select image
-     */
-    private void openGallery() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media. EXTERNAL_CONTENT_URI);
-        intent.setType("image/*");
-        galleryLauncher.launch(intent);
     }
 
     private void loadUserName() {
@@ -305,15 +191,15 @@ public class HomeFragment extends Fragment {
 
             if (displayName != null && !displayName.isEmpty()) {
                 String firstName = displayName.split(" ")[0];
-                profileNameView.setText("Welcome, " + firstName + "!");
+                profileNameView.setText(getString(R.string.welcome_user, firstName));
             } else if (email != null) {
                 String emailPrefix = email.split("@")[0];
-                profileNameView.setText("Welcome, " + emailPrefix + "!");
+                profileNameView.setText(getString(R.string.welcome_user, emailPrefix));
             } else {
-                profileNameView.setText("Welcome!");
+                profileNameView.setText(getString(R.string.welcome));
             }
         } else {
-            profileNameView. setText("Welcome!");
+            profileNameView.setText(getString(R.string.welcome));
         }
     }
 
@@ -323,12 +209,15 @@ public class HomeFragment extends Fragment {
     private void setupRecentHistory() {
         Log.d(TAG, "📜 Setting up recent history view - Carousel Mode");
 
+        // 1. Setup Layout Manager
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
         rvRecentHistory.setLayoutManager(layoutManager);
 
+        // 2. Add SnapHelper (Centers the scrolling item)
         SnapHelper snapHelper = new LinearSnapHelper();
         snapHelper.attachToRecyclerView(rvRecentHistory);
 
+        // 3. Add Scroll Listener for Scaling (The "Cool" Effect)
         rvRecentHistory.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
@@ -346,9 +235,9 @@ public class HomeFragment extends Fragment {
             @Override
             public void onToggleFavorite(QuizAttempt attempt, int position) {
                 attempt.isFavorite = !attempt.isFavorite;
-                attemptRepository.markAsFavorite(attempt. attemptId, attempt.isFavorite);
+                attemptRepository.markAsFavorite(attempt.attemptId, attempt.isFavorite);
                 historyAdapter.updateItem(position, attempt);
-                String msg = attempt.isFavorite ?  "❤️ Favourited!" : "Removed";
+                String msg = attempt.isFavorite ? "❤️ Favourited!" : "Removed";
                 Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
@@ -361,8 +250,8 @@ public class HomeFragment extends Fragment {
      * Calculates distance from center and scales items accordingly
      */
     private void updateCarouselScale(RecyclerView recyclerView) {
-        float minScale = 0.85f;
-        float minAlpha = 0.5f;
+        float minScale = 0.85f; // The scale of items on the side (85% size)
+        float minAlpha = 0.5f;  // Transparency of items on the side
 
         int centerX = recyclerView.getWidth() / 2;
 
@@ -371,12 +260,14 @@ public class HomeFragment extends Fragment {
             int childCenterX = (child.getLeft() + child.getRight()) / 2;
             int distance = Math.abs(centerX - childCenterX);
 
+            // Calculate scale based on distance (closer to 0 distance = closer to 1.0 scale)
             float scale = 1.0f - ((float) distance / centerX) * 0.4f;
-            scale = Math. max(minScale, scale);
+            scale = Math.max(minScale, scale); // Clamp to minScale
 
             child.setScaleX(scale);
             child.setScaleY(scale);
 
+            // Optional: Fade out items on the side
             float alpha = 1.0f - ((float) distance / centerX) * 0.5f;
             child.setAlpha(Math.max(minAlpha, alpha));
         }
@@ -394,8 +285,10 @@ public class HomeFragment extends Fragment {
                     emptyHistoryCard.setVisibility(View.VISIBLE);
                 } else {
                     rvRecentHistory.setVisibility(View.VISIBLE);
-                    emptyHistoryCard. setVisibility(View.GONE);
+                    emptyHistoryCard.setVisibility(View.GONE);
                     historyAdapter.notifyDataSetChanged();
+
+                    // Force an update of the scale once data is loaded
                     rvRecentHistory.post(() -> updateCarouselScale(rvRecentHistory));
                 }
             }
@@ -411,7 +304,7 @@ public class HomeFragment extends Fragment {
 
     private void extractAndProcessFile(Uri uri) {
         Log.d(TAG, "⏳ Starting background extraction for: " + uri);
-        Toast.makeText(getContext(), "Reading file.. .", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Reading file...", Toast.LENGTH_SHORT).show();
 
         new Thread(() -> {
             String text = null;
@@ -435,11 +328,11 @@ public class HomeFragment extends Fragment {
                 final String extractedText = text;
 
                 if (getActivity() != null) {
-                    getActivity(). runOnUiThread(() -> {
+                    getActivity().runOnUiThread(() -> {
                         if (extractedText != null && !extractedText.isEmpty()) {
                             launchGenerateQuizFragment(extractedText);
                         } else {
-                            Toast. makeText(getContext(), "Could not read text from this file.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), "Could not read text from this file.", Toast.LENGTH_SHORT).show();
                         }
                     });
                 }
@@ -459,7 +352,7 @@ public class HomeFragment extends Fragment {
         GenerateQuizFragment fragment = GenerateQuizFragment.newInstance(text);
         getParentFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)
-                . addToBackStack(null)
+                .addToBackStack(null)
                 .commit();
     }
 
@@ -487,7 +380,7 @@ public class HomeFragment extends Fragment {
         StringBuilder sb = new StringBuilder();
         String line;
         while ((line = r.readLine()) != null) {
-            sb.append(line). append("\n");
+            sb.append(line).append("\n");
         }
         return sb.toString();
     }
@@ -496,7 +389,7 @@ public class HomeFragment extends Fragment {
      * Extract text from image using OCR (ML Kit Text Recognition)
      */
     private void extractTextFromImage(Uri imageUri) {
-        Log. d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
+        Log.d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
         Toast.makeText(getContext(), "Scanning image for text...", Toast.LENGTH_SHORT).show();
 
         if (imageTextExtractor == null) {
@@ -508,13 +401,7 @@ public class HomeFragment extends Fragment {
             public void onSuccess(String extractedText) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        Log.d(TAG, "✅ OCR Success: " + extractedText. length() + " characters extracted");
-
-                        if (extractedText. trim().isEmpty()) {
-                            Toast.makeText(getContext(), "No text found in image", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
-
+                        Log.d(TAG, "✅ OCR Success: " + extractedText.length() + " characters extracted");
                         Toast.makeText(getContext(), "✅ Text extracted successfully!", Toast.LENGTH_SHORT).show();
                         launchGenerateQuizFragment(extractedText);
                     });
@@ -559,7 +446,7 @@ public class HomeFragment extends Fragment {
         super.onDestroy();
         // Clean up OCR resources
         if (imageTextExtractor != null) {
-            imageTextExtractor. close();
+            imageTextExtractor.close();
             imageTextExtractor = null;
         }
     }
