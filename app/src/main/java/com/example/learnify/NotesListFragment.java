@@ -1,6 +1,9 @@
 package com.example.learnify;
 
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +14,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -28,10 +32,17 @@ public class NotesListFragment extends Fragment {
     private ProgressBar progressBar;
     private TextView emptyView;
     private Chip filterFavorites;
+    private SearchView searchView;
     private VideoNotesRepository repository;
     private NotesAdapter adapter;
     private List<VideoNotesRepository.VideoNote> allNotes = new ArrayList<>();
     private boolean showingFavoritesOnly = false;
+    private String currentSearchQuery = "";
+    
+    // Debounce handler for search
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchRunnable;
+    private static final long SEARCH_DEBOUNCE_DELAY = 300; // 300ms
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -53,6 +64,7 @@ public class NotesListFragment extends Fragment {
         progressBar = view.findViewById(R.id.loading_progress);
         emptyView = view.findViewById(R.id.empty_view);
         filterFavorites = view.findViewById(R.id.filter_favorites);
+        searchView = view.findViewById(R.id.notes_search_view);
 
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(),2));
 
@@ -64,7 +76,44 @@ public class NotesListFragment extends Fragment {
             });
         }
 
+        // Setup search functionality
+        setupSearch();
+
         loadNotes();
+    }
+
+    private void setupSearch() {
+        if (searchView != null) {
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    currentSearchQuery = query;
+                    applyFilter();
+                    return true;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    // Debounce search input
+                    if (searchRunnable != null) {
+                        searchHandler.removeCallbacks(searchRunnable);
+                    }
+                    searchRunnable = () -> {
+                        currentSearchQuery = newText;
+                        applyFilter();
+                    };
+                    searchHandler.postDelayed(searchRunnable, SEARCH_DEBOUNCE_DELAY);
+                    return true;
+                }
+            });
+
+            // Handle close button
+            searchView.setOnCloseListener(() -> {
+                currentSearchQuery = "";
+                applyFilter();
+                return false;
+            });
+        }
     }
 
     private void loadNotes() {
@@ -91,23 +140,33 @@ public class NotesListFragment extends Fragment {
     }
 
     private void applyFilter() {
-        List<VideoNotesRepository.VideoNote> filteredNotes;
+        List<VideoNotesRepository.VideoNote> filteredNotes = new ArrayList<>();
         
-        if (showingFavoritesOnly) {
-            filteredNotes = new ArrayList<>();
-            for (VideoNotesRepository.VideoNote note : allNotes) {
-                if (note.isFavorite) {
-                    filteredNotes.add(note);
-                }
+        for (VideoNotesRepository.VideoNote note : allNotes) {
+            boolean matchesFavorite = !showingFavoritesOnly || note.isFavorite;
+            boolean matchesSearch = true;
+            
+            // Apply search filter
+            if (currentSearchQuery != null && !currentSearchQuery.isEmpty()) {
+                String searchLower = currentSearchQuery.toLowerCase();
+                String contentText = note.content != null ? 
+                    Html.fromHtml(note.content, Html.FROM_HTML_MODE_LEGACY).toString().toLowerCase() : "";
+                String urlText = note.videoUrl != null ? note.videoUrl.toLowerCase() : "";
+                
+                matchesSearch = contentText.contains(searchLower) || urlText.contains(searchLower);
             }
-        } else {
-            filteredNotes = new ArrayList<>(allNotes);
+            
+            if (matchesFavorite && matchesSearch) {
+                filteredNotes.add(note);
+            }
         }
 
         if (filteredNotes.isEmpty()) {
             emptyView.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
-            if (showingFavoritesOnly) {
+            if (!currentSearchQuery.isEmpty()) {
+                emptyView.setText("No results found for \"" + currentSearchQuery + "\"");
+            } else if (showingFavoritesOnly) {
                 emptyView.setText("No favorite notes yet");
             } else {
                 emptyView.setText("No notes yet");

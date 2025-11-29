@@ -28,6 +28,9 @@
             android:name=".HistoryActivity"
             android:exported="false" />
         <activity
+            android:name=".QuizReviewActivity"
+            android:exported="false" />
+        <activity
             android:name=".RecommendationsActivity"
             android:exported="false" />
         <activity

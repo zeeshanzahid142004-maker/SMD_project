@@ -5,7 +5,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android. util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget. TextView;
 import android.widget. Toast;
 
@@ -16,9 +19,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material. appbar.MaterialToolbar;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class HistoryActivity extends AppCompatActivity {
@@ -32,7 +39,17 @@ public class HistoryActivity extends AppCompatActivity {
     private MaterialToolbar toolbar;
     private SearchView searchView;
     private HistoryAdapter adapter;
-    private List<QuizAttempt> attempts = new ArrayList<>();
+    private List<QuizAttempt> allAttempts = new ArrayList<>();
+    private List<QuizAttempt> filteredAttempts = new ArrayList<>();
+
+    // Filter chips
+    private ChipGroup filterChipGroup;
+    private Chip chipAll, chipFavorites, chipRetaken, chipHighScore, chipNeedsReview;
+    
+    // Sort spinner
+    private Spinner sortSpinner;
+    private String currentSortOption = "Newest First";
+    private int currentFilterChipId = -1;
 
     private QuizAttemptRepository attemptRepository;
     private FirebaseFirestore db;
@@ -59,6 +76,17 @@ public class HistoryActivity extends AppCompatActivity {
         tvEmptyMessage = findViewById(R.id.tv_empty_message);
         tvNoResults = findViewById(R.id.tv_no_results);
         searchView = findViewById(R.id.search_view);
+        
+        // Filter chips
+        filterChipGroup = findViewById(R.id.filter_chip_group);
+        chipAll = findViewById(R.id.chip_all);
+        chipFavorites = findViewById(R.id.chip_favorites);
+        chipRetaken = findViewById(R.id.chip_retaken);
+        chipHighScore = findViewById(R.id.chip_high_score);
+        chipNeedsReview = findViewById(R.id.chip_needs_review);
+        
+        // Sort spinner
+        sortSpinner = findViewById(R.id.sort_spinner);
 
         // Setup toolbar
         setSupportActionBar(toolbar);
@@ -71,7 +99,7 @@ public class HistoryActivity extends AppCompatActivity {
         rvHistory.setLayoutManager(new LinearLayoutManager(this));
 
         // ⭐ CREATE ADAPTER CORRECTLY
-        adapter = new HistoryAdapter(attempts, new HistoryAdapter.OnHistoryActionListener() {
+        adapter = new HistoryAdapter(filteredAttempts, new HistoryAdapter.OnHistoryActionListener() {
             @Override
             public void onDownload(QuizAttempt attempt, int position) {
                 downloadQuiz(attempt, position);
@@ -86,9 +114,112 @@ public class HistoryActivity extends AppCompatActivity {
 
         // Setup search functionality
         setupSearch();
+        
+        // Setup filter chips
+        setupFilterChips();
+        
+        // Setup sort spinner
+        setupSortSpinner();
 
         // Load all history
         loadAllHistory();
+    }
+
+    private void setupFilterChips() {
+        currentFilterChipId = R.id.chip_all;
+        
+        filterChipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) {
+                // If nothing is checked, select "All" by default
+                chipAll.setChecked(true);
+                currentFilterChipId = R.id.chip_all;
+            } else {
+                currentFilterChipId = checkedIds.get(0);
+            }
+            applyFiltersAndSort();
+        });
+    }
+
+    private void setupSortSpinner() {
+        String[] sortOptions = {"Newest First", "Oldest First", "Highest Score", "Lowest Score"};
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<>(this, 
+            android.R.layout.simple_spinner_item, sortOptions);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sortSpinner.setAdapter(spinnerAdapter);
+        
+        sortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                currentSortOption = sortOptions[position];
+                applyFiltersAndSort();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing
+            }
+        });
+    }
+
+    private void applyFiltersAndSort() {
+        filteredAttempts.clear();
+        
+        // Apply filter based on selected chip
+        for (QuizAttempt attempt : allAttempts) {
+            boolean matchesFilter = false;
+            
+            if (currentFilterChipId == R.id.chip_all) {
+                matchesFilter = true;
+            } else if (currentFilterChipId == R.id.chip_favorites) {
+                matchesFilter = attempt.isFavorite;
+            } else if (currentFilterChipId == R.id.chip_retaken) {
+                matchesFilter = attempt.attemptNumber > 1;
+            } else if (currentFilterChipId == R.id.chip_high_score) {
+                matchesFilter = attempt.percentage > 70;
+            } else if (currentFilterChipId == R.id.chip_needs_review) {
+                matchesFilter = attempt.percentage < 50;
+            }
+            
+            if (matchesFilter) {
+                filteredAttempts.add(attempt);
+            }
+        }
+        
+        // Apply sorting
+        switch (currentSortOption) {
+            case "Newest First":
+                Collections.sort(filteredAttempts, (a, b) -> {
+                    if (b.attemptedAt == null && a.attemptedAt == null) return 0;
+                    if (b.attemptedAt == null) return -1;
+                    if (a.attemptedAt == null) return 1;
+                    return b.attemptedAt.compareTo(a.attemptedAt);
+                });
+                break;
+            case "Oldest First":
+                Collections.sort(filteredAttempts, (a, b) -> {
+                    if (a.attemptedAt == null && b.attemptedAt == null) return 0;
+                    if (a.attemptedAt == null) return -1;
+                    if (b.attemptedAt == null) return 1;
+                    return a.attemptedAt.compareTo(b.attemptedAt);
+                });
+                break;
+            case "Highest Score":
+                Collections.sort(filteredAttempts, (a, b) -> Integer.compare(b.percentage, a.percentage));
+                break;
+            case "Lowest Score":
+                Collections.sort(filteredAttempts, (a, b) -> Integer.compare(a.percentage, b.percentage));
+                break;
+        }
+        
+        // Update UI
+        if (filteredAttempts.isEmpty()) {
+            showNoResults();
+        } else {
+            hideNoResults();
+        }
+        
+        adapter.updateFullList(filteredAttempts);
+        adapter.notifyDataSetChanged();
     }
 
     private void setupSearch() {
@@ -153,16 +284,15 @@ public class HistoryActivity extends AppCompatActivity {
         attemptRepository.getAllAttempts(new QuizAttemptRepository.OnAttemptsLoadedListener() {
             @Override
             public void onAttemptsLoaded(List<QuizAttempt> loadedAttempts) {
-                attempts.clear();
-                attempts. addAll(loadedAttempts);
+                allAttempts.clear();
+                allAttempts.addAll(loadedAttempts);
 
-                if (attempts.isEmpty()) {
+                if (allAttempts.isEmpty()) {
                     showEmptyState();
                 } else {
                     showContent();
-                    adapter.updateFullList(loadedAttempts);
-                    adapter.notifyDataSetChanged();
-                    Log.d(TAG, "✅ Loaded " + attempts.size() + " history items");
+                    applyFiltersAndSort();
+                    Log.d(TAG, "✅ Loaded " + allAttempts.size() + " history items");
                 }
             }
 

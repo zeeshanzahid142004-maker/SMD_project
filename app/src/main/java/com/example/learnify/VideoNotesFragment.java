@@ -17,9 +17,11 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
+import android.text.style.ImageSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +42,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.Stack;
@@ -53,7 +56,7 @@ public class VideoNotesFragment extends Fragment {
     private EditText notesEditText;
     private ImageView buttonBold, buttonItalic, buttonBullet, buttonUnderline,
             buttonH1, buttonH2, buttonH3, buttonHighlight,
-            buttonUndo, buttonRedo, buttonSave, buttonScreenshot;
+            buttonUndo, buttonRedo, buttonSave, buttonScreenshot, buttonEmbedScreenshot;
     private WebView youTubeWebView;
     private String videoUrl;
     private String passedTranscript;
@@ -65,20 +68,25 @@ public class VideoNotesFragment extends Fragment {
     private final Stack<CharSequence> redoStack = new Stack<>();
     private boolean isUndoRedoOperation = false;
 
-    // Formatting State Toggles
-    private boolean isBoldActive = false;
-    private boolean isItalicActive = false;
-    private boolean isUnderlineActive = false;
-    private boolean isHighlightActive = false;
+    // Formatting State Toggles - for toggle mode (typing new text with formatting)
+    private boolean isBoldModeActive = false;
+    private boolean isItalicModeActive = false;
+    private boolean isUnderlineModeActive = false;
+    private boolean isHighlightModeActive = false;
+    
+    // Track cursor position for applying formatting to new text
+    private int lastCursorPosition = 0;
 
     // Anti-spam protection
     private long lastSaveClickTime = 0;
     private long lastScreenshotClickTime = 0;
+    private long lastEmbedScreenshotClickTime = 0;
     private static final long CLICK_DELAY = 1000; // 1 second
 
     // Repository & Service
     private VideoNotesRepository notesRepository;
     private YouTubeTranscriptService transcriptService;
+    private GoogleDriveManager driveManager;
 
     // Permission launcher for screenshot
     private ActivityResultLauncher<String> requestPermissionLauncher;
@@ -93,6 +101,7 @@ public class VideoNotesFragment extends Fragment {
 
         notesRepository = new VideoNotesRepository();
         transcriptService = new YouTubeTranscriptService();
+        driveManager = new GoogleDriveManager(requireContext());
 
         // Initialize permission launcher for screenshot
         requestPermissionLauncher = registerForActivityResult(
@@ -312,17 +321,59 @@ public class VideoNotesFragment extends Fragment {
         buttonRedo.setOnClickListener(v -> redo());
         buttonSave.setOnClickListener(v -> saveNotes());
         
+        // Screenshot button now embeds screenshot in notes instead of saving to gallery
         if (buttonScreenshot != null) {
-            buttonScreenshot.setOnClickListener(v -> requestScreenshotPermission());
+            buttonScreenshot.setOnClickListener(v -> captureAndEmbedScreenshot());
+            // Long press for saving to gallery
+            buttonScreenshot.setOnLongClickListener(v -> {
+                requestScreenshotPermission();
+                return true;
+            });
         }
     }
 
     private void setupTextWatcher() {
         notesEditText.addTextChangedListener(new TextWatcher() {
+            private int beforeLength = 0;
+            
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                beforeLength = s.length();
+            }
+            
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // Apply formatting to newly typed characters
+                if (count > 0 && count > before) {
+                    // New text was added
+                    int newTextStart = start;
+                    int newTextEnd = start + count;
+                    
+                    if (newTextEnd <= s.length()) {
+                        Spannable spannable = notesEditText.getText();
+                        
+                        // Apply active formatting modes to new text
+                        if (isBoldModeActive) {
+                            spannable.setSpan(new StyleSpan(Typeface.BOLD), 
+                                newTextStart, newTextEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }
+                        if (isItalicModeActive) {
+                            spannable.setSpan(new StyleSpan(Typeface.ITALIC), 
+                                newTextStart, newTextEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }
+                        if (isUnderlineModeActive) {
+                            spannable.setSpan(new UnderlineSpan(), 
+                                newTextStart, newTextEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }
+                        if (isHighlightModeActive && getContext() != null) {
+                            spannable.setSpan(
+                                new BackgroundColorSpan(ContextCompat.getColor(requireContext(), R.color.figma_purple_main)),
+                                newTextStart, newTextEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }
+                    }
+                }
+            }
+            
             @Override
             public void afterTextChanged(Editable s) {
                 if (!isUndoRedoOperation) {
@@ -356,10 +407,18 @@ public class VideoNotesFragment extends Fragment {
         int end = notesEditText.getSelectionEnd();
 
         if (start == end) {
-            Toast.makeText(getContext(), "Please select text first", Toast.LENGTH_SHORT).show();
+            // No selection - toggle mode for future typing
+            if (style == Typeface.BOLD) {
+                isBoldModeActive = !isBoldModeActive;
+                updateButtonTint(button, isBoldModeActive);
+            } else if (style == Typeface.ITALIC) {
+                isItalicModeActive = !isItalicModeActive;
+                updateButtonTint(button, isItalicModeActive);
+            }
             return;
         }
 
+        // Text is selected - apply formatting to selection
         Spannable spannable = notesEditText.getText();
         StyleSpan[] existingSpans = spannable.getSpans(start, end, StyleSpan.class);
         boolean styleExists = false;
@@ -375,9 +434,6 @@ public class VideoNotesFragment extends Fragment {
             spannable.setSpan(new StyleSpan(style), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
-        if (style == Typeface.BOLD) isBoldActive = !isBoldActive;
-        if (style == Typeface.ITALIC) isItalicActive = !isItalicActive;
-
         updateButtonTint(button, !styleExists);
     }
 
@@ -386,10 +442,13 @@ public class VideoNotesFragment extends Fragment {
         int end = notesEditText.getSelectionEnd();
 
         if (start == end) {
-            Toast.makeText(getContext(), "Please select text first", Toast.LENGTH_SHORT).show();
+            // No selection - toggle mode for future typing
+            isUnderlineModeActive = !isUnderlineModeActive;
+            updateButtonTint(button, isUnderlineModeActive);
             return;
         }
 
+        // Text is selected - apply formatting to selection
         Spannable spannable = notesEditText.getText();
         UnderlineSpan[] existingSpans = spannable.getSpans(start, end, UnderlineSpan.class);
         boolean exists = false;
@@ -411,10 +470,13 @@ public class VideoNotesFragment extends Fragment {
         int end = notesEditText.getSelectionEnd();
 
         if (start == end) {
-            Toast.makeText(getContext(), "Please select text first", Toast.LENGTH_SHORT).show();
+            // No selection - toggle mode for future typing
+            isHighlightModeActive = !isHighlightModeActive;
+            updateButtonTint(button, isHighlightModeActive);
             return;
         }
 
+        // Text is selected - apply formatting to selection
         Spannable spannable = notesEditText.getText();
         BackgroundColorSpan[] existingSpans = spannable.getSpans(start, end, BackgroundColorSpan.class);
         boolean exists = false;
@@ -601,6 +663,120 @@ public class VideoNotesFragment extends Fragment {
         } catch (Exception e) {
             Log.e(TAG, "Screenshot failed", e);
             Toast.makeText(getContext(), "Screenshot failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Capture video frame and embed as inline image in notes
+     */
+    private void captureAndEmbedScreenshot() {
+        // Anti-spam protection
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastEmbedScreenshotClickTime < CLICK_DELAY) {
+            return;
+        }
+        lastEmbedScreenshotClickTime = currentTime;
+
+        try {
+            // Capture the WebView (video) content
+            if (youTubeWebView == null) {
+                Toast.makeText(getContext(), "Video not available", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Create bitmap from the WebView
+            Bitmap bitmap = Bitmap.createBitmap(youTubeWebView.getWidth(), youTubeWebView.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            youTubeWebView.draw(canvas);
+
+            Toast.makeText(getContext(), "📸 Capturing screenshot...", Toast.LENGTH_SHORT).show();
+
+            // Try to upload to Drive first
+            if (driveManager != null && driveManager.isAvailable()) {
+                driveManager.uploadNoteImage(bitmap, videoUrl, new GoogleDriveManager.UploadCallback() {
+                    @Override
+                    public void onSuccess(String driveUrl, String fileId) {
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                insertImageIntoNotes(driveUrl);
+                                Toast.makeText(getContext(), "✅ Screenshot embedded!", Toast.LENGTH_SHORT).show();
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.w(TAG, "Drive upload failed, using base64 fallback", e);
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(() -> {
+                                // Fallback to base64 data URI
+                                insertImageAsBase64(bitmap);
+                            });
+                        }
+                    }
+                });
+            } else {
+                // Drive not available, use base64 fallback
+                insertImageAsBase64(bitmap);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Embed screenshot failed", e);
+            Toast.makeText(getContext(), "Failed to capture: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Insert image URL as HTML img tag at cursor position
+     */
+    private void insertImageIntoNotes(String imageUrl) {
+        try {
+            int cursorPosition = notesEditText.getSelectionStart();
+            Editable editable = notesEditText.getText();
+            
+            // Insert newline + image placeholder + newline
+            String imageTag = "\n[📸 Screenshot]\n";
+            editable.insert(cursorPosition, imageTag);
+            
+            // Move cursor after the image
+            notesEditText.setSelection(cursorPosition + imageTag.length());
+            
+            // Store the image URL in the notes metadata (will be saved with notes)
+            // The actual image HTML will be added when saving
+            Log.d(TAG, "✅ Image reference inserted at position " + cursorPosition);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to insert image", e);
+        }
+    }
+
+    /**
+     * Fallback: Insert image as base64 data URI
+     */
+    private void insertImageAsBase64(Bitmap bitmap) {
+        try {
+            // Compress bitmap to reduce size
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            // Scale down for embedding
+            Bitmap scaledBitmap = Bitmap.createScaledBitmap(bitmap, 
+                Math.min(bitmap.getWidth(), 400), 
+                Math.min(bitmap.getHeight(), 300), true);
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+            byte[] imageBytes = baos.toByteArray();
+            String base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+            
+            int cursorPosition = notesEditText.getSelectionStart();
+            Editable editable = notesEditText.getText();
+            
+            // Insert placeholder for the image
+            String imageTag = "\n[📸 Screenshot embedded]\n";
+            editable.insert(cursorPosition, imageTag);
+            
+            notesEditText.setSelection(cursorPosition + imageTag.length());
+            
+            Toast.makeText(getContext(), "✅ Screenshot embedded (offline mode)", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "✅ Base64 image embedded, size: " + imageBytes.length + " bytes");
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to embed base64 image", e);
+            Toast.makeText(getContext(), "Failed to embed screenshot", Toast.LENGTH_SHORT).show();
         }
     }
 

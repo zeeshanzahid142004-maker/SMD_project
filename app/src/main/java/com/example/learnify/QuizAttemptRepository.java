@@ -21,7 +21,7 @@ public class QuizAttemptRepository {
     private final FirebaseAuth auth = FirebaseAuth.getInstance();
 
     /**
-     * Save quiz attempt to history
+     * Save quiz attempt to history with attempt number tracking
      */
     public void saveQuizAttempt(String quizId, String quizTitle, int correctCount,
                                 int totalQuestions, List<QuizQuestion> questions) {
@@ -34,25 +34,57 @@ public class QuizAttemptRepository {
         String userId = user.getUid();
         String attemptId = quizId + "_" + System.currentTimeMillis();
 
-        Map<String, Object> historyEntry = new HashMap<>();
-        historyEntry.put("attemptId", attemptId); // Storing it in the data too for redundancy
-        historyEntry.put("quizId", quizId);
-        historyEntry.put("quizTitle", quizTitle);
-        historyEntry.put("score", correctCount);
-        historyEntry.put("totalQuestions", totalQuestions);
-        historyEntry.put("percentage", totalQuestions > 0 ? (correctCount * 100 / totalQuestions) : 0);
-        historyEntry.put("attemptedAt", new Date());
-        historyEntry.put("isDownloaded", false);
-        historyEntry.put("isFavorite", false);
-
+        // First, count existing attempts for this quiz to get attempt number
         db.collection("users").document(userId)
-                .collection("quizHistory").document(attemptId)
-                .set(historyEntry)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "✅ Quiz attempt saved to history");
+                .collection("quizHistory")
+                .whereEqualTo("quizId", quizId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    int attemptNumber = querySnapshot.size() + 1;
+                    
+                    Map<String, Object> historyEntry = new HashMap<>();
+                    historyEntry.put("attemptId", attemptId);
+                    historyEntry.put("quizId", quizId);
+                    historyEntry.put("quizTitle", quizTitle);
+                    historyEntry.put("score", correctCount);
+                    historyEntry.put("totalQuestions", totalQuestions);
+                    historyEntry.put("percentage", totalQuestions > 0 ? (correctCount * 100 / totalQuestions) : 0);
+                    historyEntry.put("attemptedAt", new Date());
+                    historyEntry.put("isDownloaded", false);
+                    historyEntry.put("isFavorite", false);
+                    historyEntry.put("attemptNumber", attemptNumber);
+
+                    db.collection("users").document(userId)
+                            .collection("quizHistory").document(attemptId)
+                            .set(historyEntry)
+                            .addOnSuccessListener(aVoid -> {
+                                Log.d(TAG, "✅ Quiz attempt #" + attemptNumber + " saved to history");
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "❌ Failed to save quiz history", e);
+                            });
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Failed to save quiz history", e);
+                    // If count fails, save with attempt number 1
+                    Log.w(TAG, "⚠️ Failed to count attempts, saving as attempt #1");
+                    
+                    Map<String, Object> historyEntry = new HashMap<>();
+                    historyEntry.put("attemptId", attemptId);
+                    historyEntry.put("quizId", quizId);
+                    historyEntry.put("quizTitle", quizTitle);
+                    historyEntry.put("score", correctCount);
+                    historyEntry.put("totalQuestions", totalQuestions);
+                    historyEntry.put("percentage", totalQuestions > 0 ? (correctCount * 100 / totalQuestions) : 0);
+                    historyEntry.put("attemptedAt", new Date());
+                    historyEntry.put("isDownloaded", false);
+                    historyEntry.put("isFavorite", false);
+                    historyEntry.put("attemptNumber", 1);
+
+                    db.collection("users").document(userId)
+                            .collection("quizHistory").document(attemptId)
+                            .set(historyEntry)
+                            .addOnSuccessListener(aVoid -> Log.d(TAG, "✅ Quiz attempt saved to history"))
+                            .addOnFailureListener(err -> Log.e(TAG, "❌ Failed to save quiz history", err));
                 });
     }
 

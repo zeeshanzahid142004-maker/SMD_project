@@ -37,6 +37,101 @@
 
     </androidx.cardview.widget.CardView>
 
+    <!-- Filter Chips -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none"
+        android:paddingHorizontal="12dp">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/filter_chip_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_all"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="All"
+                android:checked="true"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeColor="@color/figma_purple_main"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_favorites"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="❤️ Favourites"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeColor="@color/figma_purple_main"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_retaken"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🔄 Retaken"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeColor="@color/figma_purple_main"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_high_score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🌟 High Score (>70%)"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeColor="@color/figma_purple_main"
+                app:chipStrokeWidth="1dp" />
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_needs_review"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📚 Needs Review (&lt;50%)"
+                style="@style/Widget.MaterialComponents.Chip.Filter"
+                app:chipBackgroundColor="@color/white"
+                app:chipStrokeColor="@color/figma_purple_main"
+                app:chipStrokeWidth="1dp" />
+
+        </com.google.android.material.chip.ChipGroup>
+
+    </HorizontalScrollView>
+
+    <!-- Sort Dropdown -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sort by: "
+            android:textColor="@color/text_secondary_gray"
+            android:textSize="14sp" />
+
+        <Spinner
+            android:id="@+id/sort_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:spinnerMode="dropdown" />
+
+    </LinearLayout>
+
     <!-- No Results Message -->
     <TextView
         android:id="@+id/tv_no_results"

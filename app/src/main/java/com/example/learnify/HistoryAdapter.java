@@ -1,5 +1,6 @@
 package com.example.learnify;
 
+import android.content.Intent;
 import android.view. LayoutInflater;
 import android. view.View;
 import android. view.ViewGroup;
@@ -28,6 +29,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
     // Anti-spam protection
     private long lastDownloadClickTime = 0;
     private long lastFavoriteClickTime = 0;
+    private long lastCardClickTime = 0;
     private static final long CLICK_DELAY = 1000; // 1 second
 
     public interface OnHistoryActionListener {
@@ -76,6 +78,16 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault());
         holder.tvDate.setText(sdf.format(attempt.attemptedAt));
 
+        // Retake badge - show if attemptNumber > 1
+        if (holder.tvRetakeBadge != null) {
+            if (attempt.attemptNumber > 1) {
+                holder.tvRetakeBadge.setVisibility(View.VISIBLE);
+                holder.tvRetakeBadge.setText("🔄 Retake #" + attempt.attemptNumber);
+            } else {
+                holder.tvRetakeBadge.setVisibility(View.GONE);
+            }
+        }
+
         // Favorite icon
         updateFavoriteIcon(holder, attempt.isFavorite);
 
@@ -87,6 +99,23 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
             holder.btnDownload. setText("Download");
             holder. btnDownload.setEnabled(true);
         }
+
+        // Card click opens QuizReviewActivity
+        holder.itemView.setOnClickListener(v -> {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - lastCardClickTime < CLICK_DELAY) {
+                return;
+            }
+            lastCardClickTime = currentTime;
+
+            Intent intent = new Intent(v.getContext(), QuizReviewActivity.class);
+            intent.putExtra("QUIZ_ID", attempt.quizId);
+            intent.putExtra("QUIZ_TITLE", attempt.quizTitle);
+            intent.putExtra("SCORE", attempt.score);
+            intent.putExtra("TOTAL_QUESTIONS", attempt.totalQuestions);
+            intent.putExtra("ATTEMPT_ID", attempt.attemptId);
+            v.getContext().startActivity(intent);
+        });
 
         // Favorite button click with anti-spam
         holder.ivFavorite.setOnClickListener(v -> {
@@ -180,6 +209,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
         TextView tvScore;
         TextView tvPercentage;
         TextView tvDate;
+        TextView tvRetakeBadge;
         MaterialButton btnDownload;
         ImageView ivFavorite;
 
@@ -189,6 +219,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
             tvScore = itemView.findViewById(R.id.tv_score);
             tvPercentage = itemView.findViewById(R.id.tv_percentage);
             tvDate = itemView.findViewById(R.id.tv_date);
+            tvRetakeBadge = itemView.findViewById(R.id.tv_retake_badge);
             btnDownload = itemView.findViewById(R.id.btn_download);
             ivFavorite = itemView.findViewById(R.id. iv_favorite);
         }

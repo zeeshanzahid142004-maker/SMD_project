@@ -13,6 +13,7 @@ public class QuizAttempt implements Serializable {
     public Date attemptedAt;
     public boolean isDownloaded;
     public boolean isFavorite;
+    public int attemptNumber = 1; // Track retake number (1 = first attempt)
 
     // Default constructor for Firestore
     public QuizAttempt() {}
@@ -28,6 +29,7 @@ public class QuizAttempt implements Serializable {
         this.attemptedAt = attemptedAt;
         this.isDownloaded = false;
         this.isFavorite = false;
+        this.attemptNumber = 1;
     }
 
     // Getters
@@ -40,8 +42,10 @@ public class QuizAttempt implements Serializable {
     public Date getAttemptedAt() { return attemptedAt; }
     public boolean isDownloaded() { return isDownloaded; }
     public boolean isFavorite() { return isFavorite; }
+    public int getAttemptNumber() { return attemptNumber; }
 
     // Setters
     public void setDownloaded(boolean downloaded) { this.isDownloaded = downloaded; }
     public void setFavorite(boolean favorite) { this.isFavorite = favorite; }
+    public void setAttemptNumber(int attemptNumber) { this.attemptNumber = attemptNumber; }
 }

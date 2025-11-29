@@ -34,6 +34,7 @@ public class GoogleDriveManager {
 
     private static final String TAG = "GoogleDriveManager";
     private static final String FOLDER_NAME = "Learnify Profile Photos";
+    private static final String NOTES_FOLDER_NAME = "Learnify Note Images";
     private static final String APP_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 
     private final Context context;
@@ -316,5 +317,95 @@ public class GoogleDriveManager {
      */
     public boolean isAvailable() {
         return driveService != null;
+    }
+
+    /**
+     * Upload note image (screenshot) to Google Drive
+     */
+    public void uploadNoteImage(Bitmap bitmap, String videoUrl, UploadCallback callback) {
+        if (driveService == null) {
+            callback.onError(new Exception("Drive service not initialized. Please sign in with Google."));
+            return;
+        }
+
+        executor.execute(() -> {
+            try {
+                Log.d(TAG, "📤 Uploading note image to Drive");
+
+                // Create a unique filename based on timestamp
+                String sanitizedUrl = videoUrl != null ? 
+                    videoUrl.replaceAll("[^a-zA-Z0-9]", "_").substring(0, Math.min(20, videoUrl.length())) : "note";
+                String fileName = "note_" + sanitizedUrl + "_" + System.currentTimeMillis() + ".jpg";
+                
+                // Save bitmap to temp file
+                java.io.File tempFile = saveBitmapToFile(bitmap, "note_temp_" + System.currentTimeMillis());
+
+                // Find or create notes folder
+                String folderId = getOrCreateNotesFolder();
+
+                // Upload new photo
+                File fileMetadata = new File();
+                fileMetadata.setName(fileName);
+                fileMetadata.setParents(Collections.singletonList(folderId));
+                fileMetadata.setDescription("Learnify note screenshot");
+
+                FileContent mediaContent = new FileContent("image/jpeg", tempFile);
+
+                File uploadedFile = driveService.files()
+                        .create(fileMetadata, mediaContent)
+                        .setFields("id, webContentLink, webViewLink")
+                        .execute();
+
+                // Make file publicly viewable
+                makeFilePublic(uploadedFile.getId());
+
+                String fileId = uploadedFile.getId();
+                String driveUrl = "https://drive.google.com/uc?id=" + fileId;
+
+                Log.d(TAG, "✅ Note image uploaded successfully");
+                Log.d(TAG, "File ID: " + fileId);
+                Log.d(TAG, "Drive URL: " + driveUrl);
+
+                // Clean up temp file
+                tempFile.delete();
+
+                callback.onSuccess(driveUrl, fileId);
+
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Note image upload failed", e);
+                callback.onError(e);
+            }
+        });
+    }
+
+    /**
+     * Get or create the notes images folder in Drive
+     */
+    private String getOrCreateNotesFolder() throws Exception {
+        // Search for existing folder
+        FileList result = driveService.files().list()
+                .setQ("mimeType='" + APP_FOLDER_MIME_TYPE + "' and name='" + NOTES_FOLDER_NAME + "' and trashed=false")
+                .setSpaces("drive")
+                .setFields("files(id, name)")
+                .execute();
+
+        if (!result.getFiles().isEmpty()) {
+            String folderId = result.getFiles().get(0).getId();
+            Log.d(TAG, "✅ Found existing notes folder: " + folderId);
+            return folderId;
+        }
+
+        // Create new folder
+        File folderMetadata = new File();
+        folderMetadata.setName(NOTES_FOLDER_NAME);
+        folderMetadata.setMimeType(APP_FOLDER_MIME_TYPE);
+
+        File folder = driveService.files()
+                .create(folderMetadata)
+                .setFields("id")
+                .execute();
+
+        Log.d(TAG, "✅ Created new notes folder: " + folder.getId());
+        return folder.getId();
     }
 }
