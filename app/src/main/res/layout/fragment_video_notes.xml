@@ -42,7 +42,11 @@
         <com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
             android:id="@+id/youtube_player_view"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            app:autoPlay="false"
+
+
+            />
 
         <!-- FULLSCREEN BUTTON -->
         <ImageView
@@ -235,9 +239,10 @@
                     android:padding="16dp"
                     android:background="@null"
                     android:inputType="textMultiLine"
-                    android:textColor="#000000"
-                    android:textColorHint="@color/text_secondary_gray"/>
 
+                    android:textColor="@color/text_primary_dark"
+
+                    android:textColorHint="@color/text_secondary_gray"/>
             </ScrollView>
 
         </LinearLayout>

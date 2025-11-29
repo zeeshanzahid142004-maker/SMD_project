@@ -1,12 +1,15 @@
 package com.example.learnify;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -17,6 +20,9 @@ public class SplashActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+applySavedLanguage();
+applySavedTheme();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_screen);
 
@@ -50,5 +56,19 @@ public class SplashActivity extends AppCompatActivity {
             finish();
 
         }, 2000);
+    }
+    private void applySavedTheme() {
+        SharedPreferences prefs = getSharedPreferences("LearnifyPrefs", Context.MODE_PRIVATE);
+        // Default to MODE_NIGHT_FOLLOW_SYSTEM (-1) if nothing saved
+        int savedMode = prefs.getInt("theme_mode", AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        AppCompatDelegate.setDefaultNightMode(savedMode);
+    }
+
+    private void applySavedLanguage() {
+        SharedPreferences prefs = getSharedPreferences("LearnifyPrefs", Context.MODE_PRIVATE);
+        String langCode = prefs.getString("language_code", "en"); // Default English
+        String langName = prefs.getString("language_name", "English");
+
+        LanguageManager.getInstance(this).setLanguage(this, langName, langCode);
     }
 }

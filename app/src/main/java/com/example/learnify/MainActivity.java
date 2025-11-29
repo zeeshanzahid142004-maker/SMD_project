@@ -90,10 +90,20 @@ public class MainActivity extends AppCompatActivity implements HomeFragment.OnHo
 
     @Override
     public void onGoToVideoFragment(String url) {
-        Log.d(TAG, "🎬 Opening video fragment for URL: " + url);
-        VideoNotesFragment fragment = VideoNotesFragment.newInstance(url);
-        loadFragment_WithBackStack(fragment);
+
     }
+
+    @Override
+    public void onGoToVideoFragment(String videoUrl, String transcript) {
+        // Use the new instance method that accepts transcript
+        VideoNotesFragment fragment = VideoNotesFragment.newInstance(videoUrl, transcript);
+
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
 
     @Override
     public void onGoToQuizFragment(String url) {

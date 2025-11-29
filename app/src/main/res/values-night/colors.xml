@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="white">#121212</color> <color name="black">#FFFFFF</color> <color name="screen_background_light_blue">#000000</color> <color name="card_surface">#1E1E1E</color> <color name="text_primary_dark">#FFFFFF</color> <color name="text_secondary_gray">#B0B0B0</color> <color name="figma_purple_main">#8F6CFF</color> <color name="otp_box_background">#2C2C2C</color>
+
+    <color name="icon_dark">#FFFFFF</color>
+    <color name="icon_gray_light">#444444</color>
+
+    <color name="figma_green_correct">#4EFD03</color>
+    <color name="figma_red_error">#FF5252</color>
+</resources>

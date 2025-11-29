@@ -1,5 +1,6 @@
 package com.example.learnify;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -27,9 +28,10 @@ public class QuizNetworkService {
     private static final String BASE_URL = "https://api.groq.com/";
 
     private final QuizApi quizApi;
-    private final String apiKey=BuildConfig.API_KEY;
+    private final String apiKey = BuildConfig.API_KEY;
     private final Gson gson;
-    private final Handler mainHandler; // ADD THIS
+    private final Handler mainHandler;
+    private final Context context;
 
     public interface QuizCallback {
         void onSuccess(List<QuizQuestion> quizQuestions);
@@ -37,9 +39,13 @@ public class QuizNetworkService {
     }
 
     public QuizNetworkService(String apiKey) {
+        this(apiKey, null);
+    }
 
+    public QuizNetworkService(String apiKey, Context context) {
+        this.context = context;
         this.gson = new Gson();
-        this.mainHandler = new Handler(Looper.getMainLooper()); // ADD THIS
+        this.mainHandler = new Handler(Looper.getMainLooper());
 
         OkHttpClient client = new OkHttpClient.Builder()
                 .connectTimeout(60, TimeUnit.SECONDS)
@@ -57,9 +63,7 @@ public class QuizNetworkService {
     }
 
     public void generateQuiz(String inputContext, QuizCallback callback) {
-        Log.d(TAG, "Generating quiz using Groq...");
-        Log.d(TAG, "Callback object: " + callback);
-        Log.d(TAG, "Callback hashCode: " + callback.hashCode());
+        Log.d(TAG, "🎯 Generating quiz from content...");
 
         String prompt = buildPrompt(inputContext);
         GroqRequest requestBody = new GroqRequest(prompt);
@@ -69,8 +73,6 @@ public class QuizNetworkService {
             @Override
             public void onResponse(@NonNull Call<GroqResponse> call, @NonNull Response<GroqResponse> response) {
                 Log.d(TAG, "✅ HTTP Response received: " + response.code());
-                Log.d(TAG, "Callback still valid? " + callback);
-                Log.d(TAG, "Callback hashCode: " + callback.hashCode());
 
                 if (!response.isSuccessful() || response.body() == null) {
                     String errorMsg = "Groq API Error: " + response.code();
@@ -81,40 +83,26 @@ public class QuizNetworkService {
                     } catch (Exception ignored) {}
                     Log.e(TAG, errorMsg);
 
-                    // POST ERROR ON MAIN THREAD
                     String finalError = errorMsg;
-                    Log.d(TAG, "⚠️ About to post error callback...");
-                    mainHandler.post(() -> {
-                        Log.d(TAG, "⚠️ EXECUTING error callback now...");
-                        callback.onError(finalError);
-                        Log.d(TAG, "⚠️ Error callback FINISHED");
-                    });
+                    mainHandler.post(() -> callback.onError(finalError));
                     return;
                 }
 
                 String quizJsonText = response.body().getContent();
                 if (quizJsonText == null) {
                     Log.e(TAG, "Empty response from AI");
-                    mainHandler.post(() -> {
-                        Log.d(TAG, "⚠️ EXECUTING empty response callback...");
-                        callback.onError("Empty response from AI");
-                        Log.d(TAG, "⚠️ Empty response callback FINISHED");
-                    });
+                    mainHandler.post(() -> callback.onError("Empty response from AI"));
                     return;
                 }
 
-                Log.d(TAG, "📩 Raw Content from AI: " + quizJsonText);
+                Log.d(TAG, "📩 Raw Content from AI");
 
                 try {
-                    Log.d(TAG, "🔍 Starting Parsing...");
-
                     // Sanitize
                     quizJsonText = quizJsonText.replace("```json", "").replace("```", "").trim();
-                    Log.d(TAG, "🧹 Sanitized JSON: " + quizJsonText);
 
                     // Parse wrapper object
                     JsonObject root = JsonParser.parseString(quizJsonText).getAsJsonObject();
-                    Log.d(TAG, "📦 Root Object Parsed");
 
                     // Get questions array
                     JsonArray questionsArray = root.getAsJsonArray("questions");
@@ -124,57 +112,39 @@ public class QuizNetworkService {
                     Type listType = new TypeToken<ArrayList<QuizQuestion>>(){}.getType();
                     List<QuizQuestion> questions = gson.fromJson(questionsArray, listType);
 
-                    Log.d(TAG, "✅ Success! Parsed " + questions.size() + " questions.");
-                    Log.d(TAG, "🎯 About to post SUCCESS callback...");
-                    Log.d(TAG, "Callback reference: " + callback);
+                    String language = context != null ?
+                            LanguageManager.getInstance(context).getCurrentLanguage() : "English";
+                    Log.d(TAG, "✅ Success! Parsed " + questions.size() + " questions in " + language);
 
-                    // POST SUCCESS ON MAIN THREAD
-                    mainHandler.post(() -> {
-                        Log.d(TAG, "🎯 INSIDE main handler post - about to call callback.onSuccess");
-                        Log.d(TAG, "Callback object in handler: " + callback);
-                        try {
-                            callback.onSuccess(questions);
-                            Log.d(TAG, "✅ Success callback COMPLETED");
-                        } catch (Exception e) {
-                            Log.e(TAG, "❌ EXCEPTION calling onSuccess!", e);
-                        }
-                    });
-                    Log.d(TAG, "🎯 Handler.post() call finished");
+                    mainHandler.post(() -> callback.onSuccess(questions));
 
                 } catch (Exception e) {
-                    Log.e(TAG, "❌ Parsing Fail: " + quizJsonText, e);
-
-                    // POST ERROR ON MAIN THREAD
-                    mainHandler.post(() -> {
-                        Log.d(TAG, "⚠️ EXECUTING parsing error callback...");
-                        callback.onError("Failed to parse quiz: " + e.getMessage());
-                        Log.d(TAG, "⚠️ Parsing error callback FINISHED");
-                    });
+                    Log.e(TAG, "❌ Parsing Fail", e);
+                    mainHandler.post(() -> callback.onError("Failed to parse quiz: " + e.getMessage()));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<GroqResponse> call, @NonNull Throwable t) {
                 Log.e(TAG, "❌ Network Fail", t);
-
-                // POST ERROR ON MAIN THREAD
-                Log.d(TAG, "⚠️ About to post network error callback...");
-                mainHandler.post(() -> {
-                    Log.d(TAG, "⚠️ EXECUTING network error callback...");
-                    callback.onError("Network error: " + t.getMessage());
-                    Log.d(TAG, "⚠️ Network error callback FINISHED");
-                });
+                mainHandler.post(() -> callback.onError("Network error: " + t.getMessage()));
             }
         });
-
-        Log.d(TAG, "📞 API call enqueued, waiting for response...");
     }
 
     private String buildPrompt(String input) {
+        // Get user's preferred language
+        String targetLanguage = "ENGLISH";
+        if (context != null) {
+            LanguageManager langManager = LanguageManager.getInstance(context);
+            targetLanguage = langManager.getCurrentLanguage().toUpperCase();
+        }
+
         return
-                "You are a strict JSON generator. OUTPUT ONLY VALID JSON.\n" +
-                        "Never output explanations, notes, markdown, or text outside JSON.\n" +
-                        "Rules:\n" +
+                "You are a strict JSON generator that creates educational quizzes. OUTPUT ONLY VALID JSON.\n" +
+                        "Never output explanations, notes, markdown, or text outside JSON.\n\n" +
+
+                        "JSON FORMATTING RULES:\n" +
                         "- Use ONLY double quotes (\")\n" +
                         "- NEVER use single quotes (')\n" +
                         "- No trailing commas\n" +
@@ -182,41 +152,49 @@ public class QuizNetworkService {
                         "- The JSON MUST match the required structure exactly\n" +
                         "- The value of \"type\" must be either \"MCQ\" or \"CODING\"\n\n" +
 
-                        "CONTENT:\n" +
+                        "🌍 LANGUAGE REQUIREMENT:\n" +
+                        "CRITICAL: ALL quiz content MUST be in " + targetLanguage + " ONLY.\n" +
+                        "- Even if the input content is in a different language\n" +
+                        "- ALL questions, options, and answers MUST be generated in " + targetLanguage + "\n" +
+                        "- Translate concepts, ideas, and facts to " + targetLanguage + "\n" +
+                        "- Maintain the original meaning while using " + targetLanguage + " language\n\n" +
+
+                        "CONTENT TO ANALYZE:\n" +
                         input + "\n\n" +
 
                         "TASK:\n" +
-                        "Generate 5 to 10 quiz questions strictly based on the content above.\n" +
+                        "Generate 5 to 10 quiz questions based on the content above.\n" +
                         "Rules:\n" +
-                        "1. Use ONLY information present in the content.\n" +
-                        "2. Do NOT invent facts.\n" +
-                        "3. Mix EASY, NORMAL, and HARD difficulty.\n" +
-                        "4. If the content is technical or contains code, create coding questions with \"type\": \"CODING\".\n" +
-                        "5. Otherwise generate \"MCQ\" type questions.\n\n" +
+                        "1. Extract key information from the content (regardless of its language)\n" +
+                        "2. Create questions that test understanding of the material\n" +
+                        "3. Do NOT invent facts not present in the content\n" +
+                        "4. Mix difficulty levels: EASY, NORMAL, and HARD\n" +
+                        "5. For technical/programming content: use \"type\": \"CODING\"\n" +
+                        "6. For conceptual content: use \"type\": \"MCQ\"\n" +
+                        "7. 🌍 ALL TEXT IN " + targetLanguage + " - translate if source is in another language\n\n" +
 
                         "RESPONSE FORMAT:\n" +
                         "{\n" +
                         "  \"questions\": [\n" +
                         "    {\n" +
                         "      \"type\": \"MCQ\",\n" +
-                        "      \"questionText\": \"string\",\n" +
-                        "      \"options\": [\"string\", \"string\", \"string\", \"string\"],\n" +
-                        "      \"correctAnswer\": \"string\",\n" +
+                        "      \"questionText\": \"Question in " + targetLanguage + "\",\n" +
+                        "      \"options\": [\"Option A\", \"Option B\", \"Option C\", \"Option D\"],\n" +
+                        "      \"correctAnswer\": \"Correct option\",\n" +
                         "      \"difficulty\": \"EASY\"\n" +
                         "    }\n" +
                         "  ]\n" +
                         "}\n\n" +
 
-                        "For coding questions, follow this structure:\n" +
+                        "For coding questions:\n" +
                         "{\n" +
                         "  \"type\": \"CODING\",\n" +
-                        "  \"questionText\": \"string\",\n" +
+                        "  \"questionText\": \"Coding task in " + targetLanguage + "\",\n" +
                         "  \"options\": [],\n" +
-                        "  \"correctAnswer\": \"string\",\n" +
+                        "  \"correctAnswer\": \"Sample solution\",\n" +
                         "  \"difficulty\": \"HARD\"\n" +
                         "}\n\n" +
 
-                        "Return ONLY the JSON object now.";
+                        "🎯 REMEMBER: Output ONLY the JSON object. ALL text in " + targetLanguage + ".";
     }
-
 }

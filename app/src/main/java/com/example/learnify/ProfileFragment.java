@@ -1,8 +1,12 @@
 package com.example.learnify;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,8 +15,12 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -22,42 +30,73 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ProfileFragment extends Fragment {
 
     private static final String TAG = "ProfileFragment";
+    private static final String PREFS_NAME = "LearnifyPrefs";
+    private static final String KEY_THEME = "theme_mode";
+    private static final String KEY_LANG_CODE = "language_code";
+    private static final String KEY_LANG_NAME = "language_name";
 
     // Firebase & Google
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private GoogleSignInClient mGoogleSignInClient;
+    private GoogleDriveManager driveManager;
 
     // UI Views
     private ImageView ivProfileAvatar;
     private TextView tvProfileName, tvProfileEmail;
     private MaterialButton btnSignOut;
     private ImageView btnEditProfile;
-    private TextView rowNotifications, rowAppearance, rowHelp;
+    private TextView rowLanguage, rowNotifications, rowAppearance, rowHelp;
+
+    private LanguageManager languageManager;
+    private ActivityResultLauncher<Intent> imagePickerLauncher;
+    private Uri selectedImageUri;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
+        driveManager = new GoogleDriveManager(requireContext());
+        languageManager = LanguageManager.getInstance(requireContext());
 
-        // Configure Google Sign-In to be able to sign out
+        // --- 1. Load Language from Preferences immediately ---
+        SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String savedLangCode = prefs.getString(KEY_LANG_CODE, "en"); // Default English
+        String savedLangName = prefs.getString(KEY_LANG_NAME, "English");
+        languageManager.setLanguage(requireContext(), savedLangName, savedLangCode);
+
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
+                .requestScopes(new com.google.android.gms.common.api.Scope("https://www.googleapis.com/auth/drive.file"))
                 .build();
-
         mGoogleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
+
+        imagePickerLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        selectedImageUri = result.getData().getData();
+                        uploadProfilePhotoToDrive(selectedImageUri);
+                    }
+                }
+        );
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
@@ -72,78 +111,183 @@ public class ProfileFragment extends Fragment {
         btnEditProfile = view.findViewById(R.id.btn_edit_profile);
         btnSignOut = view.findViewById(R.id.btn_sign_out);
 
+        rowLanguage = view.findViewById(R.id.row_language);
         rowNotifications = view.findViewById(R.id.row_notifications);
         rowAppearance = view.findViewById(R.id.row_appearance);
         rowHelp = view.findViewById(R.id.row_help);
 
-        // Set click listeners
+        // Listeners
         btnSignOut.setOnClickListener(v -> signOut());
+        btnEditProfile.setOnClickListener(v -> selectProfilePhoto());
+        ivProfileAvatar.setOnClickListener(v -> selectProfilePhoto());
+        rowLanguage.setOnClickListener(v -> showLanguageDialog());
 
-        // Placeholder click listeners for other options
-        btnEditProfile.setOnClickListener(v -> showToast("Edit Profile clicked"));
+        rowAppearance.setOnClickListener(v -> showThemeDialog());
+
         rowNotifications.setOnClickListener(v -> showToast("Notifications clicked"));
-        rowAppearance.setOnClickListener(v -> showToast("Appearance clicked"));
         rowHelp.setOnClickListener(v -> showToast("Help Center clicked"));
 
-        // Load user data into views
         loadUserProfile();
+    }
+
+    private void showThemeDialog() {
+        int currentMode = AppCompatDelegate.getDefaultNightMode();
+
+        DialogHelper.showThemeSelectionDialog(requireContext(), currentMode, (selectedMode) -> {
+            AppCompatDelegate.setDefaultNightMode(selectedMode);
+            saveThemePreference(selectedMode);
+        });
+    }
+
+    private void saveThemePreference(int mode) {
+        SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(KEY_THEME, mode);
+        editor.apply();
+    }
+
+    /**
+     * Show styled language selection dialog
+     */
+    private void showLanguageDialog() {
+        List<LanguageManager.Language> languages = LanguageManager.getSupportedLanguages();
+
+        // Get current language code from Preferences (source of truth)
+        SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String currentCode = prefs.getString(KEY_LANG_CODE, "en");
+
+        DialogHelper.showLanguageSelectionDialog(requireContext(), languages, currentCode, (selectedLang) -> {
+            updateLanguage(selectedLang.name, selectedLang.code);
+        });
+    }
+
+    /**
+     * Update app language - Saves to BOTH Prefs and Firestore
+     */
+    private void updateLanguage(String languageName, String languageCode) {
+        // 1. Save to SharedPreferences (Local Persistence)
+        SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(KEY_LANG_CODE, languageCode);
+        editor.putString(KEY_LANG_NAME, languageName);
+        editor.apply();
+
+        // 2. Apply immediately
+        languageManager.setLanguage(requireContext(), languageName, languageCode);
+
+        // 3. Save to Firestore (Cloud Sync)
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            String userId = user.getUid();
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("language", languageName);
+            updates.put("languageCode", languageCode);
+
+            db.collection("users").document(userId).update(updates)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "✅ Language updated", Toast.LENGTH_SHORT).show();
+                    });
+        }
+
+        // 4. Restart Activity to apply changes
+        requireActivity().recreate();
     }
 
     private void loadUserProfile() {
         FirebaseUser user = mAuth.getCurrentUser();
-        if (user != null) {
-            String name = user.getDisplayName();
-            String email = user.getEmail();
-            Uri photoUrl = user.getPhotoUrl();
+        if (user == null) return;
 
-            // Set Name
-            if (name != null && !name.isEmpty()) {
-                tvProfileName.setText(name);
-            } else {
-                tvProfileName.setText("Welcome"); // Fallback text
-            }
+        String name = user.getDisplayName();
+        String email = user.getEmail();
 
-            // Set Email
-            tvProfileEmail.setText(email);
-
-            // Set Profile Picture using Glide
-            if (photoUrl != null) {
-                Glide.with(this)
-                        .load(photoUrl)
-                        .circleCrop() // Make it circular
-                        .placeholder(R.drawable.ic_profile_inactive)
-                        .into(ivProfileAvatar);
-            } else {
-                // Load placeholder if no photo URL
-                Glide.with(this)
-                        .load(R.drawable.ic_profile_inactive)
-                        .circleCrop()
-                        .into(ivProfileAvatar);
-            }
+        if (name != null && !name.isEmpty()) {
+            tvProfileName.setText(name);
+        } else {
+            tvProfileName.setText("Welcome");
         }
+        tvProfileEmail.setText(email);
+
+        String userId = user.getUid();
+        db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String drivePhotoUrl = documentSnapshot.getString("drivePhotoUrl");
+                        if (drivePhotoUrl != null && !drivePhotoUrl.isEmpty()) {
+                            loadProfilePhoto(drivePhotoUrl);
+                        } else {
+                            loadDefaultPhoto();
+                        }
+
+                        // Note: We rely on local prefs for language primarily for speed,
+                        // but you could sync here if needed.
+                    } else {
+                        loadDefaultPhoto();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Failed to load profile", e);
+                    loadDefaultPhoto();
+                });
+    }
+
+    // ... (loadProfilePhoto, loadDefaultPhoto, selectProfilePhoto, uploadProfilePhotoToDrive, signOut, showToast remain unchanged) ...
+    // Keep them exactly as they were in your previous code.
+
+    private void loadProfilePhoto(String driveUrl) {
+        if (getContext() == null) return;
+        Glide.with(this).load(driveUrl).circleCrop().placeholder(R.drawable.ic_profile_inactive).error(R.drawable.ic_profile_inactive).into(ivProfileAvatar);
+    }
+
+    private void loadDefaultPhoto() {
+        if (getContext() == null) return;
+        Glide.with(this).load(R.drawable.ic_profile_inactive).circleCrop().into(ivProfileAvatar);
+    }
+
+    private void selectProfilePhoto() {
+        if (!driveManager.isAvailable()) {
+            Toast.makeText(getContext(), "⚠️ Please sign in with Google to upload photos", Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        imagePickerLauncher.launch(intent);
+    }
+
+    private void uploadProfilePhotoToDrive(Uri imageUri) {
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user == null) return;
+        String userId = user.getUid();
+        Toast.makeText(getContext(), "📤 Uploading to Drive...", Toast.LENGTH_SHORT).show();
+        driveManager.uploadProfilePhoto(imageUri, userId, new GoogleDriveManager.UploadCallback() {
+            @Override
+            public void onSuccess(String driveUrl, String fileId) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put("drivePhotoUrl", driveUrl);
+                    updates.put("driveFileId", fileId);
+                    db.collection("users").document(userId).update(updates).addOnSuccessListener(aVoid -> {
+                        Toast.makeText(getContext(), "✅ Photo updated!", Toast.LENGTH_SHORT).show();
+                        loadProfilePhoto(driveUrl);
+                    });
+                });
+            }
+            @Override
+            public void onError(Exception e) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> Toast.makeText(getContext(), "❌ Upload failed: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+        });
     }
 
     private void signOut() {
-        Log.d(TAG, "Sign-out button clicked");
-
-        // 1. Sign out from Firebase
         mAuth.signOut();
-
-        // 2. Sign out from Google
-        // This clears the account from the Google Sign-In client
         mGoogleSignInClient.signOut().addOnCompleteListener(requireActivity(), task -> {
-            Log.d(TAG, "Signed out from Google");
-
-            // 3. Navigate back to the sign-in screen
-            // We also clear the activity stack to prevent user from pressing "back"
             Intent intent = new Intent(getActivity(), signin_activity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
-
-            // Finish the host activity (MainActivity)
-            if (getActivity() != null) {
-                getActivity().finish();
-            }
+            if (getActivity() != null) getActivity().finish();
         });
     }
 

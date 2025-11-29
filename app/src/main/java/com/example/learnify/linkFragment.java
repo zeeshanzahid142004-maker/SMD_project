@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,11 +18,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.button.MaterialButton;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class linkFragment extends Fragment {
 
@@ -32,11 +28,16 @@ public class linkFragment extends Fragment {
     private View enterLinkContainer;
     private View loadingContainer;
     private View confirmationContainer;
+    private TextView loadingMessage;
     private MaterialButton pasteButton, rewatchButton, quizButton;
     private EditText linkInput;
 
     private String processedLink = "";
+    private String extractedTranscript = "";
     private boolean isConfirmed = false;
+    private boolean isYouTubeVideo = false;
+
+    private YouTubeTranscriptService transcriptService;
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -46,6 +47,12 @@ public class linkFragment extends Fragment {
         } else {
             throw new RuntimeException(context.toString() + " must implement OnHomeFragmentInteractionListener");
         }
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        transcriptService = new YouTubeTranscriptService();
     }
 
     @Nullable
@@ -66,6 +73,13 @@ public class linkFragment extends Fragment {
         rewatchButton = view.findViewById(R.id.rewatch_button);
         quizButton = view.findViewById(R.id.quiz_button);
 
+        // Get loading message TextView
+        loadingMessage = loadingContainer.findViewById(R.id.tv_loading_subtitle);
+        if (loadingMessage == null) {
+            // Fallback: try to find any TextView in loading container
+            loadingMessage = loadingContainer.findViewById(R.id.tv_loading_title);
+        }
+
         updateUiState();
 
         // 1. Paste/Go Button
@@ -75,33 +89,100 @@ public class linkFragment extends Fragment {
                 Toast.makeText(getContext(), "Please enter a link", Toast.LENGTH_SHORT).show();
             } else {
                 processedLink = link;
-                showLoadingState();
+                isYouTubeVideo = isYouTubeUrl(link);
+
+                if (isYouTubeVideo) {
+                    Log.d(TAG, "📹 YouTube video detected - extracting transcript");
+                    showLoadingState("Extracting video content...");
+                    extractTranscript(link);
+                } else {
+                    Log.d(TAG, "🔗 Regular link - proceeding normally");
+                    showLoadingState("Analyzing...");
+                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                        isConfirmed = true;
+                        updateUiState();
+                    }, 1500);
+                }
             }
         });
 
         // 2. "Watch Video" Button
         rewatchButton.setOnClickListener(v -> {
             if (mListener != null) {
-                mListener.onGoToVideoFragment(processedLink);
+                // UPDATED: Pass both the link AND the transcript
+                mListener.onGoToVideoFragment(processedLink, extractedTranscript);
             }
         });
 
-        // 3. "Take Quiz" Button - Navigate to GenerateQuizFragment
+        // 3. "Take Quiz" Button
         quizButton.setOnClickListener(v -> {
-            Log.d(TAG, "Take Quiz clicked - launching GenerateQuizFragment with URL: " + processedLink);
-            launchGenerateQuizFragment(processedLink);
+            Log.d(TAG, "🎯 Take Quiz clicked");
+
+            if (isYouTubeVideo && !extractedTranscript.isEmpty()) {
+                Log.d(TAG, "✅ Using transcript for quiz generation");
+                launchGenerateQuizFragment(extractedTranscript);
+            } else {
+                Log.d(TAG, "📝 Using URL for quiz generation");
+                launchGenerateQuizFragment(processedLink);
+            }
         });
     }
 
-    private void showLoadingState() {
+    /**
+     * Check if URL is a YouTube video
+     */
+    private boolean isYouTubeUrl(String url) {
+        return url.contains("youtube.com") || url.contains("youtu.be");
+    }
+
+    /**
+     * Extract transcript from YouTube video
+     */
+    private void extractTranscript(String videoUrl) {
+        transcriptService.getTranscript(videoUrl, new YouTubeTranscriptService.TranscriptCallback() {
+            @Override
+            public void onSuccess(String transcript) {
+                Log.d(TAG, "✅ Transcript extracted successfully. Length: " + transcript.length());
+                extractedTranscript = transcript;
+
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        isConfirmed = true;
+                        updateUiState();
+                        Toast.makeText(getContext(), "✅ Video content extracted!", Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                Log.e(TAG, "❌ Transcript extraction failed: " + error);
+
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        // Fallback: proceed with URL anyway
+                        Toast.makeText(getContext(),
+                                "⚠️ Could not extract transcript. Using video URL instead.",
+                                Toast.LENGTH_LONG).show();
+
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            isConfirmed = true;
+                            updateUiState();
+                        }, 1000);
+                    });
+                }
+            }
+        });
+    }
+
+    private void showLoadingState(String message) {
         enterLinkContainer.setVisibility(View.GONE);
         loadingContainer.setVisibility(View.VISIBLE);
         confirmationContainer.setVisibility(View.GONE);
 
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            isConfirmed = true;
-            updateUiState();
-        }, 1500);
+        if (loadingMessage != null) {
+            loadingMessage.setText(message);
+        }
     }
 
     private void updateUiState() {
@@ -109,6 +190,16 @@ public class linkFragment extends Fragment {
             enterLinkContainer.setVisibility(View.GONE);
             loadingContainer.setVisibility(View.GONE);
             confirmationContainer.setVisibility(View.VISIBLE);
+
+            // Update button text based on content type
+            if (isYouTubeVideo) {
+                rewatchButton.setText("Watch Video");
+                quizButton.setText(extractedTranscript.isEmpty() ?
+                        "Take Quiz (URL)" : "Take Quiz (Transcript)");
+            } else {
+                rewatchButton.setVisibility(View.GONE);
+                quizButton.setText("Generate Quiz");
+            }
         } else {
             enterLinkContainer.setVisibility(View.VISIBLE);
             loadingContainer.setVisibility(View.GONE);
@@ -117,20 +208,19 @@ public class linkFragment extends Fragment {
     }
 
     /**
-     * Launch GenerateQuizFragment with the URL/text
-     * This fragment will handle the AI generation, saving, and launching QuizActivity
+     * Launch GenerateQuizFragment with content (transcript or URL)
      */
-    private void launchGenerateQuizFragment(String urlOrText) {
-        Log.d(TAG, "Creating GenerateQuizFragment with content: " + urlOrText.substring(0, Math.min(50, urlOrText.length())));
+    private void launchGenerateQuizFragment(String content) {
+        Log.d(TAG, "🚀 Creating GenerateQuizFragment with content length: " + content.length());
 
-        GenerateQuizFragment fragment = GenerateQuizFragment.newInstance(urlOrText);
+        GenerateQuizFragment fragment = GenerateQuizFragment.newInstance(content);
 
         getParentFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
                 .commit();
 
-        Log.d(TAG, "GenerateQuizFragment transaction committed");
+        Log.d(TAG, "✅ GenerateQuizFragment transaction committed");
     }
 
     @Override

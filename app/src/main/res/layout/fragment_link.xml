@@ -18,6 +18,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp">
 
+        <!-- ENTER LINK SCREEN -->
         <androidx.cardview.widget.CardView
             android:id="@+id/enter_link_container"
             android:layout_width="match_parent"
@@ -59,7 +60,7 @@
                     android:id="@+id/linkInput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Paste link here..."
+                    android:hint="Paste YouTube link or URL here..."
                     android:padding="14dp"
                     android:textColor="#FFFFFF"
                     android:textColorHint="#BBFFFFFF"
@@ -82,6 +83,7 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- LOADING SCREEN -->
         <androidx.cardview.widget.CardView
             android:id="@+id/loading_container"
             android:layout_width="match_parent"
@@ -107,16 +109,28 @@
                     android:layout_gravity="center"/>
 
                 <TextView
+                    android:id="@+id/tv_loading_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Analyzing..."
+                    android:text="Processing..."
                     android:textColor="@color/white"
                     style="@style/TextAppearance.Home.CardTitle"
                     android:layout_marginTop="20dp"/>
 
+                <TextView
+                    android:id="@+id/tv_loading_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Extracting video content..."
+                    android:textColor="#CCFFFFFF"
+                    style="@style/TextAppearance.Body.Small.Medium"
+                    android:textAlignment="center"
+                    android:layout_marginTop="8dp"/>
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- CONFIRMATION SCREEN -->
         <androidx.cardview.widget.CardView
             android:id="@+id/confirmation_container"
             android:layout_width="match_parent"

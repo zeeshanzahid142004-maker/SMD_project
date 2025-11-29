@@ -357,6 +357,7 @@ public class HomeFragment extends Fragment {
         void onGoToVideoFragment(String url);
         void onGoToQuizFragment(String url);
         void onUploadLinkClicked();
+        void onGoToVideoFragment(String videoUrl, String transcript);
     }
 
     @Override
