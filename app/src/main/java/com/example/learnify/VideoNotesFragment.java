@@ -17,7 +17,6 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.TextWatcher;
 import android.text.style.BackgroundColorSpan;
-import android.text.style.ImageSpan;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.style.UnderlineSpan;
@@ -26,12 +25,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceError;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -41,9 +34,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.YouTubePlayer;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.AbstractYouTubePlayerListener;
+import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -60,7 +56,8 @@ public class VideoNotesFragment extends Fragment {
     private ImageView buttonBold, buttonItalic, buttonBullet, buttonUnderline,
             buttonH1, buttonH2, buttonH3, buttonHighlight,
             buttonUndo, buttonRedo, buttonSave, buttonScreenshot, buttonEmbedScreenshot;
-    private WebView youTubeWebView;
+    private YouTubePlayerView youTubePlayerView;
+    private YouTubePlayer youTubePlayer;
     private String videoUrl;
     private String passedTranscript;
     private View loadingOverlay;
@@ -144,7 +141,10 @@ public class VideoNotesFragment extends Fragment {
         buttonScreenshot = view.findViewById(R.id.button_screenshot);
         loadingOverlay = view.findViewById(R.id.video_loading_overlay);
         videoPlayerContainer = view.findViewById(R.id.video_player_container);
-        youTubeWebView = view.findViewById(R.id.youtube_webview);
+        youTubePlayerView = view.findViewById(R.id.youtube_player_view);
+
+        // Add lifecycle observer for YouTubePlayerView
+        getLifecycle().addObserver(youTubePlayerView);
 
         setupVideoPlayer();
         setupFormattingButtons();
@@ -153,95 +153,25 @@ public class VideoNotesFragment extends Fragment {
     }
 
     private void setupVideoPlayer() {
-        // Configure WebView for YouTube video playback
-        WebSettings webSettings = youTubeWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setDomStorageEnabled(true);
-        webSettings.setMediaPlaybackRequiresUserGesture(false);
-        webSettings.setAllowContentAccess(true);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setLoadWithOverviewMode(true);
-        webSettings.setUseWideViewPort(true);
-        
-        // FIX 6: Add mixed content mode and hardware acceleration for white screen fix
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        }
-        youTubeWebView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-
-        youTubeWebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                if (loadingOverlay != null) {
-                    loadingOverlay.setVisibility(View.GONE);
-                }
-            }
-            
-            @Override
-            @RequiresApi(api = Build.VERSION_CODES.M)
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                super.onReceivedError(view, request, error);
-                if (request.isForMainFrame()) {
-                    Log.e(TAG, "WebView error: " + error.getDescription() + " (code: " + error.getErrorCode() + ")");
-                    if (loadingOverlay != null) {
-                        loadingOverlay.setVisibility(View.GONE);
-                    }
-                }
-            }
-            
-            // Fallback for older API levels
-            @SuppressWarnings("deprecation")
-            @Override
-            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
-                super.onReceivedError(view, errorCode, description, failingUrl);
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                    Log.e(TAG, "WebView error: " + description + " (code: " + errorCode + ")");
-                    if (loadingOverlay != null) {
-                        loadingOverlay.setVisibility(View.GONE);
-                    }
-                }
-            }
-        });
-
-        youTubeWebView.setWebChromeClient(new WebChromeClient() {
-            private View customView;
-            private WebChromeClient.CustomViewCallback customViewCallback;
-
-            @Override
-            public void onShowCustomView(View view, CustomViewCallback callback) {
-                customView = view;
-                customViewCallback = callback;
-                if (videoPlayerContainer != null) {
-                    videoPlayerContainer.addView(view);
-                }
-            }
-
-            @Override
-            public void onHideCustomView() {
-                if (customView != null && videoPlayerContainer != null) {
-                    videoPlayerContainer.removeView(customView);
-                    customView = null;
-                }
-                if (customViewCallback != null) {
-                    customViewCallback.onCustomViewHidden();
-                }
-            }
-        });
-
-        // Load the video
+        // Get video ID from URL
         String videoId = getVideoIdFromUrl(videoUrl);
+        
         if (videoId != null && !videoId.isEmpty() && isValidVideoId(videoId)) {
             Log.d(TAG, "✅ Loading Video ID: " + videoId);
+            
             // Sanitize video ID to prevent XSS - only allow alphanumeric, hyphens and underscores
             String sanitizedVideoId = videoId.replaceAll("[^a-zA-Z0-9_-]", "");
-            String embedUrl = "https://www.youtube.com/embed/" + sanitizedVideoId + "?autoplay=1&playsinline=1&rel=0";
-            String html = "<html><head><meta http-equiv='Content-Security-Policy' content=\"default-src 'self' https://www.youtube.com; frame-src https://www.youtube.com;\"></head>" +
-                    "<body style='margin:0;padding:0;background:#000;'>" +
-                    "<iframe width='100%' height='100%' src='" + embedUrl + "' " +
-                    "frameborder='0' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' " +
-                    "allowfullscreen></iframe></body></html>";
-            youTubeWebView.loadData(html, "text/html", "utf-8");
+            
+            youTubePlayerView.addYouTubePlayerListener(new AbstractYouTubePlayerListener() {
+                @Override
+                public void onReady(@NonNull YouTubePlayer player) {
+                    youTubePlayer = player;
+                    player.loadVideo(sanitizedVideoId, 0);
+                    if (loadingOverlay != null) {
+                        loadingOverlay.setVisibility(View.GONE);
+                    }
+                }
+            });
         } else {
             if (getContext() != null) {
                 Toast.makeText(getContext(), "Invalid Video URL", Toast.LENGTH_SHORT).show();
@@ -265,9 +195,8 @@ public class VideoNotesFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (youTubeWebView != null) {
-            youTubeWebView.loadUrl("about:blank");
-            youTubeWebView.destroy();
+        if (youTubePlayerView != null) {
+            youTubePlayerView.release();
         }
     }
 
@@ -711,16 +640,16 @@ public class VideoNotesFragment extends Fragment {
         lastEmbedScreenshotClickTime = currentTime;
 
         try {
-            // Capture the WebView (video) content
-            if (youTubeWebView == null) {
+            // Capture the YouTubePlayerView content
+            if (youTubePlayerView == null) {
                 Toast.makeText(getContext(), "Video not available", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Create bitmap from the WebView
-            Bitmap bitmap = Bitmap.createBitmap(youTubeWebView.getWidth(), youTubeWebView.getHeight(), Bitmap.Config.ARGB_8888);
+            // Create bitmap from the YouTubePlayerView
+            Bitmap bitmap = Bitmap.createBitmap(youTubePlayerView.getWidth(), youTubePlayerView.getHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(bitmap);
-            youTubeWebView.draw(canvas);
+            youTubePlayerView.draw(canvas);
 
             Toast.makeText(getContext(), "📸 Capturing screenshot...", Toast.LENGTH_SHORT).show();
 

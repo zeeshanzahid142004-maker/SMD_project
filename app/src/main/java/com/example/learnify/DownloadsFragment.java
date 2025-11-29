@@ -16,6 +16,7 @@ import androidx. fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -32,6 +33,7 @@ public class DownloadsFragment extends Fragment {
     private RecyclerView rvDownloads;
     private TextView tvEmptyState;
     private LinearLayout llEmpty;
+    private ShimmerFrameLayout shimmerContainer;
     private DownloadedQuizAdapter adapter;
     private List<DownloadedQuizItem> downloadedQuizzes = new ArrayList<>();
 
@@ -60,6 +62,7 @@ public class DownloadsFragment extends Fragment {
         rvDownloads = view.findViewById(R.id. rv_downloads);
         tvEmptyState = view.findViewById(R.id.tv_empty_state);
         llEmpty = view. findViewById(R.id.ll_empty_state);
+        shimmerContainer = view.findViewById(R.id.shimmer_container);
 
         // Setup RecyclerView
         rvDownloads.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -104,10 +107,16 @@ public class DownloadsFragment extends Fragment {
         String userId = user.getUid();
         Log.d(TAG, "📥 Loading downloads for user: " + userId);
 
+        // Show shimmer before loading
+        showShimmer();
+
         db.collection("users").document(userId)
                 .collection("downloads")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    // Hide shimmer after data loads
+                    hideShimmer();
+                    
                     downloadedQuizzes.clear();
 
                     if (querySnapshot.isEmpty()) {
@@ -133,6 +142,9 @@ public class DownloadsFragment extends Fragment {
                     Log.d(TAG, "✅ Loaded " + downloadedQuizzes.size() + " downloaded quizzes");
                 })
                 .addOnFailureListener(e -> {
+                    // Hide shimmer on error
+                    hideShimmer();
+                    
                     Log.e(TAG, "❌ Failed to load downloads", e);
                     Toast.makeText(getContext(), "Failed to load downloads: " + e.getMessage(), Toast. LENGTH_SHORT).show();
                     showEmptyState();
@@ -250,6 +262,22 @@ public class DownloadsFragment extends Fragment {
         if (llEmpty != null && rvDownloads != null) {
             llEmpty.setVisibility(View.GONE);
             rvDownloads.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showShimmer() {
+        if (shimmerContainer != null) {
+            shimmerContainer.setVisibility(View.VISIBLE);
+            shimmerContainer.startShimmer();
+            if (rvDownloads != null) rvDownloads.setVisibility(View.GONE);
+            if (llEmpty != null) llEmpty.setVisibility(View.GONE);
+        }
+    }
+
+    private void hideShimmer() {
+        if (shimmerContainer != null) {
+            shimmerContainer.stopShimmer();
+            shimmerContainer.setVisibility(View.GONE);
         }
     }
 

@@ -21,6 +21,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material. appbar.MaterialToolbar;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.facebook.shimmer.ShimmerFrameLayout;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -53,6 +54,9 @@ public class HistoryActivity extends BaseActivity {
     private String currentSortOption = "Newest First";
     private boolean isAscending = false; // false = descending (newest first), true = ascending (oldest first)
     private int currentFilterChipId = -1;
+
+    // Shimmer loading
+    private ShimmerFrameLayout shimmerContainer;
 
     private QuizAttemptRepository attemptRepository;
     private FirebaseFirestore db;
@@ -91,6 +95,9 @@ public class HistoryActivity extends BaseActivity {
         // Sort spinner and direction toggle
         sortSpinner = findViewById(R.id.sort_spinner);
         btnSortDirection = findViewById(R.id.btn_sort_direction);
+        
+        // Shimmer loading
+        shimmerContainer = findViewById(R.id.shimmer_container);
 
         // Setup toolbar
         setSupportActionBar(toolbar);
@@ -299,9 +306,15 @@ public class HistoryActivity extends BaseActivity {
     private void loadAllHistory() {
         Log.d(TAG, "📥 Loading all history...");
 
+        // Show shimmer before loading
+        showShimmer();
+
         attemptRepository.getAllAttempts(new QuizAttemptRepository.OnAttemptsLoadedListener() {
             @Override
             public void onAttemptsLoaded(List<QuizAttempt> loadedAttempts) {
+                // Hide shimmer after data loads
+                hideShimmer();
+                
                 allAttempts.clear();
                 allAttempts.addAll(loadedAttempts);
 
@@ -316,6 +329,9 @@ public class HistoryActivity extends BaseActivity {
 
             @Override
             public void onError(Exception e) {
+                // Hide shimmer on error
+                hideShimmer();
+                
                 Log.e(TAG, "❌ Failed to load history", e);
                 Toast.makeText(HistoryActivity.this, "Failed to load history", Toast.LENGTH_SHORT).show();
                 showEmptyState();
@@ -372,6 +388,22 @@ public class HistoryActivity extends BaseActivity {
     private void showContent() {
         llEmptyState. setVisibility(View.GONE);
         rvHistory.setVisibility(View.VISIBLE);
+    }
+
+    private void showShimmer() {
+        if (shimmerContainer != null) {
+            shimmerContainer.setVisibility(View.VISIBLE);
+            shimmerContainer.startShimmer();
+            rvHistory.setVisibility(View.GONE);
+            llEmptyState.setVisibility(View.GONE);
+        }
+    }
+
+    private void hideShimmer() {
+        if (shimmerContainer != null) {
+            shimmerContainer.stopShimmer();
+            shimmerContainer.setVisibility(View.GONE);
+        }
     }
 
     @Override
