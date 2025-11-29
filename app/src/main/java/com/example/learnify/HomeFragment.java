@@ -191,15 +191,15 @@ public class HomeFragment extends Fragment {
 
             if (displayName != null && !displayName.isEmpty()) {
                 String firstName = displayName.split(" ")[0];
-                profileNameView.setText("Welcome, " + firstName + "!");
+                profileNameView.setText(getString(R.string.welcome_user, firstName));
             } else if (email != null) {
                 String emailPrefix = email.split("@")[0];
-                profileNameView.setText("Welcome, " + emailPrefix + "!");
+                profileNameView.setText(getString(R.string.welcome_user, emailPrefix));
             } else {
-                profileNameView.setText("Welcome!");
+                profileNameView.setText(getString(R.string.welcome));
             }
         } else {
-            profileNameView.setText("Welcome!");
+            profileNameView.setText(getString(R.string.welcome));
         }
     }
 
