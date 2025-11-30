@@ -52,6 +52,8 @@ public class ProfileFragment extends Fragment {
     private FirebaseFirestore db;
     private GoogleSignInClient mGoogleSignInClient;
     private GoogleDriveManager driveManager;
+    private DriveProfileService driveProfileService;
+    private FirebaseProfileManager firebaseProfileManager;
 
     // UI Views
     private ImageView ivProfileAvatar;
@@ -76,49 +78,59 @@ public class ProfileFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mAuth = FirebaseAuth.getInstance();
+        mAuth = FirebaseAuth. getInstance();
         db = FirebaseFirestore.getInstance();
         driveManager = new GoogleDriveManager(requireContext());
+        driveProfileService = new DriveProfileService();
+        firebaseProfileManager = new FirebaseProfileManager();
         languageManager = LanguageManager.getInstance(requireContext());
+
+        // Initialize DriveProfileService with current account
+        GoogleSignInAccount account = GoogleSignIn. getLastSignedInAccount(requireContext());
+        if (account != null) {
+            driveProfileService.initialize(account, requireContext());
+        }
 
         // Load Language from Preferences
         SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        String savedLangCode = prefs.getString(KEY_LANG_CODE, "en");
+        String savedLangCode = prefs. getString(KEY_LANG_CODE, "en");
         String savedLangName = prefs.getString(KEY_LANG_NAME, "English");
         languageManager.setLanguage(requireContext(), savedLangName, savedLangCode);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
+                . requestEmail()
                 . requestScopes(new Scope(DriveScopes.DRIVE_FILE))
                 .build();
-        mGoogleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
+        mGoogleSignInClient = GoogleSignIn. getClient(requireActivity(), gso);
 
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
-                        selectedImageUri = result.getData().getData();
+                    if (result. getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                        selectedImageUri = result. getData().getData();
                         uploadProfilePhotoToDrive(selectedImageUri);
                     }
                 }
         );
 
+        // ✅ FIXED: Renamed 'account' to 'reAuthAccount' inside lambda
         driveReAuthLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
-                    if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    if (result. getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         try {
-                            GoogleSignInAccount account = GoogleSignIn.getSignedInAccountFromIntent(result.getData())
+                            GoogleSignInAccount reAuthAccount = GoogleSignIn. getSignedInAccountFromIntent(result. getData())
                                     .getResult(ApiException.class);
-                            Log.d(TAG, "Re-authentication successful with Drive scope");
+                            Log. d(TAG, "Re-authentication successful with Drive scope");
                             driveManager = new GoogleDriveManager(requireContext());
+                            driveProfileService.initialize(reAuthAccount, requireContext());
                             if (pendingImageUri != null) {
                                 uploadProfilePhotoToDrive(pendingImageUri);
                                 pendingImageUri = null;
                             }
                         } catch (ApiException e) {
-                            Log.e(TAG, "Re-authentication failed", e);
+                            Log. e(TAG, "Re-authentication failed", e);
                             CustomToast.error(getContext(), "Failed to get Drive access");
                         }
                     } else {
@@ -316,24 +328,42 @@ public class ProfileFragment extends Fragment {
         tvProfileName.setText(name != null && !name.isEmpty() ? name : "Welcome");
         tvProfileEmail.setText(email);
 
-        db.collection("users").document(user.getUid())
-                .get()
-                . addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String drivePhotoUrl = documentSnapshot.getString("drivePhotoUrl");
-                        if (drivePhotoUrl != null && !drivePhotoUrl.isEmpty()) {
-                            loadProfilePhoto(drivePhotoUrl);
-                        } else {
+        // Use FirebaseProfileManager to load profile image
+        firebaseProfileManager.getProfileImageUrl(user.getUid(), new FirebaseProfileManager.ProfileImageCallback() {
+            @Override
+            public void onSuccess(String imageUrl, String fileId) {
+                loadProfilePhoto(imageUrl);
+            }
+
+            @Override
+            public void onNotFound() {
+                // Fallback to old field names for backward compatibility
+                db.collection("users").document(user.getUid())
+                        .get()
+                        .addOnSuccessListener(documentSnapshot -> {
+                            if (documentSnapshot.exists()) {
+                                String drivePhotoUrl = documentSnapshot.getString("drivePhotoUrl");
+                                if (drivePhotoUrl != null && !drivePhotoUrl.isEmpty()) {
+                                    loadProfilePhoto(drivePhotoUrl);
+                                } else {
+                                    loadDefaultPhoto();
+                                }
+                            } else {
+                                loadDefaultPhoto();
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e(TAG, "❌ Failed to load profile", e);
                             loadDefaultPhoto();
-                        }
-                    } else {
-                        loadDefaultPhoto();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Failed to load profile", e);
-                    loadDefaultPhoto();
-                });
+                        });
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e(TAG, "❌ Failed to load profile image", e);
+                loadDefaultPhoto();
+            }
+        });
     }
 
     private void loadProfilePhoto(String driveUrl) {
@@ -355,7 +385,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void selectProfilePhoto() {
-        if (! driveManager.isAvailable()) {
+        if (!driveProfileService.isInitialized() && !driveManager.isAvailable()) {
             GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(requireContext());
             if (account != null) {
                 CustomToast.info(getContext(), "Requesting Drive access...");
@@ -381,7 +411,7 @@ public class ProfileFragment extends Fragment {
         FirebaseUser user = mAuth.getCurrentUser();
         if (user == null) return;
 
-        if (! driveManager.isAvailable()) {
+        if (!driveProfileService.isInitialized() && !driveManager.isAvailable()) {
             pendingImageUri = imageUri;
             triggerDriveReAuthentication();
             return;
@@ -390,29 +420,66 @@ public class ProfileFragment extends Fragment {
         String userId = user.getUid();
         CustomToast.info(getContext(), "Uploading to Drive...");
 
-        driveManager.uploadProfilePhoto(imageUri, userId, new GoogleDriveManager. UploadCallback() {
-            @Override
-            public void onSuccess(String driveUrl, String fileId) {
-                if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> {
-                    Map<String, Object> updates = new HashMap<>();
-                    updates.put("drivePhotoUrl", driveUrl);
-                    updates. put("driveFileId", fileId);
-                    db.collection("users").document(userId).update(updates)
-                            .addOnSuccessListener(aVoid -> {
-                                CustomToast.success(getContext(), "Photo updated!");
-                                loadProfilePhoto(driveUrl);
-                            });
-                });
-            }
+        // Prefer DriveProfileService (uses appDataFolder) over GoogleDriveManager
+        if (driveProfileService.isInitialized()) {
+            driveProfileService.uploadProfilePicture(imageUri, new DriveProfileService.Callback() {
+                @Override
+                public void onSuccess(String imageUrl, String fileId) {
+                    if (getActivity() == null) return;
+                    getActivity().runOnUiThread(() -> {
+                        // Save to Firestore using FirebaseProfileManager
+                        firebaseProfileManager.saveProfileImageUrl(userId, imageUrl, fileId,
+                                new FirebaseProfileManager.UpdateCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        CustomToast.success(getContext(), "Photo updated!");
+                                        loadProfilePhoto(imageUrl);
+                                    }
 
-            @Override
-            public void onError(Exception e) {
-                if (getActivity() == null) return;
-                getActivity().runOnUiThread(() ->
-                        CustomToast.error(getContext(), "Upload failed: " + e.getMessage()));
-            }
-        });
+                                    @Override
+                                    public void onError(Exception e) {
+                                        CustomToast.error(getContext(), "Failed to save photo URL");
+                                    }
+                                });
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    if (getActivity() == null) return;
+                    getActivity().runOnUiThread(() ->
+                            CustomToast.error(getContext(), "Upload failed: " + e.getMessage()));
+                }
+            });
+        } else {
+            // Fallback to GoogleDriveManager
+            driveManager.uploadProfilePhoto(imageUri, userId, new GoogleDriveManager.UploadCallback() {
+                @Override
+                public void onSuccess(String driveUrl, String fileId) {
+                    if (getActivity() == null) return;
+                    getActivity().runOnUiThread(() -> {
+                        // Save using both old and new field names for compatibility
+                        Map<String, Object> updates = new HashMap<>();
+                        updates.put("drivePhotoUrl", driveUrl);
+                        updates.put("driveFileId", fileId);
+                        updates.put("profileImageUrl", driveUrl);
+                        updates.put("profileImageFileId", fileId);
+                        db.collection("users").document(userId).update(updates)
+                                .addOnSuccessListener(aVoid -> {
+                                    CustomToast.success(getContext(), "Photo updated!");
+                                    loadProfilePhoto(driveUrl);
+                                });
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    if (getActivity() == null) return;
+                    getActivity().runOnUiThread(() ->
+                            CustomToast.error(getContext(), "Upload failed: " + e.getMessage()));
+                }
+            });
+        }
     }
 
     private void signOut() {
