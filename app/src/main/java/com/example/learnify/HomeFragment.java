@@ -13,6 +13,7 @@ import android.util. Log;
 import android.view. LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -27,6 +28,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.LinearSnapHelper;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx. recyclerview.widget.SnapHelper;
+
+import com.bumptech.glide.Glide;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -59,6 +62,7 @@ public class HomeFragment extends Fragment {
     private CardView profileCard;
     private TextView viewMoreButton;
     private TextView profileNameView;
+    private ImageView profileImageView;
     private ActivityResultLauncher<String[]> filePickerLauncher;
 
     // Camera and Gallery launchers
@@ -178,12 +182,14 @@ public class HomeFragment extends Fragment {
         profileCard = view.findViewById(R.id.profile_card);
         viewMoreButton = view.findViewById(R.id.view_more_button);
         profileNameView = view.findViewById(R.id.profile_name);
+        profileImageView = view.findViewById(R.id.profile_image);
         rvRecentHistory = view.findViewById(R.id. history_recycler_view);
         emptyHistoryCard = view. findViewById(R.id.empty_history_view);
 
         if (rvRecentHistory == null || emptyHistoryCard == null) return;
 
         loadUserName();
+        loadProfileImage();
 
         profileCard.setOnClickListener(v -> {
             if (mListener != null) {
@@ -314,6 +320,41 @@ public class HomeFragment extends Fragment {
         } else {
             profileNameView.setText(getString(R.string.welcome));
         }
+    }
+
+    /**
+     * Load profile image from Firestore URL using Glide
+     */
+    private void loadProfileImage() {
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser == null || profileImageView == null) return;
+
+        String userId = currentUser.getUid();
+
+        db.collection("users")
+                .document(userId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (getContext() == null) return;
+
+                    // Try new field name first, then fallback to old field name
+                    String imageUrl = doc.getString("profileImageUrl");
+                    if (imageUrl == null || imageUrl.isEmpty()) {
+                        imageUrl = doc.getString("drivePhotoUrl");
+                    }
+
+                    if (imageUrl != null && !imageUrl.isEmpty()) {
+                        Glide.with(this)
+                                .load(imageUrl)
+                                .circleCrop()
+                                .placeholder(R.drawable.profile_image)
+                                .error(R.drawable.profile_image)
+                                .into(profileImageView);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Failed to load profile image", e);
+                });
     }
 
     /**
@@ -545,6 +586,7 @@ public class HomeFragment extends Fragment {
         super.onResume();
         loadRecentHistory();
         loadUserName();
+        loadProfileImage();
     }
 
     @Override

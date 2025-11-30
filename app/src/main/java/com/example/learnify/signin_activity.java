@@ -84,11 +84,11 @@ public class signin_activity extends BaseActivity {
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
-        // Configure Google Sign-In with Drive scope for profile photo upload
+        // Configure Google Sign-In with Drive appData scope for profile photo upload
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
-                .requestScopes(new Scope(DriveScopes.DRIVE_FILE))
+                .requestScopes(new Scope(DriveScopes.DRIVE_APPDATA)) // App-specific hidden folder
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
