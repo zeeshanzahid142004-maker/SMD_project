@@ -3,29 +3,34 @@ package com.example.learnify;
 import android.util.Log;
 
 import org.json.JSONArray;
-import org. json.JSONObject;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
-import java.util. regex.Matcher;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
-import okhttp3. Request;
+import okhttp3.Request;
 import okhttp3.Response;
 
 public class YouTubeTranscriptService {
 
     private static final String TAG = "YouTubeTranscript";
+    private static final String DEBUG_VIDEO_ID = "yGekRAvAxPg";
     private static final String YOUTUBE_URL = "https://www.youtube.com";
+    private static final int DEBUG_LOG_MAX_LENGTH = 10000;
+    private static final int PATTERN_LOG_PREVIEW_LENGTH = 20;
 
-    private static final OkHttpClient client = new OkHttpClient. Builder()
-            . connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit. SECONDS)
-            . followRedirects(true)
+    private static final OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .followRedirects(true)
             .build();
 
     public interface TranscriptCallback {
@@ -40,10 +45,10 @@ public class YouTubeTranscriptService {
     public void getTranscript(String videoUrl, String targetLang, TranscriptCallback callback) {
         String videoId = extractVideoId(videoUrl);
         if (videoId == null || videoId.isEmpty()) {
-            callback. onError("Invalid YouTube URL");
+            callback.onError("Invalid YouTube URL");
             return;
         }
-        Log. d(TAG, "📺 Fetching transcript for video ID: " + videoId);
+        Log.d(TAG, "📺 Fetching transcript for video ID: " + videoId);
         fetchPage(videoId, targetLang, callback);
     }
 
@@ -52,12 +57,12 @@ public class YouTubeTranscriptService {
 
         Request request = new Request.Builder()
                 .url(url)
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0. 0 Safari/537.36")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                 .header("Accept-Language", "en-US,en;q=0.9")
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0. 9,*/*;q=0.8")
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                 .build();
 
-        client. newCall(request). enqueue(new Callback() {
+        client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 Log.e(TAG, "❌ Network error fetching page", e);
@@ -66,29 +71,80 @@ public class YouTubeTranscriptService {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                if (! response.isSuccessful()) {
+                if (!response.isSuccessful()) {
                     Log.e(TAG, "❌ HTTP error: " + response.code());
                     callback.onError("HTTP " + response.code());
                     return;
                 }
 
                 String html = response.body().string();
-                Log.d(TAG, "📄 Page fetched, size: " + html. length());
+                Log.d(TAG, "📄 Page fetched, size: " + html.length());
+
+                // Debug logging for specific failing video
+                if (DEBUG_VIDEO_ID.equals(videoId)) {
+                    logDebugInfoForVideo(html, videoId);
+                }
 
                 // Try to find caption URL from page HTML
-                String captionUrl = findCaptionUrl(html);
+                String captionUrl = findCaptionUrl(html, videoId);
                 String lang = findLang(html);
 
-                if (captionUrl != null && ! captionUrl.isEmpty()) {
+                if (captionUrl != null && !captionUrl.isEmpty()) {
                     Log.d(TAG, "✅ Found caption URL in HTML");
                     getCaptions(captionUrl, lang, targetLang, callback);
                 } else {
-                    Log. d(TAG, "⚠️ No caption URL in HTML, trying API methods.. .");
+                    Log.d(TAG, "⚠️ No caption URL in HTML, trying API methods...");
                     // Try multiple methods
                     tryAllMethods(videoId, targetLang, callback);
                 }
             }
         });
+    }
+
+    /**
+     * Log detailed debug information for the failing video id to help diagnose caption extraction issues.
+     * Tagged with "YT-DEBUG-INIT", "YT-DEBUG-TRACKS", "YT-DEBUG-SIGNATURE" for easy filtering.
+     */
+    private void logDebugInfoForVideo(String html, String videoId) {
+        String ytInitJson = extractYtInitialPlayerResponse(html);
+        if (ytInitJson != null) {
+            // Log the first DEBUG_LOG_MAX_LENGTH chars of ytInitialPlayerResponse
+            String truncated = ytInitJson.length() > DEBUG_LOG_MAX_LENGTH ? ytInitJson.substring(0, DEBUG_LOG_MAX_LENGTH) + "...[truncated]" : ytInitJson;
+            Log.d("YT-DEBUG-INIT", "ytInitialPlayerResponse for video " + videoId + ": " + truncated);
+
+            // Try to extract and log captionTracks
+            try {
+                JSONObject ytInit = new JSONObject(ytInitJson);
+                JSONObject captions = ytInit.optJSONObject("captions");
+                if (captions != null) {
+                    JSONObject tracklist = captions.optJSONObject("playerCaptionsTracklistRenderer");
+                    if (tracklist != null) {
+                        JSONArray captionTracks = tracklist.optJSONArray("captionTracks");
+                        if (captionTracks != null) {
+                            Log.d("YT-DEBUG-TRACKS", "captionTracks for video " + videoId + ": " + captionTracks.toString());
+
+                            // Log signatureCipher for each track
+                            for (int i = 0; i < captionTracks.length(); i++) {
+                                JSONObject track = captionTracks.optJSONObject(i);
+                                if (track != null && track.has("signatureCipher")) {
+                                    Log.d("YT-DEBUG-SIGNATURE", "Track " + i + " signatureCipher: " + track.optString("signatureCipher", ""));
+                                }
+                            }
+                        } else {
+                            Log.w("YT-DEBUG-TRACKS", "No captionTracks array found in playerCaptionsTracklistRenderer for video " + videoId);
+                        }
+                    } else {
+                        Log.w("YT-DEBUG-TRACKS", "No playerCaptionsTracklistRenderer found in captions for video " + videoId);
+                    }
+                } else {
+                    Log.w("YT-DEBUG-TRACKS", "No captions object found in ytInitialPlayerResponse for video " + videoId);
+                }
+            } catch (Exception e) {
+                Log.e("YT-DEBUG-TRACKS", "Failed to parse ytInitialPlayerResponse JSON for video " + videoId, e);
+            }
+        } else {
+            Log.w("YT-DEBUG-INIT", "Could not extract ytInitialPlayerResponse from HTML for video " + videoId);
+        }
     }
 
     /**
@@ -104,7 +160,7 @@ public class YouTubeTranscriptService {
 
             @Override
             public void onError(String error) {
-                Log. d(TAG, "⚠️ Manual captions failed, trying auto-generated.. .");
+                Log.d(TAG, "⚠️ Manual captions failed, trying auto-generated...");
                 // Method 2: Try auto-generated captions (ASR)
                 tryAutoGeneratedCaptions(videoId, targetLang, new TranscriptCallback() {
                     @Override
@@ -114,7 +170,7 @@ public class YouTubeTranscriptService {
 
                     @Override
                     public void onError(String error2) {
-                        Log. d(TAG, "⚠️ Auto-generated failed, trying innertube API...");
+                        Log.d(TAG, "⚠️ Auto-generated failed, trying innertube API...");
                         // Method 3: Try innertube API
                         tryInnertubeApi(videoId, targetLang, callback);
                     }
@@ -151,7 +207,7 @@ public class YouTubeTranscriptService {
         String lang = langs[index];
 
         // Build URL with optional kind=asr for auto-generated captions
-        String url = YOUTUBE_URL + "/api/timedtext? v=" + videoId + "&lang=" + lang;
+        String url = YOUTUBE_URL + "/api/timedtext?v=" + videoId + "&lang=" + lang;
         if (useAsr) {
             url += "&kind=asr";  // ✅ KEY: This requests auto-generated captions!
         }
@@ -161,10 +217,10 @@ public class YouTubeTranscriptService {
 
         Request req = new Request.Builder()
                 .url(url)
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10. 0; Win64; x64) Chrome/120.0. 0.0")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0")
                 .build();
 
-        client. newCall(req). enqueue(new Callback() {
+        client.newCall(req).enqueue(new Callback() {
             @Override
             public void onFailure(Call c, IOException e) {
                 tryLangList(videoId, langs, index + 1, useAsr, targetLang, callback);
@@ -173,7 +229,7 @@ public class YouTubeTranscriptService {
             @Override
             public void onResponse(Call c, Response r) throws IOException {
                 if (r.isSuccessful()) {
-                    String body = r.body(). string();
+                    String body = r.body().string();
                     if (body != null && body.contains("events")) {
                         String text = parseJson(body);
                         if (text != null && text.length() > 50) {
@@ -208,7 +264,7 @@ public class YouTubeTranscriptService {
         Request request = new Request.Builder()
                 .url(url)
                 .header("Content-Type", "application/json")
-                .header("User-Agent", "Mozilla/5. 0")
+                .header("User-Agent", "Mozilla/5.0")
                 .post(okhttp3.RequestBody.create(jsonBody, okhttp3.MediaType.parse("application/json")))
                 .build();
 
@@ -225,7 +281,7 @@ public class YouTubeTranscriptService {
                     String body = response.body().string();
                     String transcript = parseInnertubeResponse(body);
                     if (transcript != null && transcript.length() > 50) {
-                        Log. d(TAG, "✅ Got transcript from innertube API");
+                        Log.d(TAG, "✅ Got transcript from innertube API");
                         finish(transcript, "en", targetLang, callback);
                         return;
                     }
@@ -239,7 +295,7 @@ public class YouTubeTranscriptService {
         // Base64 encoded params for transcript request
         try {
             String params = "\n\u000b" + videoId;
-            return android.util.Base64.encodeToString(params.getBytes(), android.util. Base64.NO_WRAP | android.util.Base64.URL_SAFE);
+            return android.util.Base64.encodeToString(params.getBytes(), android.util.Base64.NO_WRAP | android.util.Base64.URL_SAFE);
         } catch (Exception e) {
             return "";
         }
@@ -254,10 +310,10 @@ public class YouTubeTranscriptService {
                 // Parse transcript segments
                 JSONArray segments = actions.optJSONObject("updateEngagementPanelAction")
                         .optJSONObject("content")
-                        . optJSONObject("transcriptRenderer")
+                        .optJSONObject("transcriptRenderer")
                         .optJSONObject("body")
                         .optJSONObject("transcriptBodyRenderer")
-                        . optJSONArray("cueGroups");
+                        .optJSONArray("cueGroups");
 
                 if (segments != null) {
                     for (int i = 0; i < segments.length(); i++) {
@@ -271,8 +327,8 @@ public class YouTubeTranscriptService {
                                         .optJSONObject("cue")
                                         .optJSONObject("simpleText")
                                         .optString("simpleText", "");
-                                if (! text.isEmpty()) {
-                                    sb.append(text). append(" ");
+                                if (!text.isEmpty()) {
+                                    sb.append(text).append(" ");
                                 }
                             }
                         }
@@ -285,9 +341,183 @@ public class YouTubeTranscriptService {
         return clean(sb.toString());
     }
 
-    private String findCaptionUrl(String html) {
+    /**
+     * Extracts ytInitialPlayerResponse JSON from the YouTube page HTML.
+     * Handles both ytInitialPlayerResponse = {...}; and window["ytInitialPlayerResponse"] patterns.
+     * @param html The HTML content of the YouTube page
+     * @return The JSON string or null if not found
+     */
+    private String extractYtInitialPlayerResponse(String html) {
+        if (html == null || html.isEmpty()) {
+            return null;
+        }
+
+        // Pattern 1: ytInitialPlayerResponse = {...};
+        Pattern pattern1 = Pattern.compile("ytInitialPlayerResponse\\s*=\\s*(\\{.+?\\});\\s*(?:var\\s|</script)", Pattern.DOTALL);
+        Matcher matcher1 = pattern1.matcher(html);
+        if (matcher1.find()) {
+            String json = matcher1.group(1);
+            Log.d(TAG, "Found ytInitialPlayerResponse via pattern 1");
+            return json;
+        }
+
+        // Pattern 2: window["ytInitialPlayerResponse"] = {...};
+        Pattern pattern2 = Pattern.compile("window\\[\"ytInitialPlayerResponse\"\\]\\s*=\\s*(\\{.+?\\});", Pattern.DOTALL);
+        Matcher matcher2 = pattern2.matcher(html);
+        if (matcher2.find()) {
+            String json = matcher2.group(1);
+            Log.d(TAG, "Found ytInitialPlayerResponse via pattern 2 (window)");
+            return json;
+        }
+
+        // Pattern 3: Another common pattern - ytInitialPlayerResponse = {...}; at end
+        Pattern pattern3 = Pattern.compile("ytInitialPlayerResponse\\s*=\\s*(\\{\"responseContext\".+?\\});", Pattern.DOTALL);
+        Matcher matcher3 = pattern3.matcher(html);
+        if (matcher3.find()) {
+            String json = matcher3.group(1);
+            Log.d(TAG, "Found ytInitialPlayerResponse via pattern 3 (responseContext)");
+            return json;
+        }
+
+        Log.w(TAG, "Could not find ytInitialPlayerResponse in HTML");
+        return null;
+    }
+
+    /**
+     * Extracts a usable baseUrl from a captionTrack JSONObject.
+     * Handles both direct baseUrl and signatureCipher decoding.
+     * @param track The captionTrack JSON object
+     * @return A usable baseUrl or null if none found
+     */
+    private String extractBaseUrlFromTrack(JSONObject track) {
+        if (track == null) {
+            return null;
+        }
+
+        // First, try direct baseUrl
+        String baseUrl = track.optString("baseUrl", null);
+        if (baseUrl != null && !baseUrl.isEmpty()) {
+            Log.d(TAG, "Found direct baseUrl in captionTrack");
+            return normalizeUrl(baseUrl);
+        }
+
+        // Try signatureCipher decoding
+        String signatureCipher = track.optString("signatureCipher", null);
+        if (signatureCipher == null || signatureCipher.isEmpty()) {
+            // Also check for cipher (alternative name)
+            signatureCipher = track.optString("cipher", null);
+        }
+
+        if (signatureCipher != null && !signatureCipher.isEmpty()) {
+            Log.d(TAG, "Found signatureCipher, attempting to decode");
+            return decodeSignatureCipher(signatureCipher);
+        }
+
+        Log.w(TAG, "No baseUrl or signatureCipher found in captionTrack");
+        return null;
+    }
+
+    /**
+     * Decodes a signatureCipher string to extract the url component.
+     * @param signatureCipher The signatureCipher string
+     * @return The decoded URL or null if decoding fails
+     */
+    private String decodeSignatureCipher(String signatureCipher) {
         try {
-            // Try multiple patterns
+            // signatureCipher is typically URL-encoded parameters like:
+            // s=...&sp=sig&url=https%3A%2F%2F...
+            String[] params = signatureCipher.split("&");
+            for (String param : params) {
+                if (param.startsWith("url=")) {
+                    String encodedUrl = param.substring(4);
+                    String decodedUrl = URLDecoder.decode(encodedUrl, "UTF-8");
+                    Log.d(TAG, "Decoded signatureCipher url component");
+                    return normalizeUrl(decodedUrl);
+                }
+            }
+        } catch (UnsupportedEncodingException e) {
+            Log.e(TAG, "Failed to decode signatureCipher URL", e);
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing signatureCipher", e);
+        }
+        return null;
+    }
+
+    /**
+     * Normalizes a URL by replacing escaped sequences.
+     * @param url The URL to normalize
+     * @return The normalized URL
+     */
+    private String normalizeUrl(String url) {
+        if (url == null) {
+            return null;
+        }
+        return url.replace("\\u0026", "&")
+                .replace("\\/", "/")
+                .replace("\\u003d", "=")
+                .replace("\\u003c", "<")
+                .replace("\\u003e", ">");
+    }
+
+    /**
+     * Robust caption URL extraction that tries multiple strategies:
+     * 1. Parse ytInitialPlayerResponse JSON and extract from captionTracks
+     * 2. Fall back to regex-based patterns
+     * @param html The HTML content of the YouTube page
+     * @param videoId The video ID (for debug logging)
+     * @return A usable caption URL or null
+     */
+    private String findCaptionUrl(String html, String videoId) {
+        // Strategy 1: Try ytInitialPlayerResponse JSON parsing
+        String ytInitJson = extractYtInitialPlayerResponse(html);
+        if (ytInitJson != null) {
+            try {
+                JSONObject ytInit = new JSONObject(ytInitJson);
+                JSONObject captions = ytInit.optJSONObject("captions");
+                if (captions != null) {
+                    JSONObject tracklist = captions.optJSONObject("playerCaptionsTracklistRenderer");
+                    if (tracklist != null) {
+                        JSONArray captionTracks = tracklist.optJSONArray("captionTracks");
+                        if (captionTracks != null && captionTracks.length() > 0) {
+                            Log.d(TAG, "Found " + captionTracks.length() + " captionTracks in ytInitialPlayerResponse");
+
+                            // Try each track to find a usable URL
+                            for (int i = 0; i < captionTracks.length(); i++) {
+                                JSONObject track = captionTracks.optJSONObject(i);
+                                if (track != null) {
+                                    // Log signatureCipher for debug video
+                                    if (DEBUG_VIDEO_ID.equals(videoId) && track.has("signatureCipher")) {
+                                        Log.d("YT-DEBUG-SIGNATURE", "findCaptionUrl track " + i + " signatureCipher: " + track.optString("signatureCipher", ""));
+                                    }
+
+                                    String url = extractBaseUrlFromTrack(track);
+                                    if (url != null && !url.isEmpty()) {
+                                        Log.d(TAG, "Successfully extracted caption URL from track " + i);
+                                        return url;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Failed to parse ytInitialPlayerResponse JSON, falling back to regex", e);
+            }
+        }
+
+        // Strategy 2: Fall back to regex-based patterns
+        Log.d(TAG, "Trying regex-based caption URL extraction");
+        return findCaptionUrlWithRegex(html);
+    }
+
+    /**
+     * Legacy regex-based caption URL extraction (fallback).
+     * @param html The HTML content
+     * @return A caption URL or null
+     */
+    private String findCaptionUrlWithRegex(String html) {
+        try {
+            // Pattern for captionTracks with baseUrl
             String[] patterns = {
                     "\"captionTracks\":\\s*\\[\\{.*?\"baseUrl\":\\s*\"([^\"]+)\"",
                     "\"playerCaptionsTracklistRenderer\".*?\"baseUrl\":\\s*\"([^\"]+)\"",
@@ -296,18 +526,29 @@ public class YouTubeTranscriptService {
 
             for (String patternStr : patterns) {
                 Pattern p = Pattern.compile(patternStr, Pattern.DOTALL);
-                Matcher m = p. matcher(html);
-                if (m. find()) {
-                    String url = m.group(1)
-                            .replace("\\u0026", "&")
-                            .replace("\\/", "/")
-                            .replace("\\u003d", "=");
-                    Log. d(TAG, "Found caption URL with pattern: " + patternStr. substring(0, 20) + "...");
+                Matcher m = p.matcher(html);
+                if (m.find()) {
+                    String url = normalizeUrl(m.group(1));
+                    Log.d(TAG, "Found caption URL with regex pattern: " + patternStr.substring(0, Math.min(PATTERN_LOG_PREVIEW_LENGTH, patternStr.length())) + "...");
                     return url;
                 }
             }
+
+            // Try to extract signatureCipher from regex and decode
+            Pattern cipherPattern = Pattern.compile("\"signatureCipher\":\\s*\"([^\"]+)\"");
+            Matcher cipherMatcher = cipherPattern.matcher(html);
+            if (cipherMatcher.find()) {
+                String cipher = cipherMatcher.group(1);
+                // Unescape the cipher string
+                cipher = cipher.replace("\\u0026", "&");
+                Log.d(TAG, "Found signatureCipher via regex, attempting decode");
+                String decodedUrl = decodeSignatureCipher(cipher);
+                if (decodedUrl != null) {
+                    return decodedUrl;
+                }
+            }
         } catch (Exception e) {
-            Log. e(TAG, "Error finding caption URL", e);
+            Log.e(TAG, "Error finding caption URL with regex", e);
         }
         return null;
     }
@@ -326,7 +567,7 @@ public class YouTubeTranscriptService {
 
         Request req = new Request.Builder()
                 .url(url)
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10. 0; Win64; x64) Chrome/120.0. 0.0")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0")
                 .build();
 
         client.newCall(req).enqueue(new Callback() {
@@ -339,9 +580,9 @@ public class YouTubeTranscriptService {
             @Override
             public void onResponse(Call c, Response r) throws IOException {
                 String body = r.body().string();
-                String text = body. startsWith("{") ? parseJson(body) : parseXml(body);
-                if (text != null && ! text.isEmpty() && text.length() > 50) {
-                    Log. d(TAG, "✅ Parsed captions: " + text.length() + " chars");
+                String text = body.startsWith("{") ? parseJson(body) : parseXml(body);
+                if (text != null && !text.isEmpty() && text.length() > 50) {
+                    Log.d(TAG, "✅ Parsed captions: " + text.length() + " chars");
                     finish(text, srcLang, tgtLang, cb);
                 } else {
                     cb.onError("Failed to parse captions");
@@ -356,12 +597,12 @@ public class YouTubeTranscriptService {
             JSONObject root = new JSONObject(json);
             JSONArray events = root.optJSONArray("events");
             if (events != null) {
-                for (int i = 0; i < events. length(); i++) {
+                for (int i = 0; i < events.length(); i++) {
                     JSONArray segs = events.getJSONObject(i).optJSONArray("segs");
                     if (segs != null) {
                         for (int j = 0; j < segs.length(); j++) {
                             String t = segs.getJSONObject(j).optString("utf8", "");
-                            if (!t.isEmpty() && ! t.equals("\n")) {
+                            if (!t.isEmpty() && !t.equals("\n")) {
                                 sb.append(t);
                             }
                         }
@@ -380,7 +621,7 @@ public class YouTubeTranscriptService {
             Pattern p = Pattern.compile("<text[^>]*>([^<]*)</text>");
             Matcher m = p.matcher(xml);
             while (m.find()) {
-                sb. append(m.group(1)
+                sb.append(m.group(1)
                                 .replace("&amp;", "&")
                                 .replace("&#39;", "'")
                                 .replace("&quot;", "\"")
@@ -397,7 +638,7 @@ public class YouTubeTranscriptService {
     private String clean(String s) {
         if (s == null) return "";
         return s.replaceAll("\\s+", " ")
-                . replaceAll("\\[.*?]", "")  // Remove [Music], [Applause], etc.
+                .replaceAll("\\[.*?]", "")  // Remove [Music], [Applause], etc.
                 .replaceAll("\\(.*?\\)", "") // Remove (inaudible), etc.
                 .trim();
     }
@@ -408,7 +649,7 @@ public class YouTubeTranscriptService {
             return;
         }
 
-        if (tgt != null && ! tgt.isEmpty() && !tgt. equals(src) && !src.startsWith(tgt)) {
+        if (tgt != null && !tgt.isEmpty() && !tgt.equals(src) && !src.startsWith(tgt)) {
             translate(text, src, tgt, cb);
         } else {
             cb.onSuccess(text);
@@ -418,15 +659,15 @@ public class YouTubeTranscriptService {
     private void translate(String text, String from, String to, TranscriptCallback cb) {
         try {
             // Limit text to avoid URL length issues
-            String textToTranslate = text. length() > 4500 ? text.substring(0, 4500) : text;
+            String textToTranslate = text.length() > 4500 ? text.substring(0, 4500) : text;
             String enc = URLEncoder.encode(textToTranslate, "UTF-8");
-            String url = "https://translate. googleapis.com/translate_a/single? client=gtx&sl="
+            String url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl="
                     + from + "&tl=" + to + "&dt=t&q=" + enc;
 
-            client.newCall(new Request.Builder(). url(url).build()).enqueue(new Callback() {
+            client.newCall(new Request.Builder().url(url).build()).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call c, IOException e) {
-                    Log. e(TAG, "Translation failed", e);
+                    Log.e(TAG, "Translation failed", e);
                     cb.onSuccess(text); // Return original on failure
                 }
 
@@ -440,7 +681,7 @@ public class YouTubeTranscriptService {
                             sb.append(t.getJSONArray(i).getString(0));
                         }
                         String translated = sb.toString();
-                        cb.onSuccess(translated. length() > 0 ? translated : text);
+                        cb.onSuccess(translated.length() > 0 ? translated : text);
                     } catch (Exception e) {
                         Log.e(TAG, "Translation parse error", e);
                         cb.onSuccess(text);
@@ -449,7 +690,7 @@ public class YouTubeTranscriptService {
             });
         } catch (Exception e) {
             Log.e(TAG, "Translation error", e);
-            cb. onSuccess(text);
+            cb.onSuccess(text);
         }
     }
 
@@ -461,11 +702,11 @@ public class YouTubeTranscriptService {
             if (url.contains("youtu.be/"))
                 id = url.split("youtu.be/")[1];
             else if (url.contains("/shorts/"))
-                id = url. split("/shorts/")[1];
+                id = url.split("/shorts/")[1];
             else if (url.contains("v="))
-                id = url. split("v=")[1];
+                id = url.split("v=")[1];
             else if (url.contains("/embed/"))
-                id = url. split("/embed/")[1];
+                id = url.split("/embed/")[1];
             else if (url.contains("/live/"))
                 id = url.split("/live/")[1];
 
@@ -473,7 +714,7 @@ public class YouTubeTranscriptService {
                 if (id.contains("&")) id = id.split("&")[0];
                 if (id.contains("?")) id = id.split("\\?")[0];
                 if (id.contains("/")) id = id.split("/")[0];
-                if (id.contains("#")) id = id. split("#")[0];
+                if (id.contains("#")) id = id.split("#")[0];
             }
         } catch (Exception e) {
             Log.e(TAG, "Error extracting video ID", e);
