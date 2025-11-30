@@ -127,4 +127,8 @@
     <color name="quiz_difficulty_normal">#FF9800</color>
     <color name="quiz_difficulty_hard">#E53935</color>
     <color name="figma_lime_green">#AEFF42</color>
+
+    <!-- Validation Warning Colors -->
+    <color name="validation_warning_orange">#FF9800</color>
+    <color name="validation_warning_yellow">#FFD600</color>
 </resources>
