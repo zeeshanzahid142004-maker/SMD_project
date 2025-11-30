@@ -1,14 +1,15 @@
 import java.util.Properties
 
-// 1. Load the local.properties file
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.google.gms.google.services)
+}
+
+// Load the local.properties file AFTER plugins block
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localProperties.load(localPropertiesFile.inputStream())
-}
-plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -22,11 +23,14 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // ✅ ADD THIS LINE - Secure API key from local.properties
+        // API Keys from local.properties
         buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("GROQ_API_KEY", "")}\"")
+        buildConfigField("String", "JDOODLE_CLIENT_ID", "\"${localProperties.getProperty("JDOODLE_CLIENT_ID", "")}\"")
+        buildConfigField("String", "JDOODLE_CLIENT_SECRET", "\"${localProperties.getProperty("JDOODLE_CLIENT_SECRET", "")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
     packaging {
         resources {
             excludes += setOf(
@@ -52,10 +56,12 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     buildFeatures {
         buildConfig = true
     }
@@ -74,10 +80,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
 
-    // Authentication (Use older Play Services Auth to match your Java code)
-    // implementation(libs.credentials)  <-- COMMENTED OUT TO FIX CONFLICT
-    // implementation(libs.credentials.play.services.auth) <-- COMMENTED OUT TO FIX CONFLICT
-    // implementation(libs.googleid) <-- COMMENTED OUT TO FIX CONFLICT
+    // Authentication
     implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     // Google Drive API
@@ -115,11 +118,9 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 
-    //taking notes
+    // Taking notes
     implementation("jp.wasabeef:richeditor-android:2.0.0")
 
     // Lottie Animations
     implementation("com.airbnb.android:lottie:6.1.0")
 }
-
-

@@ -9,6 +9,7 @@
     tools:context=".RecommendationsActivity">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/white"
@@ -41,43 +42,57 @@
                 android:layout_height="wrap_content"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="8dp"
-                android:layout_marginBottom="24dp">
+                app:cardBackgroundColor="@color/figma_purple_main"
+                app:cardPreventCornerOverlap="false"
+                android:layout_marginBottom="32dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="24dp"
+                    android:padding="32dp"
+                    android:gravity="center"
                     android:background="@drawable/bg_profile_card_gradient">
 
                     <TextView
                         android:id="@+id/tv_recommendation_header"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Loading Result..."
+                        android:text="Analyzing Performance..."
                         style="@style/TextAppearance.Home.CardTitle"
                         android:textColor="@color/white"
-                        android:gravity="center"
                         android:textSize="22sp"
+                        android:textAlignment="center"
                         android:layout_marginBottom="8dp"/>
 
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Check your performance summary below"
+                        android:text="Check your summary below"
                         style="@style/TextAppearance.Body.Small.Medium"
                         android:textColor="#CCFFFFFF"
-                        android:gravity="center"/>
+                        android:textAlignment="center"/>
+
+                    <ProgressBar
+                        android:id="@+id/progressBar"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginTop="16dp"
+                        android:indeterminateTint="@color/white"
+                        android:visibility="gone"
+                        tools:visibility="visible"/>
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Topics to Review"
+                android:text="Topics to Improve"
                 style="@style/TextAppearance.Header.Small"
                 android:textSize="20sp"
-                android:layout_marginBottom="12dp"/>
+                android:layout_marginBottom="16dp"
+                android:layout_marginStart="4dp"/>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_recommendations"
@@ -85,6 +100,7 @@
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
                 android:nestedScrollingEnabled="false"
+                android:overScrollMode="never"
                 tools:itemCount="2"
                 tools:listitem="@layout/item_recommendation"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
@@ -104,74 +120,55 @@
                     style="@style/TextAppearance.Header.Small"
                     android:textSize="20sp"
                     android:layout_marginBottom="12dp"/>
-
             </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="1"
-                android:minHeight="24dp"/>
+                android:minHeight="40dp"/>
 
-            <!-- UPDATED BUTTON CONTAINER -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginBottom="16dp">
+                android:gravity="center">
 
-                <!--
-                     Favorite Button:
-                     - Uses `Widget.MaterialComponents.Button.OutlinedButton` style for stroke.
-                     - Explicitly sets cornerRadius to match.
-                     - Uses `app:strokeColor` to match primary color.
-                -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_mark_favorite"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="60dp"
                     android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
+                    android:layout_marginEnd="12dp"
                     android:text="Favorite"
-                    android:textColor="@color/text_primary_dark"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    app:cornerRadius="12dp"
-                    app:strokeColor="@color/text_primary_dark"
+                    android:textColor="@color/figma_purple_main"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="@color/figma_purple_main"
                     app:strokeWidth="1dp"
+                    app:cornerRadius="12dp"
                     app:icon="@drawable/ic_favorite_border"
                     app:iconGravity="textStart"
-                    app:iconTint="@color/text_primary_dark"
-                    app:iconPadding="4dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                    app:iconTint="@color/figma_purple_main"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"/>
 
-                <!--
-                     Download Button:
-                     - Uses consistent cornerRadius (12dp).
-                     - Removed custom background drawable to rely on `backgroundTint` if possible,
-                       but since you want gradient, we keep it but ensure shape matches.
-                     - Note: If using a custom background drawable, `app:cornerRadius` on the button
-                       might be ignored in favor of the drawable's corners. Ensure drawable matches.
-                -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_download_quiz"
                     android:layout_width="0dp"
-                    android:layout_height="56dp"
+                    android:layout_height="60dp"
                     android:layout_weight="1"
-                    android:layout_marginStart="8dp"
+                    android:layout_marginStart="12dp"
                     android:text="Download"
                     android:textColor="@color/white"
-                    android:insetTop="0dp"
-                    android:insetBottom="0dp"
-                    app:cornerRadius="12dp"
-                    app:icon="@drawable/ic_download"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/white"
-                    app:iconPadding="4dp"
                     style="@style/TextAppearance.Button.Large"
                     android:background="@drawable/bg_sign_up_gradient"
-                    app:backgroundTint="@null"/>
+                    app:backgroundTint="@null"
+                    app:cornerRadius="12dp"
+
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/white"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"/>
 
             </LinearLayout>
 

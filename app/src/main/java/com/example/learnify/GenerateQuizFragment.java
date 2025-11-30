@@ -102,7 +102,7 @@ public class GenerateQuizFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_generate_quiz, container, false);
+        return inflater.inflate(R.layout.blank_layout, container, false);
     }
 
     @Override

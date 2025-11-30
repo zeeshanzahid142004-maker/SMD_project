@@ -100,7 +100,7 @@
                 android:gravity="center"
                 android:padding="28dp"
                 android:minHeight="300dp"
-                android:background="@drawable/bg_gradient_thirdver">
+                android:background="@drawable/gradient_book_background">
 
                 <ProgressBar
                     android:layout_width="60dp"
@@ -146,7 +146,7 @@
                 android:orientation="vertical"
                 android:gravity="center"
                 android:padding="28dp"
-                android:background="@drawable/bg_gradient_thirdver">
+                android:background="@drawable/gradient_book_background">
 
                 <TextView
                     android:layout_width="wrap_content"
