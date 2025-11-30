@@ -117,14 +117,9 @@ public class CodingExerciseActivity extends BaseActivity {
     private void submitCode() {
         String code = etCodeInput.getText().toString().trim();
 
-        if (code.isEmpty()) {
-            showValidationError("Please write some code first!");
-            return;
-        }
+        Log.d(TAG, "📝 User submitted code: " + (code.isEmpty() ? "(empty)" : code.substring(0, Math.min(50, code.length()))));
 
-        Log.d(TAG, "📝 User submitted code: " + code.substring(0, Math.min(50, code.length())));
-
-        // Use CodeValidator for anti-cheating validation
+        // Use CodeValidator for anti-cheating validation (includes empty check)
         String questionText = question != null ? question.questionText : "";
         CodeValidator.ValidationResult validationResult = CodeValidator.validateCode(code, questionText);
 

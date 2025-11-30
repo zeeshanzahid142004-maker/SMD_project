@@ -96,9 +96,9 @@ public class CodeValidator {
      */
     private static ValidationResult checkForHardcodedOutput(String code, String lowerCode) {
         // Pattern to detect simple print statements with just a number or string literal
-        // Matches: print("15"), print('15'), System.out.println("15"), console.log("15"), etc.
+        // Matches: print("15"), print('Hello'), System.out.println("result"), console.log("42"), etc.
         Pattern hardcodedPrintPattern = Pattern.compile(
-                "(print|println|console\\.log|system\\.out\\.print|echo|puts|write)\\s*\\(\\s*[\"']?\\d+[\"']?\\s*\\)",
+                "(print|println|console\\.log|system\\.out\\.print|echo|puts|write)\\s*\\(\\s*[\"'][^\"']*[\"']\\s*\\)",
                 Pattern.CASE_INSENSITIVE
         );
 
@@ -237,7 +237,8 @@ public class CodeValidator {
             boolean hasFunction = lowerCode.contains("def ") ||
                     lowerCode.contains("function ") ||
                     lowerCode.contains("function(") ||
-                    Pattern.compile("(public|private|protected)?\\s*(static)?\\s*(void|int|string|boolean|float|double|long|char)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(").matcher(lowerCode).find() ||
+                    // Java method pattern - case insensitive to work with lowerCode
+                    Pattern.compile("(public|private|protected)?\\s*(static)?\\s*(void|int|string|boolean|float|double|long|char|integer|object)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*\\(", Pattern.CASE_INSENSITIVE).matcher(lowerCode).find() ||
                     Pattern.compile("(const|let|var)\\s+[a-zA-Z_][a-zA-Z0-9_]*\\s*=\\s*(\\([^)]*\\)|[a-zA-Z_][a-zA-Z0-9_]*)\\s*=>").matcher(lowerCode).find() ||
                     lowerCode.contains("func ") ||
                     lowerCode.contains("fn ");
