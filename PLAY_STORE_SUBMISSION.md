@@ -118,15 +118,9 @@ versionName = "1.0"
 **Character Limit:** 80 characters maximum
 
 ```
-AI-powered learning companion with quizzes, coding exercises & smart recommendations
-```
-
-**Character Count:** 83 characters
-
-**Alternative (within limit):**
-```
 AI-powered learning companion with quizzes, coding exercises & recommendations
 ```
+
 **Character Count:** 78 characters ✓
 
 ### 3.3 Full Description
