@@ -177,10 +177,7 @@ public class CodingExerciseActivity extends BaseActivity {
         cardOutput.setVisibility(View.VISIBLE);
         tvOutputLabel.setText("OUTPUT");
 
-        // Handle null or empty output
-        if (output == null || output.trim().isEmpty()) {
-            output = "(No output)";
-        }
+        // Output is already handled by CodeExecutionService (null -> "(No output)")
         tvOutput.setText(output);
 
         // Set status dot color

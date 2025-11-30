@@ -40,8 +40,8 @@ public class CodeExecutionService {
     public CodeExecutionService() {
         this.gson = new Gson();
         this.mainHandler = new Handler(Looper.getMainLooper());
-        this.clientId = BuildConfig.JDOODLE_CLIENT_ID;
-        this.clientSecret = BuildConfig.JDOODLE_CLIENT_SECRET;
+        this.clientId = BuildConfig.JDOODLE_CLIENT_ID != null ? BuildConfig.JDOODLE_CLIENT_ID : "";
+        this.clientSecret = BuildConfig.JDOODLE_CLIENT_SECRET != null ? BuildConfig.JDOODLE_CLIENT_SECRET : "";
 
         this.client = new OkHttpClient.Builder()
                 .connectTimeout(30, TimeUnit.SECONDS)
@@ -52,6 +52,13 @@ public class CodeExecutionService {
 
     public void executeCode(String code, String language, CodeExecutionCallback callback) {
         Log.d(TAG, "🚀 Executing code in " + language);
+
+        // Check for missing credentials
+        if (clientId.isEmpty() || clientSecret.isEmpty()) {
+            Log.e(TAG, "❌ Missing JDoodle credentials");
+            mainHandler.post(() -> callback.onError("Code execution service not configured. Please add JDoodle credentials."));
+            return;
+        }
 
         // Map language to JDoodle language code and version
         String languageCode = getLanguageCode(language);
