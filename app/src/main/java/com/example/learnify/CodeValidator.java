@@ -1,7 +1,5 @@
 package com.example.learnify;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -137,10 +135,12 @@ public class CodeValidator {
      * without any actual computation.
      */
     private static ValidationResult checkHardcodedOutputs(String code, String lowerCode) {
-        // Pattern to match print statements with hardcoded values
+        // Pattern to match print statements with hardcoded numeric values
+        // Requires closing parenthesis for print functions
         Pattern printPattern = Pattern.compile(
-                "(print\\s*\\(|println\\s*\\(|console\\.log\\s*\\(|echo\\s+|puts\\s+)" +
-                        "\\s*[\"']\\s*\\d+\\s*[\"']\\s*\\)?",
+                "(print\\s*\\(|println\\s*\\(|console\\.log\\s*\\()" +
+                        "\\s*[\"']\\s*\\d+\\s*[\"']\\s*\\)" +
+                        "|(echo\\s+|puts\\s+)[\"']\\s*\\d+\\s*[\"']",
                 Pattern.CASE_INSENSITIVE
         );
 
@@ -172,8 +172,8 @@ public class CodeValidator {
      * Checks if code has actual logic (variables, operations, loops, conditionals).
      */
     private static boolean hasActualLogic(String lowerCode) {
-        // Check for variable assignments
-        boolean hasAssignment = lowerCode.contains("=") && !lowerCode.contains("==");
+        // Check for variable assignments (exclude comparison operators)
+        boolean hasAssignment = hasAssignmentOperator(lowerCode);
 
         // Check for arithmetic operations
         boolean hasArithmetic = lowerCode.contains("+") || lowerCode.contains("-") ||
@@ -190,6 +190,17 @@ public class CodeValidator {
         boolean hasFunctionCalls = countFunctionCalls(lowerCode) > 1;
 
         return (hasAssignment && hasArithmetic) || hasLoop || hasConditional || hasFunctionCalls;
+    }
+
+    /**
+     * Checks if code contains actual assignment operators (=, +=, -=, etc.)
+     * while excluding comparison operators (==, !=, >=, <=).
+     */
+    private static boolean hasAssignmentOperator(String code) {
+        // Pattern matches = not preceded or followed by =, !, <, >
+        Pattern assignmentPattern = Pattern.compile("[^=!<>]=[^=]");
+        Matcher matcher = assignmentPattern.matcher(code);
+        return matcher.find();
     }
 
     /**
@@ -231,24 +242,7 @@ public class CodeValidator {
      */
     private static ValidationResult checkRequiredFunctions(String lowerCode, String lowerQuestion) {
         if (containsAnyKeyword(lowerQuestion, FUNCTION_KEYWORDS)) {
-            // Check for actual function/method definitions, not just type keywords
-            boolean hasFunction = lowerCode.contains("function ") ||
-                    lowerCode.contains("function(") ||
-                    lowerCode.contains("def ") ||
-                    (lowerCode.contains("void ") && lowerCode.contains("(")) ||
-                    (lowerCode.contains("public ") && lowerCode.contains("(")) ||
-                    (lowerCode.contains("private ") && lowerCode.contains("(")) ||
-                    (lowerCode.contains("static ") && lowerCode.contains("(")) ||
-                    lowerCode.contains("=>") ||
-                    lowerCode.contains("func ") ||
-                    lowerCode.contains("fn ");
-
-            // Additional check: look for function definition patterns
-            if (!hasFunction) {
-                // Check for Java/C++ style: return_type method_name(
-                boolean hasMethodPattern = lowerCode.matches("(?s).*\\b(int|void|string|boolean|double|float)\\s+\\w+\\s*\\(.*");
-                hasFunction = hasMethodPattern;
-            }
+            boolean hasFunction = hasFunctionDefinition(lowerCode);
 
             if (!hasFunction) {
                 return ValidationResult.warning("This problem asks you to create a function/method. Please define a function in your solution.");
@@ -256,6 +250,60 @@ public class CodeValidator {
         }
 
         return ValidationResult.success();
+    }
+
+    /**
+     * Checks if code contains a function/method definition.
+     * Uses more precise patterns to detect actual function definitions.
+     */
+    private static boolean hasFunctionDefinition(String lowerCode) {
+        // JavaScript/TypeScript function keyword
+        if (lowerCode.contains("function ") || lowerCode.contains("function(")) {
+            return true;
+        }
+
+        // Python def keyword
+        if (lowerCode.contains("def ") && lowerCode.contains(":")) {
+            return true;
+        }
+
+        // Arrow functions (JavaScript/TypeScript)
+        if (lowerCode.contains("=>")) {
+            return true;
+        }
+
+        // Rust fn keyword
+        if (lowerCode.contains("fn ") && lowerCode.contains("(") && lowerCode.contains("{")) {
+            return true;
+        }
+
+        // Go func keyword
+        if (lowerCode.contains("func ") && lowerCode.contains("(")) {
+            return true;
+        }
+
+        // Java/C++/C# method definition patterns
+        // Look for: modifier* return_type name ( params ) {
+        Pattern javaMethodPattern = Pattern.compile(
+                "(?:public|private|protected|static|final|abstract)?\\s*" +
+                        "(?:void|int|string|boolean|double|float|char|long|object|var|auto)\\s+" +
+                        "\\w+\\s*\\([^)]*\\)\\s*\\{",
+                Pattern.CASE_INSENSITIVE
+        );
+        if (javaMethodPattern.matcher(lowerCode).find()) {
+            return true;
+        }
+
+        // Simpler check for public/private method declarations
+        Pattern accessModifierMethod = Pattern.compile(
+                "(?:public|private|protected)\\s+\\w+\\s+\\w+\\s*\\([^)]*\\)",
+                Pattern.CASE_INSENSITIVE
+        );
+        if (accessModifierMethod.matcher(lowerCode).find()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -305,8 +353,8 @@ public class CodeValidator {
         // Count meaningful constructs
         int complexityScore = 0;
 
-        // Variable declarations/assignments
-        if (lowerCode.contains("=")) complexityScore++;
+        // Variable declarations/assignments (use proper assignment detection)
+        if (hasAssignmentOperator(lowerCode)) complexityScore++;
 
         // Loops
         if (lowerCode.contains("for") || lowerCode.contains("while")) complexityScore += 2;
@@ -315,8 +363,7 @@ public class CodeValidator {
         if (lowerCode.contains("if")) complexityScore++;
 
         // Functions
-        if (lowerCode.contains("function") || lowerCode.contains("def ") ||
-                lowerCode.contains("void ") || lowerCode.contains("public ")) complexityScore += 2;
+        if (hasFunctionDefinition(lowerCode)) complexityScore += 2;
 
         // Arithmetic operations
         if (lowerCode.contains("+") || lowerCode.contains("-") ||
