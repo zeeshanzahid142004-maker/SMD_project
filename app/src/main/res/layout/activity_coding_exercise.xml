@@ -99,6 +99,37 @@
                 android:scrollbars="vertical"
                 android:lineSpacingMultiplier="1.2"/>
 
+            <!-- Validation Error Display -->
+            <LinearLayout
+                android:id="@+id/ll_validation_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:layout_marginTop="12dp"
+                android:padding="12dp"
+                android:background="@drawable/bg_validation_error"
+                android:gravity="center_vertical">
+
+                <View
+                    android:id="@+id/view_status_dot"
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:background="@drawable/bg_yellow_dot"
+                    android:layout_marginEnd="12dp"/>
+
+                <TextView
+                    android:id="@+id/tv_validation_error"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="#FF8C00"
+                    android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.2"
+                    tools:text="Hardcoded answer detected"/>
+
+            </LinearLayout>
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="100dp"/>
