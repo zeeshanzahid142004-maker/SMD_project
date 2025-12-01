@@ -99,6 +99,37 @@
                 android:scrollbars="vertical"
                 android:lineSpacingMultiplier="1.2"/>
 
+            <!-- Validation Error Display -->
+            <LinearLayout
+                android:id="@+id/ll_validation_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:visibility="gone">
+
+                <View
+                    android:id="@+id/view_validation_dot"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/bg_validation_dot_yellow"
+                    android:layout_marginEnd="10dp"/>
+
+                <TextView
+                    android:id="@+id/tv_validation_error"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/validation_warning_orange"
+                    android:textSize="14sp"
+                    android:lineSpacingMultiplier="1.2"
+                    tools:text="Your code seems too short for this problem." />
+            </LinearLayout>
+
             <View
                 android:layout_width="match_parent"
                 android:layout_height="100dp"/>
