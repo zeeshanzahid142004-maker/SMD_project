@@ -20,8 +20,10 @@ import androidx.core.content.ContextCompat;
 import com.airbnb.lottie.LottieAnimationView;
 import com.example.learnify.R;
 import com.example.learnify.managers.LanguageManager;
+import com.example.learnify.modelclass.QuizSettings;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.radiobutton.MaterialRadioButton;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.util.List;
 
@@ -509,6 +511,136 @@ public class DialogHelper {
         });
 
         return dialog;
+    }
+
+    /**
+     * Callback interface for quiz customizer dialog
+     */
+    public interface QuizCustomizerCallback {
+        void onSettingsConfirmed(QuizSettings settings);
+        void onCancelled();
+    }
+
+    /**
+     * Show Quiz Customizer Dialog before quiz generation
+     */
+    public static void showQuizCustomizerDialog(Context context, QuizCustomizerCallback callback) {
+        // Load saved settings
+        QuizSettings settings = QuizSettings.load(context);
+        
+        Dialog dialog = new Dialog(context);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(true);
+
+        View view = LayoutInflater.from(context).inflate(R.layout.dialog_quiz_customizer, null);
+        dialog.setContentView(view);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            dialog.getWindow().setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+
+        // Find views
+        RadioGroup rgNumQuestions = view.findViewById(R.id.rg_num_questions);
+        RadioGroup rgDifficulty = view.findViewById(R.id.rg_difficulty);
+        SwitchMaterial switchCoding = view.findViewById(R.id.switch_coding);
+        TextView tvSelectedLanguage = view.findViewById(R.id.tv_selected_language);
+        MaterialButton btnCancel = view.findViewById(R.id.btn_cancel);
+        MaterialButton btnGenerate = view.findViewById(R.id.btn_generate);
+
+        // Set current language from LanguageManager
+        LanguageManager langManager = LanguageManager.getInstance(context);
+        tvSelectedLanguage.setText(langManager.getCurrentLanguage());
+
+        // Pre-select saved settings
+        // Number of questions
+        switch (settings.getNumQuestions()) {
+            case 3:
+                rgNumQuestions.check(R.id.rb_questions_3);
+                break;
+            case 10:
+                rgNumQuestions.check(R.id.rb_questions_10);
+                break;
+            case 15:
+                rgNumQuestions.check(R.id.rb_questions_15);
+                break;
+            default:
+                rgNumQuestions.check(R.id.rb_questions_5);
+                break;
+        }
+
+        // Difficulty
+        switch (settings.getDifficulty()) {
+            case QuizSettings.DIFFICULTY_EASY:
+                rgDifficulty.check(R.id.rb_easy);
+                break;
+            case QuizSettings.DIFFICULTY_MEDIUM:
+                rgDifficulty.check(R.id.rb_medium);
+                break;
+            case QuizSettings.DIFFICULTY_HARD:
+                rgDifficulty.check(R.id.rb_hard);
+                break;
+            default:
+                rgDifficulty.check(R.id.rb_mix);
+                break;
+        }
+
+        // Include coding
+        switchCoding.setChecked(settings.isIncludeCoding());
+
+        // Cancel button
+        btnCancel.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (callback != null) {
+                callback.onCancelled();
+            }
+        });
+
+        // Generate button
+        btnGenerate.setOnClickListener(v -> {
+            // Get selected number of questions
+            int numQuestions = 5;
+            int checkedQuestionId = rgNumQuestions.getCheckedRadioButtonId();
+            if (checkedQuestionId == R.id.rb_questions_3) {
+                numQuestions = 3;
+            } else if (checkedQuestionId == R.id.rb_questions_10) {
+                numQuestions = 10;
+            } else if (checkedQuestionId == R.id.rb_questions_15) {
+                numQuestions = 15;
+            }
+
+            // Get selected difficulty
+            String difficulty = QuizSettings.DIFFICULTY_MIX;
+            int checkedDifficultyId = rgDifficulty.getCheckedRadioButtonId();
+            if (checkedDifficultyId == R.id.rb_easy) {
+                difficulty = QuizSettings.DIFFICULTY_EASY;
+            } else if (checkedDifficultyId == R.id.rb_medium) {
+                difficulty = QuizSettings.DIFFICULTY_MEDIUM;
+            } else if (checkedDifficultyId == R.id.rb_hard) {
+                difficulty = QuizSettings.DIFFICULTY_HARD;
+            }
+
+            // Get include coding setting
+            boolean includeCoding = switchCoding.isChecked();
+
+            // Create and save settings
+            QuizSettings newSettings = new QuizSettings(numQuestions, difficulty, includeCoding);
+            newSettings.save(context);
+
+            dialog.dismiss();
+            if (callback != null) {
+                callback.onSettingsConfirmed(newSettings);
+            }
+        });
+
+        // Handle dialog dismiss
+        dialog.setOnCancelListener(dialogInterface -> {
+            if (callback != null) {
+                callback.onCancelled();
+            }
+        });
+
+        dialog.show();
     }
 
 }

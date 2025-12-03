@@ -70,9 +70,23 @@ public class QuizNetworkService {
     }
 
     public void generateQuiz(String inputContext, QuizCallback callback) {
-        Log.d(TAG, "🎯 Generating quiz from content...");
+        generateQuiz(inputContext, 5, "Mix", true, callback);
+    }
 
-        String prompt = buildPrompt(inputContext);
+    /**
+     * Generate quiz with customizable settings
+     * @param inputContext The content to generate questions from
+     * @param numQuestions Number of questions (3, 5, 10, or 15)
+     * @param difficulty Difficulty level: "Easy", "Medium", "Hard", or "Mix"
+     * @param includeCoding Whether to include coding questions
+     * @param callback Callback for quiz generation result
+     */
+    public void generateQuiz(String inputContext, int numQuestions, String difficulty, 
+                            boolean includeCoding, QuizCallback callback) {
+        Log.d(TAG, "🎯 Generating quiz from content... Settings: " + numQuestions + " questions, " + 
+              difficulty + " difficulty, coding=" + includeCoding);
+
+        String prompt = buildPrompt(inputContext, numQuestions, difficulty, includeCoding);
         GroqRequest requestBody = new GroqRequest(prompt);
         String authHeader = "Bearer " + apiKey;
 
@@ -147,12 +161,54 @@ public class QuizNetworkService {
         });
     }
 
+    /**
+     * @deprecated Use buildPrompt(String, int, String, boolean) instead
+     */
+    @Deprecated
     private String buildPrompt(String input) {
+        return buildPrompt(input, 5, "Mix", true);
+    }
+
+    /**
+     * Build the quiz generation prompt with customizable options
+     * @param input The content to generate questions from
+     * @param numQuestions Number of questions to generate (3, 5, 10, or 15)
+     * @param difficulty Difficulty level: "Easy", "Medium", "Hard", or "Mix"
+     * @param includeCoding Whether to include coding questions
+     * @return The formatted prompt for the AI
+     */
+    public String buildPrompt(String input, int numQuestions, String difficulty, boolean includeCoding) {
         // Get user's preferred language
         String targetLanguage = "ENGLISH";
         if (context != null) {
             LanguageManager langManager = LanguageManager.getInstance(context);
             targetLanguage = langManager.getCurrentLanguage().toUpperCase();
+        }
+
+        // Determine question type instruction based on includeCoding
+        String questionTypeInstruction;
+        if (includeCoding) {
+            questionTypeInstruction = "For technical/programming content: use \"type\": \"CODING\"\n" +
+                    "For conceptual content: use \"type\": \"MCQ\"";
+        } else {
+            questionTypeInstruction = "Use ONLY \"type\": \"MCQ\" for all questions. Do NOT generate coding questions.";
+        }
+
+        // Determine difficulty instruction
+        String difficultyInstruction;
+        switch (difficulty.toLowerCase()) {
+            case "easy":
+                difficultyInstruction = "ALL questions should be \"difficulty\": \"EASY\"";
+                break;
+            case "medium":
+                difficultyInstruction = "ALL questions should be \"difficulty\": \"NORMAL\"";
+                break;
+            case "hard":
+                difficultyInstruction = "ALL questions should be \"difficulty\": \"HARD\"";
+                break;
+            default: // Mix
+                difficultyInstruction = "Mix difficulty levels: EASY, NORMAL, and HARD";
+                break;
         }
 
         return
@@ -166,6 +222,32 @@ public class QuizNetworkService {
                         "- Every string must be enclosed in double quotes\n" +
                         "- The JSON MUST match the required structure exactly\n" +
                         "- The value of \"type\" must be either \"MCQ\" or \"CODING\"\n\n" +
+
+                        "🚫 QUESTION QUALITY RULES (CRITICAL):\n" +
+                        "1. NEVER generate questions that reference visual content like:\n" +
+                        "   - \"What was in the picture/image/diagram/video?\"\n" +
+                        "   - \"According to the figure...\"\n" +
+                        "   - \"As shown in the screenshot...\"\n" +
+                        "   - \"Based on the visual...\"\n" +
+                        "   - \"What does X look like?\"\n" +
+                        "2. ALL questions MUST be SELF-CONTAINED and answerable from the question text alone\n" +
+                        "3. If the input mentions images/videos/diagrams, extract the CONCEPT being explained, not the visual reference\n" +
+                        "4. Questions should test KNOWLEDGE and UNDERSTANDING, not visual recall\n" +
+                        "5. NEVER require the user to view external content to answer\n" +
+                        "6. Each question must provide ALL necessary context within the question text itself\n" +
+                        "7. If content references \"see image\" or \"as shown\", rephrase to describe the concept textually\n" +
+                        "8. Avoid trivial questions like \"What is the title of this content?\"\n" +
+                        "9. Ensure questions have clear, unambiguous correct answers\n" +
+                        "10. Make sure all 4 MCQ options are plausible (avoid obviously wrong options)\n" +
+                        "11. For coding questions, ensure the task is clear and achievable\n\n" +
+
+                        "GOOD EXAMPLE:\n" +
+                        "- Input: \"The diagram shows photosynthesis process where sunlight converts CO2 to glucose\"\n" +
+                        "- Question: \"What is the product of photosynthesis when CO2 is converted using sunlight?\"\n\n" +
+
+                        "BAD EXAMPLE:\n" +
+                        "- Input: \"The diagram shows photosynthesis process\"\n" +
+                        "- Question: \"What process is shown in the diagram?\" ❌ (requires viewing diagram)\n\n" +
 
                         "🏷️ QUIZ TITLE RULES (IMPORTANT):\n" +
                         "1. Generate a SHORT topic name (2-4 words max)\n" +
@@ -185,15 +267,16 @@ public class QuizNetworkService {
                         input + "\n\n" +
 
                         "TASK:\n" +
-                        "Generate 5 to 10 quiz questions based on the content above.\n" +
+                        "Generate EXACTLY " + numQuestions + " quiz questions based on the content above.\n" +
                         "Rules:\n" +
                         "1. Extract key information from the content (regardless of its language)\n" +
                         "2. Create questions that test understanding of the material\n" +
                         "3. Do NOT invent facts not present in the content\n" +
-                        "4. Mix difficulty levels: EASY, NORMAL, and HARD\n" +
-                        "5. For technical/programming content: use \"type\": \"CODING\"\n" +
-                        "6. For conceptual content: use \"type\": \"MCQ\"\n" +
-                        "7. 🌍 ALL TEXT IN " + targetLanguage + " - translate if source is in another language\n\n" +
+                        "4. " + difficultyInstruction + "\n" +
+                        "5. " + questionTypeInstruction + "\n" +
+                        "6. 🌍 ALL TEXT IN " + targetLanguage + " - translate if source is in another language\n" +
+                        "7. Generate EDUCATIONAL questions that test real understanding\n" +
+                        "8. Questions must be SELF-CONTAINED - never reference external visual content\n\n" +
 
                         "RESPONSE FORMAT:\n" +
                         "{\n" +
@@ -209,15 +292,15 @@ public class QuizNetworkService {
                         "  ]\n" +
                         "}\n\n" +
 
-                        "For coding questions:\n" +
+                        (includeCoding ? "For coding questions:\n" +
                         "{\n" +
                         "  \"type\": \"CODING\",\n" +
                         "  \"questionText\": \"Coding task in " + targetLanguage + "\",\n" +
                         "  \"options\": [],\n" +
                         "  \"correctAnswer\": \"Sample solution\",\n" +
                         "  \"difficulty\": \"HARD\"\n" +
-                        "}\n\n" +
+                        "}\n\n" : "") +
 
-                        "🎯 REMEMBER: Output ONLY the JSON object. ALL text in " + targetLanguage + ". Include 'topic' field!";
+                        "🎯 REMEMBER: Output ONLY the JSON object. ALL text in " + targetLanguage + ". Include 'topic' field! Generate EXACTLY " + numQuestions + " questions.";
     }
 }

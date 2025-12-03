@@ -46,6 +46,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
     private TextView tvTimer;
     private MaterialButton btnNext;
     private MaterialButton btnStartCoding;
+    private MaterialButton btnSkip;
 
     private List<QuizQuestion> questions;
     private String currentQuizId;
@@ -53,6 +54,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
     private String quizSourceContent;
 
     private int correctCount = 0;
+    private int skippedCount = 0;
     private int currentQuestionIndex = 0;
     private CountDownTimer quizTimer;
     private long totalTimeInMillis;
@@ -75,12 +77,13 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         // Initialize Views
         viewPager = findViewById(R.id.view_pager_questions);
         progressBar = findViewById(R.id.quiz_progress_bar);
-        tvTimer = findViewById(R.id. tv_timer);
+        tvTimer = findViewById(R.id.tv_timer);
         btnNext = findViewById(R.id.btn_next_question);
         btnStartCoding = findViewById(R.id.btn_start_coding);
+        btnSkip = findViewById(R.id.btn_skip_question);
 
         // Get quiz data from intent
-        if (getIntent(). hasExtra("QUIZ_ID")) {
+        if (getIntent().hasExtra("QUIZ_ID")) {
             currentQuizId = getIntent().getStringExtra("QUIZ_ID");
         }
         if (getIntent().hasExtra("QUIZ_TITLE")) {
@@ -107,8 +110,8 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
 
             for (int i = 0; i < questions.size(); i++) {
                 questions.get(i).id = i + 1;
-                if (questions.get(i).difficulty == null || questions.get(i).difficulty. isEmpty()) {
-                    questions. get(i).difficulty = "NORMAL";
+                if (questions.get(i).difficulty == null || questions.get(i).difficulty.isEmpty()) {
+                    questions.get(i).difficulty = "NORMAL";
                 }
             }
 
@@ -143,9 +146,12 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         btnNext.setEnabled(false);
         btnNext.setOnClickListener(v -> goToNextQuestion());
         btnStartCoding.setOnClickListener(v -> startCodingExercise());
+        
+        // Skip button listener
+        btnSkip.setOnClickListener(v -> skipCurrentQuestion());
 
         // ViewPager page change listener
-        viewPager. registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
@@ -164,6 +170,31 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
     }
 
     /**
+     * Skip the current question - awards 0 marks and moves to next
+     */
+    private void skipCurrentQuestion() {
+        QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
+        
+        // Mark as answered but incorrect (skipped)
+        currentQuestion.isAnswered = true;
+        currentQuestion.isCorrect = false;
+        currentQuestion.isSkipped = true;
+        skippedCount++;
+        
+        Log.d(TAG, "⏭️ Question " + (currentQuestionIndex + 1) + " skipped");
+        
+        // Show toast feedback
+        CustomToast.info(this, getString(R.string.question_skipped));
+        
+        // Move to next question or finish
+        if (currentQuestionIndex < questions.size() - 1) {
+            viewPager.setCurrentItem(currentQuestionIndex + 1, true);
+        } else {
+            finishQuiz();
+        }
+    }
+
+    /**
      * ⭐ EXTRACTED METHOD: Updates button visibility/state
      * Called from setupQuiz() for first question
      * Called from onPageSelected() for subsequent navigation
@@ -175,25 +206,33 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         }
 
         QuizQuestion currentQuestion = questions.get(position);
-        boolean isCodingQuestion = currentQuestion. type != null && currentQuestion.type.equals("CODING");
+        boolean isCodingQuestion = currentQuestion.type != null && currentQuestion.type.equals("CODING");
+        boolean isAlreadyAnswered = currentQuestion.isAnswered;
+
+        // Skip button visibility - hide if already answered
+        if (isAlreadyAnswered) {
+            btnSkip.setVisibility(View.GONE);
+        } else {
+            btnSkip.setVisibility(View.VISIBLE);
+        }
 
         if (isCodingQuestion) {
             // 💻 CODING QUESTION
             btnStartCoding.setVisibility(View.VISIBLE);
-            btnNext.setText("Skip For Now");
-            btnNext. setEnabled(true); // Always enabled for coding
+            btnNext.setText(R.string.skip_question);
+            btnNext.setEnabled(true); // Always enabled for coding
             Log.d(TAG, "📝 Coding question at position " + position + " - Skip enabled ✅");
         } else {
             // ❓ REGULAR QUESTION
             btnStartCoding.setVisibility(View.GONE);
-            btnNext.setEnabled(currentQuestion.isAnswered);
+            btnNext.setEnabled(isAlreadyAnswered);
 
             if (position == questions.size() - 1) {
                 btnNext.setText("Finish Quiz");
             } else {
-                btnNext. setText("Next Question");
+                btnNext.setText(R.string.next_question);
             }
-            Log.d(TAG, "❓ Regular question at position " + position + " - Enabled: " + currentQuestion.isAnswered);
+            Log.d(TAG, "❓ Regular question at position " + position + " - Enabled: " + isAlreadyAnswered);
         }
     }
 
@@ -429,14 +468,16 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
 
     @Override
     public void onRetakeQuiz() {
-        Log. d(TAG, "🔄 Retaking quiz...");
+        Log.d(TAG, "🔄 Retaking quiz...");
 
         correctCount = 0;
+        skippedCount = 0;
         isSubmitted = false;
 
         for (QuizQuestion q : questions) {
             q.isAnswered = false;
             q.isCorrect = false;
+            q.isSkipped = false;
             q.selectedOptionIndex = -1;
         }
 
@@ -452,7 +493,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         startTimer();
 
         if (viewPager.getAdapter() != null) {
-            viewPager. getAdapter().notifyDataSetChanged();
+            viewPager.getAdapter().notifyDataSetChanged();
         }
 
 
