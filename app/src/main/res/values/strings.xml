@@ -146,4 +146,45 @@
     <string name="cd_back_button">Back Button</string>
     <string name="cd_toggle_password">Toggle password visibility</string>
     <string name="cd_success">Success</string>
+
+    <!-- Camera Errors -->
+    <string name="error_no_camera_app">No camera app available</string>
+    <string name="error_camera_file_provider">Camera configuration error. Please try again.</string>
+    <string name="error_create_image_file">Could not create image file</string>
+    <string name="error_camera_launch">Failed to launch camera</string>
+
+    <!-- Quiz Customizer -->
+    <string name="quiz_customizer_title">Customize Your Quiz</string>
+    <string name="number_of_questions">Number of Questions</string>
+    <string name="difficulty_level">Difficulty Level</string>
+    <string name="include_coding_questions">Include Coding Questions</string>
+    <string name="quiz_language">Quiz Language</string>
+    <string name="easy">Easy</string>
+    <string name="medium">Medium</string>
+    <string name="hard">Hard</string>
+    <string name="mix">Mix</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="generate_quiz">Generate Quiz</string>
+    <string name="questions_count_3">3 Questions</string>
+    <string name="questions_count_5">5 Questions</string>
+    <string name="questions_count_10">10 Questions</string>
+    <string name="questions_count_15">15 Questions</string>
+
+    <!-- Skip Question -->
+    <string name="skip_question">Skip Question</string>
+    <string name="question_skipped">Question skipped</string>
+    <string name="skipped">SKIPPED</string>
+
+    <!-- Back Navigation -->
+    <string name="exit_quiz_title">Exit Quiz?</string>
+    <string name="exit_quiz_message">Your progress will be lost. Are you sure you want to exit?</string>
+    <string name="exit">Exit</string>
+    <string name="stay">Stay</string>
+    <string name="exit_generation_title">Cancel Generation?</string>
+    <string name="exit_generation_message">Quiz generation is in progress. Are you sure you want to cancel?</string>
+    <string name="press_back_to_exit">Press back again to exit</string>
+    <string name="times_up">Time\'s up!</string>
+    <string name="code_passed">Great job! Code passed.</string>
+    <string name="default_language">English</string>
 </resources>

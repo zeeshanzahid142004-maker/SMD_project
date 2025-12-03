@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -15,11 +16,13 @@ import androidx.fragment.app.Fragment;
 import com.example.learnify.BuildConfig;
 import com.example.learnify.helpers.CustomToast;
 import com.example.learnify.helpers.DialogHelper;
+import com.example.learnify.managers.LanguageManager;
 import com.example.learnify.modelclass.Quiz;
+import com.example.learnify.modelclass.QuizSettings;
 import com.example.learnify.activities.QuizActivity;
 import com.example.learnify.services.QuizNetworkService;
-import com.example.learnify.services.YouTubeFallbackService; // ✅ NEW
-import com.example.learnify.services.YouTubeTranscriptService; // ✅ NEW
+import com.example.learnify.services.YouTubeFallbackService;
+import com.example.learnify.services.YouTubeTranscriptService;
 import com.example.learnify.modelclass.QuizQuestion;
 import com.example.learnify.R;
 import com.google.firebase.firestore.DocumentReference;
@@ -39,6 +42,8 @@ public class GenerateQuizFragment extends Fragment {
     private YouTubeTranscriptService transcriptService;
     private YouTubeFallbackService fallbackService;
     private Dialog loadingDialog;
+    private QuizSettings currentQuizSettings;
+    private boolean isGenerating = false;
 
     // Regex to detect YouTube URLs
     private static final Pattern YOUTUBE_URL_PATTERN = Pattern.compile(
@@ -49,6 +54,7 @@ public class GenerateQuizFragment extends Fragment {
         @Override
         public void onSuccess(List<QuizQuestion> questions, String aiTopic) {
             Log.d(TAG, "✅ Quiz generated: " + questions.size() + " questions");
+            isGenerating = false;
 
             if (!isAdded() || isDetached() || getActivity() == null) {
                 Log.e(TAG, "❌ Fragment not attached");
@@ -80,7 +86,8 @@ public class GenerateQuizFragment extends Fragment {
         @Override
         public void onError(String error) {
             Log.e(TAG, "❌ AI Generation Error: " + error);
-            handleError("AI Generation Failed: " + error);
+            isGenerating = false;
+            handleError(getString(R.string.error_generation_failed) + ": " + error);
         }
     };
 
@@ -100,11 +107,11 @@ public class GenerateQuizFragment extends Fragment {
         }
 
         String apiKey = BuildConfig.API_KEY;
-        quizService = new QuizNetworkService(apiKey);
+        quizService = new QuizNetworkService(apiKey, getContext());
 
         // Initialize the YouTube services
-        transcriptService = new YouTubeTranscriptService(); // ✅ NEW
-        fallbackService = new YouTubeFallbackService();     // ✅ NEW
+        transcriptService = new YouTubeTranscriptService();
+        fallbackService = new YouTubeFallbackService();
     }
 
     @Nullable
@@ -117,19 +124,86 @@ public class GenerateQuizFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Setup back press handler
+        setupBackPressHandler();
+
         if (inputContent != null && !inputContent.isEmpty()) {
-            startProcess();
+            // Show quiz customizer dialog first
+            showQuizCustomizer();
         }
+    }
+
+    /**
+     * Setup back press handler with confirmation dialog
+     */
+    private void setupBackPressHandler() {
+        requireActivity().getOnBackPressedDispatcher().addCallback(
+                getViewLifecycleOwner(),
+                new OnBackPressedCallback(true) {
+                    @Override
+                    public void handleOnBackPressed() {
+                        if (isGenerating) {
+                            // Show confirmation dialog if generation is in progress
+                            DialogHelper.showConfirmation(
+                                    requireContext(),
+                                    getString(R.string.exit_generation_title),
+                                    getString(R.string.exit_generation_message),
+                                    getString(R.string.exit),
+                                    () -> {
+                                        dismissLoadingDialog();
+                                        isGenerating = false;
+                                        setEnabled(false);
+                                        requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                                    },
+                                    getString(R.string.stay),
+                                    null
+                            );
+                        } else {
+                            setEnabled(false);
+                            requireActivity().getOnBackPressedDispatcher().onBackPressed();
+                        }
+                    }
+                }
+        );
+    }
+
+    /**
+     * Show quiz customizer dialog before starting generation
+     */
+    private void showQuizCustomizer() {
+        if (getContext() == null) return;
+
+        String currentLanguage = LanguageManager.getInstance(requireContext()).getCurrentLanguage();
+
+        DialogHelper.showQuizCustomizerDialog(requireContext(), currentLanguage,
+                new DialogHelper.QuizCustomizerListener() {
+                    @Override
+                    public void onSettingsConfirmed(QuizSettings settings) {
+                        currentQuizSettings = settings;
+                        Log.d(TAG, "📝 Quiz settings: " + settings.getNumberOfQuestions() + " questions, " +
+                                settings.getDifficulty() + " difficulty, coding=" + settings.isIncludeCodingQuestions());
+                        startProcess();
+                    }
+
+                    @Override
+                    public void onCancelled() {
+                        // Go back when cancelled
+                        if (getActivity() != null) {
+                            getActivity().getSupportFragmentManager().popBackStack();
+                        }
+                    }
+                });
     }
 
     private void startProcess() {
         Log.d(TAG, "🚀 Starting process...");
+        isGenerating = true;
 
         if (getContext() != null) {
             loadingDialog = DialogHelper.createAnimatedLoadingDialog(
                     getContext(),
-                    "Analyzing Content...",
-                    "Please wait while we process your request.");
+                    getString(R.string.generating_quiz),
+                    getString(R.string.curating_topic));
             loadingDialog.show();
         }
 
@@ -140,7 +214,7 @@ public class GenerateQuizFragment extends Fragment {
         } else {
             // 2. It's just text, send directly to AI
             Log.d(TAG, "📝 Raw text detected. Sending to AI...");
-            quizService.generateQuiz(inputContent, quizCallback);
+            quizService.generateQuizWithSettings(inputContent, currentQuizSettings, quizCallback);
         }
     }
 
@@ -148,14 +222,14 @@ public class GenerateQuizFragment extends Fragment {
         return YOUTUBE_URL_PATTERN.matcher(text).matches();
     }
 
-    // ✅ STEP 1: Try to get Transcript
+    // STEP 1: Try to get Transcript
     private void fetchYouTubeContent(String videoUrl) {
         transcriptService.getTranscript(videoUrl, new YouTubeTranscriptService.TranscriptCallback() {
             @Override
             public void onSuccess(String transcript) {
                 Log.d(TAG, "✅ Transcript fetched (" + transcript.length() + " chars). Generating quiz...");
-                // Send transcript to AI
-                quizService.generateQuiz(transcript, quizCallback);
+                // Send transcript to AI with settings
+                quizService.generateQuizWithSettings(transcript, currentQuizSettings, quizCallback);
             }
 
             @Override
@@ -167,32 +241,34 @@ public class GenerateQuizFragment extends Fragment {
         });
     }
 
-    // ✅ STEP 2: Try to get Metadata (Description/Tags)
+    // STEP 2: Try to get Metadata (Description/Tags)
     private void fetchFallbackMetadata(String videoUrl) {
         fallbackService.getVideoMetadata(videoUrl, new YouTubeFallbackService.MetadataCallback() {
             @Override
             public void onSuccess(String metadata) {
                 Log.d(TAG, "✅ Metadata fetched. Generating quiz from description...");
-                // Send description/tags to AI
-                quizService.generateQuiz(metadata, quizCallback);
+                // Send description/tags to AI with settings
+                quizService.generateQuizWithSettings(metadata, currentQuizSettings, quizCallback);
             }
 
             @Override
             public void onError(String error) {
                 Log.e(TAG, "❌ Fallback failed: " + error);
-                handleError("Could not read video content. Ensure the video is public.");
+                handleError(getString(R.string.error_loading));
             }
         });
     }
 
     private void handleError(String message) {
         if (!isAdded() || getActivity() == null) return;
+        isGenerating = false;
 
         getActivity().runOnUiThread(() -> {
             dismissLoadingDialog();
             CustomToast.error(getContext(), message);
+            // Go back instead of finishing the whole activity
             if (getActivity() != null) {
-                getActivity().finish();
+                getActivity().getSupportFragmentManager().popBackStack();
             }
         });
     }
@@ -206,8 +282,6 @@ public class GenerateQuizFragment extends Fragment {
             }
         }
     }
-
-    // ... (generateQuizTitle and saveQuizToFirestore methods remain exactly the same as your code) ...
 
     private String generateQuizTitle(List<QuizQuestion> questions) {
         if (questions == null || questions.isEmpty()) {
@@ -260,7 +334,7 @@ public class GenerateQuizFragment extends Fragment {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "❌ Firestore save failed", e);
-                    CustomToast.error(getContext(), "Save failed: " + e.getMessage());
+                    CustomToast.error(getContext(), getString(R.string.error_loading) + ": " + e.getMessage());
                 });
     }
 

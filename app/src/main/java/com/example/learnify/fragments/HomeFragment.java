@@ -263,20 +263,38 @@ public class HomeFragment extends Fragment {
      * Actually launch the camera
      */
     private void launchCamera() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        try {
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-        // Create file to save the photo
-        File photoFile = createImageFile();
-        if (photoFile != null) {
-            cameraPhotoUri = FileProvider. getUriForFile(
-                    requireContext(),
-                    requireContext().getPackageName() + ".fileprovider",
-                    photoFile
-            );
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri);
-            cameraLauncher.launch(takePictureIntent);
-        } else {
-            CustomToast.error(getContext(), "Could not create image file");
+            // Check if there's a camera app available
+            if (takePictureIntent.resolveActivity(requireContext().getPackageManager()) == null) {
+                CustomToast.error(getContext(), getString(R.string.error_no_camera_app));
+                return;
+            }
+
+            // Create file to save the photo
+            File photoFile = createImageFile();
+            if (photoFile != null) {
+                try {
+                    cameraPhotoUri = FileProvider.getUriForFile(
+                            requireContext(),
+                            requireContext().getPackageName() + ".fileprovider",
+                            photoFile
+                    );
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri);
+                    takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    takePictureIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    cameraLauncher.launch(takePictureIntent);
+                } catch (IllegalArgumentException e) {
+                    Log.e(TAG, "FileProvider error", e);
+                    CustomToast.error(getContext(), getString(R.string.error_camera_file_provider));
+                }
+            } else {
+                CustomToast.error(getContext(), getString(R.string.error_create_image_file));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error launching camera", e);
+            CustomToast.error(getContext(), getString(R.string.error_camera_launch));
         }
     }
 

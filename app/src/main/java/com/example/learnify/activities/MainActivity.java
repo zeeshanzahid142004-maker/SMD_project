@@ -3,10 +3,14 @@ package com.example.learnify.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.learnify.R;
+import com.example.learnify.helpers.CustomToast;
 import com.example.learnify.fragments.GenerateQuizFragment;
 import com.example.learnify.fragments.HomeFragment;
 import com.example.learnify.fragments.LibraryFragment;
@@ -19,7 +23,10 @@ import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFragmentInteractionListener {
 
     private static final String TAG = "MainActivity";
+    private static final long BACK_PRESS_DELAY = 2000;
+    
     private BottomNavigationView bottomNavigationView;
+    private long backPressedTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,10 +57,12 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
             Log.d(TAG, "Nav item clicked: " + itemId);
 
             if (itemId == R.id.nav_home) {
-                selectedFragment = new HomeFragment();
+                // Clear back stack and go to home
+                clearBackStackAndLoadHome();
+                return true;
             } else if (itemId == R.id.nav_library) {
-                selectedFragment = new LibraryFragment();}
-             else if (itemId == R.id.nav_profile) {
+                selectedFragment = new LibraryFragment();
+            } else if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
             }
 
@@ -62,6 +71,58 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
             }
             return true;
         });
+
+        // Setup back press handler
+        setupBackPressHandler();
+    }
+
+    /**
+     * Setup proper back press handling for fragments
+     */
+    private void setupBackPressHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                FragmentManager fm = getSupportFragmentManager();
+                
+                // Check if there are fragments in the back stack
+                if (fm.getBackStackEntryCount() > 0) {
+                    // Pop the back stack to go to previous fragment
+                    fm.popBackStack();
+                    return;
+                }
+
+                // Get current fragment
+                Fragment currentFragment = fm.findFragmentById(R.id.fragment_container);
+
+                // If not on HomeFragment, go to HomeFragment
+                if (!(currentFragment instanceof HomeFragment)) {
+                    clearBackStackAndLoadHome();
+                    bottomNavigationView.setSelectedItemId(R.id.nav_home);
+                    return;
+                }
+
+                // On HomeFragment - double tap to exit
+                if (backPressedTime + BACK_PRESS_DELAY > System.currentTimeMillis()) {
+                    setEnabled(false);
+                    finish();
+                } else {
+                    backPressedTime = System.currentTimeMillis();
+                    CustomToast.info(MainActivity.this, getString(R.string.press_back_to_exit));
+                }
+            }
+        });
+    }
+
+    /**
+     * Clear back stack and load HomeFragment
+     */
+    private void clearBackStackAndLoadHome() {
+        FragmentManager fm = getSupportFragmentManager();
+        // Clear all back stack entries
+        fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        // Load HomeFragment
+        loadFragment_NoBackStack(new HomeFragment());
     }
 
     // --- Navigation Helper Methods ---
@@ -98,7 +159,7 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
     @Override
     public void onGoToVideoFragment(String videoUrl, String transcript) {
         // Use the new instance method that accepts transcript
-        VideoNotesFragment fragment = VideoNotesFragment.newInstance(videoUrl,transcript);
+        VideoNotesFragment fragment = VideoNotesFragment.newInstance(videoUrl, transcript);
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, fragment)
