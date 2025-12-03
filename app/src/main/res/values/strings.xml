@@ -188,6 +188,16 @@
     <string name="question_skipped">Question skipped</string>
     <string name="skipped">SKIPPED</string>
 
+    <!-- Quiz Review -->
+    <string name="question_number">Question %1$d</string>
+    <string name="your_answer">Your Answer:</string>
+    <string name="correct_answer">Correct Answer:</string>
+    <string name="explanation">💡 Explanation:</string>
+    <string name="topics_to_improve">Topics to Improve</string>
+    <string name="recommended_videos">Recommended Videos</string>
+    <string name="analyzing_performance">Analyzing Performance...</string>
+    <string name="check_summary">Check your summary below</string>
+
     <!-- Back Navigation -->
     <string name="exit_quiz_title">Exit Quiz?</string>
     <string name="exit_quiz_message">Your progress will be lost. Are you sure you want to exit?</string>
