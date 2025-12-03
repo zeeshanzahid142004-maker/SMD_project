@@ -22,8 +22,10 @@ public class QuizQuestion implements Serializable {
     public int selectedOptionIndex = -1;
     public boolean isAnswered = false;
     public boolean isCorrect = false;
+    public boolean isSkipped = false;
     public int id;
-public String explanation;
+    public String explanation;
+    
     public QuizQuestion() {}
 
     public boolean isCodingQuestion() {

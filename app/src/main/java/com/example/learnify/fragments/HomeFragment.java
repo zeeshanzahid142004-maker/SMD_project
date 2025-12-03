@@ -260,23 +260,40 @@ public class HomeFragment extends Fragment {
     }
 
     /**
-     * Actually launch the camera
+     * Actually launch the camera with proper error handling
      */
     private void launchCamera() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        try {
+            Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            
+            // Verify that there's a camera app available
+            if (takePictureIntent.resolveActivity(requireContext().getPackageManager()) == null) {
+                CustomToast.error(getContext(), getString(R.string.camera_error));
+                return;
+            }
 
-        // Create file to save the photo
-        File photoFile = createImageFile();
-        if (photoFile != null) {
-            cameraPhotoUri = FileProvider. getUriForFile(
-                    requireContext(),
-                    requireContext().getPackageName() + ".fileprovider",
-                    photoFile
-            );
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri);
-            cameraLauncher.launch(takePictureIntent);
-        } else {
-            CustomToast.error(getContext(), "Could not create image file");
+            // Create file to save the photo
+            File photoFile = createImageFile();
+            if (photoFile != null) {
+                try {
+                    cameraPhotoUri = FileProvider.getUriForFile(
+                            requireContext(),
+                            requireContext().getPackageName() + ".fileprovider",
+                            photoFile
+                    );
+                    takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, cameraPhotoUri);
+                    takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                    cameraLauncher.launch(takePictureIntent);
+                } catch (IllegalArgumentException e) {
+                    Log.e(TAG, "FileProvider error", e);
+                    CustomToast.error(getContext(), getString(R.string.camera_error));
+                }
+            } else {
+                CustomToast.error(getContext(), getString(R.string.image_file_error));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error launching camera", e);
+            CustomToast.error(getContext(), getString(R.string.camera_error));
         }
     }
 
@@ -288,6 +305,12 @@ public class HomeFragment extends Fragment {
             String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
             String imageFileName = "JPEG_" + timeStamp + "_";
             File storageDir = requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            
+            // Ensure the directory exists
+            if (storageDir != null && !storageDir.exists()) {
+                storageDir.mkdirs();
+            }
+            
             return File.createTempFile(imageFileName, ".jpg", storageDir);
         } catch (Exception e) {
             Log.e(TAG, "Error creating image file", e);

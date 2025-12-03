@@ -146,4 +146,33 @@
     <string name="cd_back_button">Back Button</string>
     <string name="cd_toggle_password">Toggle password visibility</string>
     <string name="cd_success">Success</string>
+    
+    <!-- Quiz Customizer -->
+    <string name="quiz_customizer_title">Customize Your Quiz</string>
+    <string name="quiz_customizer_subtitle">Adjust settings before generating</string>
+    <string name="num_questions_label">Number of Questions</string>
+    <string name="difficulty_label">Difficulty Level</string>
+    <string name="difficulty_easy">Easy</string>
+    <string name="difficulty_medium">Medium</string>
+    <string name="difficulty_hard">Hard</string>
+    <string name="difficulty_mix">Mix</string>
+    <string name="include_coding_label">Include Coding Questions</string>
+    <string name="include_coding_hint">For programming-related content</string>
+    <string name="quiz_language_label">Quiz Language</string>
+    <string name="quiz_language_hint">Based on your language selection</string>
+    <string name="generate_quiz">Generate Quiz</string>
+    
+    <!-- Skip Question -->
+    <string name="skip_question">Skip Question</string>
+    <string name="question_skipped">Question skipped</string>
+    
+    <!-- Exit Confirmation -->
+    <string name="exit_quiz_title">Exit Quiz?</string>
+    <string name="exit_quiz_message">Your progress will be lost. Are you sure you want to exit?</string>
+    <string name="exit">Exit</string>
+    <string name="stay">Stay</string>
+    
+    <!-- Camera/Image -->
+    <string name="camera_error">Could not open camera</string>
+    <string name="image_file_error">Could not create image file</string>
 </resources>

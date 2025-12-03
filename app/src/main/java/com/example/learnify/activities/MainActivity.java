@@ -3,7 +3,11 @@ package com.example.learnify.activities;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
+
+import androidx.activity.OnBackPressedCallback;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.learnify.R;
@@ -13,13 +17,18 @@ import com.example.learnify.fragments.LibraryFragment;
 import com.example.learnify.fragments.ProfileFragment;
 import com.example.learnify.fragments.VideoNotesFragment;
 import com.example.learnify.fragments.linkFragment;
+import com.example.learnify.helpers.CustomToast;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader;
 
 public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFragmentInteractionListener {
 
     private static final String TAG = "MainActivity";
+    private static final long BACK_PRESS_DELAY = 2000;
+    
     private BottomNavigationView bottomNavigationView;
+    private long backPressedTime = 0;
+    private Toast exitToast;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,16 +61,74 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
             if (itemId == R.id.nav_home) {
                 selectedFragment = new HomeFragment();
             } else if (itemId == R.id.nav_library) {
-                selectedFragment = new LibraryFragment();}
-             else if (itemId == R.id.nav_profile) {
+                selectedFragment = new LibraryFragment();
+            } else if (itemId == R.id.nav_profile) {
                 selectedFragment = new ProfileFragment();
             }
 
             if (selectedFragment != null) {
+                // Clear back stack and load fresh fragment
+                clearBackStack();
                 loadFragment_NoBackStack(selectedFragment);
             }
             return true;
         });
+
+        // Setup back press handler
+        setupBackPressHandler();
+    }
+
+    /**
+     * Setup proper back press handling
+     */
+    private void setupBackPressHandler() {
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                
+                // If there are fragments in the back stack, pop them
+                if (fragmentManager.getBackStackEntryCount() > 0) {
+                    fragmentManager.popBackStack();
+                    
+                    // Update bottom nav if needed
+                    Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragment_container);
+                    updateBottomNavForFragment(currentFragment);
+                } else {
+                    // No back stack - double tap to exit
+                    if (backPressedTime + BACK_PRESS_DELAY > System.currentTimeMillis()) {
+                        if (exitToast != null) exitToast.cancel();
+                        finish();
+                    } else {
+                        backPressedTime = System.currentTimeMillis();
+                        exitToast = CustomToast.info(MainActivity.this, "Press BACK again to exit");
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Update bottom navigation selection based on current fragment
+     */
+    private void updateBottomNavForFragment(Fragment fragment) {
+        if (fragment instanceof HomeFragment) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_home);
+        } else if (fragment instanceof LibraryFragment) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_library);
+        } else if (fragment instanceof ProfileFragment) {
+            bottomNavigationView.setSelectedItemId(R.id.nav_profile);
+        }
+    }
+
+    /**
+     * Clear the fragment back stack
+     */
+    private void clearBackStack() {
+        FragmentManager fm = getSupportFragmentManager();
+        for (int i = 0; i < fm.getBackStackEntryCount(); i++) {
+            fm.popBackStack();
+        }
     }
 
     // --- Navigation Helper Methods ---
