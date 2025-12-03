@@ -183,4 +183,8 @@
     <string name="stay">Stay</string>
     <string name="exit_generation_title">Cancel Generation?</string>
     <string name="exit_generation_message">Quiz generation is in progress. Are you sure you want to cancel?</string>
+    <string name="press_back_to_exit">Press back again to exit</string>
+    <string name="times_up">Time\'s up!</string>
+    <string name="code_passed">Great job! Code passed.</string>
+    <string name="default_language">English</string>
 </resources>

@@ -108,7 +108,7 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
                     finish();
                 } else {
                     backPressedTime = System.currentTimeMillis();
-                    CustomToast.info(MainActivity.this, getString(R.string.exit));
+                    CustomToast.info(MainActivity.this, getString(R.string.press_back_to_exit));
                 }
             }
         });

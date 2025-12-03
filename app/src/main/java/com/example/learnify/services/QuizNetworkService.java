@@ -247,9 +247,4 @@ public class QuizNetworkService {
 
                         "🎯 REMEMBER: Output ONLY the JSON object. ALL text in " + targetLanguage + ". Include 'topic' field! Generate EXACTLY " + questionCount + " questions!";
     }
-
-    // Keep the old method for backwards compatibility
-    private String buildPrompt(String input) {
-        return buildPromptWithSettings(input, null);
-    }
 }

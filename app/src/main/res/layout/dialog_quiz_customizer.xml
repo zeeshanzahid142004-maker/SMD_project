@@ -196,7 +196,7 @@
                 android:id="@+id/tv_language"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="English"
+                android:text="@string/default_language"
                 android:textSize="14sp"
                 android:textColor="@color/figma_purple_main"
                 android:textStyle="bold" />

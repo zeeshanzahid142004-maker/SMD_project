@@ -188,7 +188,11 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
             // CODING QUESTION
             btnStartCoding.setVisibility(View.VISIBLE);
             btnSkip.setVisibility(View.VISIBLE);
-            btnNext.setText(getString(R.string.skip_question));
+            if (isLastQuestion) {
+                btnNext.setText(getString(R.string.view_results));
+            } else {
+                btnNext.setText(getString(R.string.next_question));
+            }
             btnNext.setEnabled(true); // Always enabled for coding
             Log.d(TAG, "📝 Coding question at position " + position + " - Skip enabled ✅");
         } else {
@@ -256,7 +260,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
             @Override
             public void onFinish() {
                 tvTimer.setText("00:00");
-                CustomToast.info(QuizActivity.this, getString(R.string.error_loading));
+                CustomToast.info(QuizActivity.this, getString(R.string.times_up));
                 finishQuiz();
             }
         }.start();
@@ -305,7 +309,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
                 currentQuestion.isCorrect = true;
                 correctCount++;
 
-                CustomToast.success(this, getString(R.string.cd_success));
+                CustomToast.success(this, getString(R.string.code_passed));
 
                 goToNextQuestion();
 
