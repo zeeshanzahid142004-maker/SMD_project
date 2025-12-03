@@ -5,25 +5,29 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardCornerRadius="12dp"
-    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="16dp"
+    app:cardBackgroundColor="?attr/colorSurface"
     android:layout_marginBottom="12dp"
     app:cardElevation="2dp"
-    app:strokeWidth="0dp">
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/border_light">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground">
 
         <ImageView
             android:id="@+id/iv_recommendation_icon"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:src="@drawable/ic_video_play"
-            app:tint="@color/text_link_blue"/>
+            android:background="@drawable/bg_icon_purple_circle"
+            android:padding="10dp"
+            app:tint="@color/white"/>
 
         <LinearLayout
             android:layout_width="0dp"
@@ -37,7 +41,7 @@
                 android:id="@+id/tv_recommendation_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_primary_dark"
+                android:textColor="?attr/colorOnSurface"
                 style="@style/TextAppearance.Body.Small.Bold"
                 tools:text="Video: Understanding 'for' loops"/>
 
@@ -45,8 +49,9 @@
                 android:id="@+id/tv_recommendation_type"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_secondary_gray"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 style="@style/TextAppearance.Body.Small.Medium"
+                android:layout_marginTop="4dp"
                 tools:text="Video • 5 min"/>
         </LinearLayout>
 
@@ -54,7 +59,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_chevron_right"
-            app:tint="@color/text_secondary_gray"/>
+            app:tint="?attr/colorOnSurfaceVariant"/>
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

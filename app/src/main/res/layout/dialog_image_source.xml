@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/bg_card_soft_shadow"
+    android:background="@drawable/bg_dialog_dark_mode"
     android:padding="24dp">
 
     <!-- Header with close button -->
@@ -17,10 +17,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:text="Choose Image Source"
+            android:text="@string/choose_image_source"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary_dark"/>
+            android:textColor="?attr/colorOnSurface"/>
 
         <ImageView
             android:id="@+id/btn_close"
@@ -30,8 +30,8 @@
             android:layout_centerVertical="true"
             android:src="@drawable/ic_close_white"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Close"
-            app:tint="@color/text_secondary_gray"
+            android:contentDescription="@string/close"
+            app:tint="?attr/colorOnSurfaceVariant"
             android:padding="4dp"/>
 
     </RelativeLayout>
@@ -65,17 +65,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Camera"
+                android:text="@string/camera"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary_dark"/>
+                android:textColor="?attr/colorOnSurface"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Take a photo with your camera"
+                android:text="@string/camera_description"
                 android:textSize="14sp"
-                android:textColor="@color/text_secondary_gray"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginTop="2dp"/>
 
         </LinearLayout>
@@ -84,7 +84,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_chevron_right"
-            app:tint="@color/text_secondary_gray"/>
+            app:tint="?attr/colorOnSurfaceVariant"/>
 
     </LinearLayout>
 
@@ -92,7 +92,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#E0E0E0"
+        android:background="@color/divider"
         android:layout_marginHorizontal="16dp"/>
 
     <!-- Gallery option -->
@@ -124,17 +124,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Gallery"
+                android:text="@string/gallery"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary_dark"/>
+                android:textColor="?attr/colorOnSurface"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Choose from your photo gallery"
+                android:text="@string/gallery_description"
                 android:textSize="14sp"
-                android:textColor="@color/text_secondary_gray"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_marginTop="2dp"/>
 
         </LinearLayout>
@@ -143,7 +143,7 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:src="@drawable/ic_chevron_right"
-            app:tint="@color/text_secondary_gray"/>
+            app:tint="?attr/colorOnSurfaceVariant"/>
 
     </LinearLayout>
 

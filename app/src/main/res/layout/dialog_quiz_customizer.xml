@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="24dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="8dp">
+    app:cardCornerRadius="24dp"
+    app:cardElevation="8dp"
+    app:cardBackgroundColor="?attr/colorSurface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,9 +20,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/quiz_customizer_title"
-            android:textSize="20sp"
+            android:textSize="22sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary_dark"
+            android:textColor="?attr/colorOnSurface"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="24dp" />
 
@@ -32,50 +33,47 @@
             android:text="@string/number_of_questions"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary_dark"
-            android:layout_marginBottom="8dp" />
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="12dp" />
 
-        <RadioGroup
-            android:id="@+id/rg_question_count"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_questions"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            app:singleSelection="true"
+            app:selectionRequired="true"
+            android:layout_marginBottom="20dp">
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/rb_questions_3"
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_questions_3"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="3"
-                android:textSize="14sp" />
+                style="@style/Widget.App.Chip.Choice" />
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/rb_questions_5"
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_questions_5"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="5"
                 android:checked="true"
-                android:textSize="14sp" />
+                style="@style/Widget.App.Chip.Choice" />
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/rb_questions_10"
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_questions_10"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="10"
-                android:textSize="14sp" />
+                style="@style/Widget.App.Chip.Choice" />
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/rb_questions_15"
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_questions_15"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="15"
-                android:textSize="14sp" />
+                style="@style/Widget.App.Chip.Choice" />
 
-        </RadioGroup>
+        </com.google.android.material.chip.ChipGroup>
 
         <!-- Divider -->
         <View
@@ -91,50 +89,48 @@
             android:text="@string/difficulty_level"
             android:textSize="14sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary_dark"
-            android:layout_marginBottom="8dp" />
+            android:textColor="?attr/colorOnSurface"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="8dp" />
 
-        <RadioGroup
-            android:id="@+id/rg_difficulty"
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chip_group_difficulty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            app:singleSelection="true"
+            app:selectionRequired="true"
+            android:layout_marginBottom="20dp">
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/rb_easy"
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_easy"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/easy"
-                android:textSize="14sp" />
+                style="@style/Widget.App.Chip.Choice" />
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/rb_medium"
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_medium"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/medium"
-                android:textSize="14sp" />
+                style="@style/Widget.App.Chip.Choice" />
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/rb_hard"
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_hard"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/hard"
-                android:textSize="14sp" />
+                style="@style/Widget.App.Chip.Choice" />
 
-            <com.google.android.material.radiobutton.MaterialRadioButton
-                android:id="@+id/rb_mix"
-                android:layout_width="0dp"
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chip_mix"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="@string/mix"
                 android:checked="true"
-                android:textSize="14sp" />
+                style="@style/Widget.App.Chip.Choice" />
 
-        </RadioGroup>
+        </com.google.android.material.chip.ChipGroup>
 
         <!-- Divider -->
         <View
@@ -149,22 +145,40 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="16dp">
+            android:paddingVertical="12dp"
+            android:layout_marginBottom="8dp">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/include_coding_questions"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary_dark" />
+                android:orientation="vertical">
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/include_coding_questions"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/start_coding_exercise"
+                    android:textSize="12sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
+
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/switch_coding"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false" />
+                android:checked="false"
+                app:thumbTint="@color/switch_thumb_color"
+                app:trackTint="@color/switch_track_color" />
 
         </LinearLayout>
 
@@ -181,7 +195,8 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="24dp">
+            android:paddingVertical="12dp"
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="0dp"
@@ -190,16 +205,18 @@
                 android:text="@string/quiz_language"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_primary_dark" />
+                android:textColor="?attr/colorOnSurface" />
 
-            <TextView
+            <com.google.android.material.chip.Chip
                 android:id="@+id/tv_language"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/default_language"
-                android:textSize="14sp"
                 android:textColor="@color/figma_purple_main"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                app:chipBackgroundColor="@color/purple_soft"
+                app:chipStrokeWidth="0dp"
+                android:clickable="false" />
 
         </LinearLayout>
 
@@ -216,7 +233,8 @@
                 android:layout_height="48dp"
                 android:text="@string/cancel"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:textColor="@color/text_secondary_dark"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                app:rippleColor="@color/ripple_color"
                 android:layout_marginEnd="8dp" />
 
             <com.google.android.material.button.MaterialButton
@@ -224,10 +242,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="48dp"
                 android:text="@string/generate_quiz"
-                app:backgroundTint="@color/figma_purple_main" />
+                app:backgroundTint="@color/figma_purple_main"
+                app:cornerRadius="12dp"
+                app:rippleColor="#33FFFFFF" />
 
         </LinearLayout>
 
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

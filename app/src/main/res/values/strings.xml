@@ -101,6 +101,18 @@
     
     <!-- Language Dialog -->
     <string name="select_language">Select Language</string>
+    <string name="language_english">English</string>
+    <string name="language_spanish">Español</string>
+    <string name="language_arabic">العربية</string>
+    <string name="language_hindi">हिन्दी</string>
+    <string name="language_urdu">اردو</string>
+    
+    <!-- Image Source Dialog -->
+    <string name="choose_image_source">Choose Image Source</string>
+    <string name="camera">Camera</string>
+    <string name="camera_description">Take a photo with your camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="gallery_description">Choose from your photo gallery</string>
     
     <!-- Common Actions -->
     <string name="cancel">Cancel</string>

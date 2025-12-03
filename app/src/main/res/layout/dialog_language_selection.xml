@@ -5,10 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="24dp"
-    app:cardBackgroundColor="@color/card_surface"
+    app:cardBackgroundColor="?attr/colorSurface"
     app:cardCornerRadius="24dp"
     app:cardElevation="16dp"
-    app:strokeColor="#F0F0F0"
+    app:strokeColor="@color/border_light"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -23,6 +23,7 @@
             android:text="@string/select_language"
             style="@style/TextAppearance.Header.Small"
             android:textSize="20sp"
+            android:textColor="?attr/colorOnSurface"
             android:gravity="center"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -57,10 +58,12 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintVertical_bias="1.0"
             android:text="@string/cancel"
-            style="@style/Widget.App.Button.Gradient"
-            android:textColor="@color/text_primary_dark"
-            app:strokeColor="@color/text_primary_dark"
-            app:cornerRadius="12dp"/>
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:textColor="?attr/colorOnSurface"
+            app:strokeColor="@color/border_light"
+            app:strokeWidth="1dp"
+            app:cornerRadius="12dp"
+            app:rippleColor="@color/ripple_color"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment;
 import com.example.learnify.helpers.CustomToast;
 import com.example.learnify.R;
 import com.example.learnify.services.YouTubeTranscriptService;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 
 public class linkFragment extends Fragment {
@@ -127,6 +128,30 @@ public class linkFragment extends Fragment {
                 launchGenerateQuizFragment(processedLink);
             }
         });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Hide bottom navigation when this fragment is visible
+        if (getActivity() != null) {
+            BottomNavigationView nav = getActivity().findViewById(R.id.bottomNavigationView);
+            if (nav != null) {
+                nav.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        // Show bottom navigation when leaving this fragment
+        if (getActivity() != null) {
+            BottomNavigationView nav = getActivity().findViewById(R.id.bottomNavigationView);
+            if (nav != null) {
+                nav.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     /**

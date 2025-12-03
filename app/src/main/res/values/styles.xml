@@ -8,6 +8,8 @@
 
         <item name="android:windowBackground">@color/screen_background_light_blue</item>
         <item name="colorSurface">@color/card_surface</item>
+        <item name="colorOnSurface">@color/text_primary_dark</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary_gray</item>
         <item name="android:textColor">@color/text_primary_dark</item>
 
         <item name="materialCardViewStyle">@style/Widget.App.CardView</item>
@@ -376,5 +378,19 @@
         <item name="android:height">32dp</item>
         <item name="android:color">@color/purple_soft</item>
         <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
+    </style>
+
+    <!-- Chip Choice Style for Quiz Customizer -->
+    <style name="Widget.App.Chip.Choice" parent="Widget.MaterialComponents.Chip.Choice">
+        <item name="chipBackgroundColor">@color/chip_background_color</item>
+        <item name="android:textColor">@color/chip_text_color</item>
+        <item name="chipStrokeColor">@color/chip_stroke_color</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipCornerRadius">12dp</item>
+        <item name="chipMinHeight">40dp</item>
+        <item name="chipStartPadding">16dp</item>
+        <item name="chipEndPadding">16dp</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="rippleColor">@color/ripple_color</item>
     </style>
 </resources>
