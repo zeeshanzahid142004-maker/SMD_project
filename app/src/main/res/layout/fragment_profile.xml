@@ -8,7 +8,7 @@
     android:fillViewport="true"
     android:background="@color/screen_background_light_blue"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".ProfileFragment">
+    tools:context=".fragments.ProfileFragment">
 
     <LinearLayout
         android:layout_width="match_parent"

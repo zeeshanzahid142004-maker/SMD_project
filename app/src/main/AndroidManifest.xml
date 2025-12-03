@@ -9,7 +9,8 @@
 
     <!-- Storage Permissions -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
+        tools:ignore="PhotoAndVideoPolicy" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -24,23 +25,28 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Learnify"
         tools:replace="android:allowBackup"
-        tools:targetApi="31">
+        tools:targetApi="31"
+        android:usesCleartextTraffic="true"
+        >
 
         <activity
-            android:name=".HistoryActivity"
+            android:name=".activities.HistoryActivity"
             android:exported="false" />
         <activity
-            android:name=".QuizReviewActivity"
+            android:name=".activities.BaseActivity"
             android:exported="false" />
         <activity
-            android:name=".RecommendationsActivity"
+            android:name=".activities.QuizReviewActivity"
             android:exported="false" />
         <activity
-            android:name=".CodingExerciseActivity"
+            android:name=".activities.RecommendationsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".activities.CodingExerciseActivity"
             android:exported="false" />
 
         <activity
-            android:name=".SplashActivity"
+            android:name=".activities.SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.Learnify">
             <intent-filter>
@@ -49,28 +55,28 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Welcome_Page_Activity"
+            android:name=".activities.Welcome_Page_Activity"
             android:exported="false" />
         <activity
-            android:name=".OnboardingActivity"
+            android:name=".activities.OnboardingActivity"
             android:exported="false" />
         <activity
-            android:name=".signin_activity"
+            android:name=".activities.signin_activity"
             android:exported="false" />
         <activity
-            android:name=".signup_activity"
+            android:name=".activities.signup_activity"
             android:exported="false" />
         <activity
-            android:name=".ForgotPasswordActivity"
+            android:name=".activities.ForgotPasswordActivity"
             android:exported="false" />
         <activity
-            android:name=".CreateNewPasswordActivity"
+            android:name=".activities.CreateNewPasswordActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
-            android:exported="true"></activity>
+            android:name=".activities.MainActivity"
+            android:exported="true"/>
         <activity
-            android:name=".QuizActivity"
+            android:name=".activities.QuizActivity"
             android:exported="false"
             android:screenOrientation="portrait" />
     </application>

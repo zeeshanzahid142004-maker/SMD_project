@@ -8,7 +8,7 @@
     android:fillViewport="true"
     android:background="@color/screen_background_light_blue"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".progress_fragment"> <!-- Context points to the new Java file -->
+    tools:context=".fragments.progress_fragment"> <!-- Context points to the new Java file -->
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/screen_background_light_blue"
-    tools:context=".VideoNotesFragment">
+    tools:context=".fragments.VideoNotesFragment">
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline_middle"

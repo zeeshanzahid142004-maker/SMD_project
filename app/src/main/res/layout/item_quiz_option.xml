@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- item_quiz_option  deisng of a single option with A B C D and explanation text -->
 <com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -15,7 +14,7 @@
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
-    app:cardBackgroundColor="@color/white">
+    app:cardBackgroundColor="#2D2D2D"> <!-- Changed to a Dark Grey default to match your screenshot -->
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -40,13 +39,14 @@
                 android:layout_marginEnd="16dp"
                 tools:text="A"/>
 
+            <!-- FIXED: Changed textColor to white -->
             <TextView
                 android:id="@+id/tv_option_text"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 style="@style/TextAppearance.Body.Small.Medium"
-                android:textColor="@color/text_primary_dark"
+                android:textColor="@android:color/white"
                 android:textSize="16sp"
                 tools:text="The method is the entry point."/>
 
@@ -72,7 +72,7 @@
             android:paddingStart="48dp"
             android:visibility="gone"
             tools:visibility="visible"
-            android:textColor="@color/figma_green_correct"
+            android:textColor="#4CAF50"
             style="@style/TextAppearance.Body.Small.Medium"
             tools:text="This is correct because the JVM always starts execution here."/>
 

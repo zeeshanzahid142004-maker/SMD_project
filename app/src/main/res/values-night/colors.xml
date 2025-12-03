@@ -7,7 +7,7 @@
     <color name="card_surface">#1E1E1E</color>
     <color name="surface_primary">#121212</color>
     <color name="surface_secondary">#1E1E1E</color>
-    
+
     <!-- Text Colors - CRITICAL for visibility -->
     <color name="text_primary">#FFFFFF</color>
     <color name="text_primary_dark">#FFFFFF</color>
@@ -17,20 +17,23 @@
     <color name="text_hint_gray_light">#707070</color>
     <color name="text_secondary_gray_dark">#A0A0A0</color>
     <color name="text_secondary_dark">#B0B0B0</color>
-    
+
     <!-- Primary Colors -->
-    <color name="figma_purple_main">#8F6CFF</color>
+    <color name="figma_purple_main">#7B1FA2</color>
     <color name="purple_main">#8F6CFF</color>
     <color name="purple_light">#B199FF</color>
     <color name="purple_dark">#6A32F9</color>
-    
+
     <!-- OTP/Input Box Background -->
     <color name="otp_box_background">#2C2C2C</color>
-    
+
+
+
+
     <!-- Icon Colors -->
     <color name="icon_dark">#FFFFFF</color>
     <color name="icon_gray_light">#444444</color>
-    
+
     <!-- Status Colors -->
     <color name="figma_green_correct">#4EFD03</color>
     <color name="figma_red_error">#FF5252</color>
@@ -38,14 +41,14 @@
     <color name="error">#FF5252</color>
     <color name="warning">#FFB74D</color>
     <color name="info">#64B5F6</color>
-    
+
     <!-- Border and Divider Colors -->
     <color name="border_light">#333333</color>
     <color name="divider">#333333</color>
-    
+
     <!-- Navigation Colors -->
     <color name="nav_text_inactive">#808080</color>
-    
+
     <!-- Gray -->
     <color name="gray">#555555</color>
 </resources>
