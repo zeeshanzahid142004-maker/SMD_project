@@ -161,6 +161,10 @@ public class QuizNetworkService {
         });
     }
 
+    /**
+     * @deprecated Use buildPrompt(String, int, String, boolean) instead
+     */
+    @Deprecated
     private String buildPrompt(String input) {
         return buildPrompt(input, 5, "Mix", true);
     }

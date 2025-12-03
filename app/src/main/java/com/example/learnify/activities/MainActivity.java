@@ -126,8 +126,8 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
      */
     private void clearBackStack() {
         FragmentManager fm = getSupportFragmentManager();
-        for (int i = 0; i < fm.getBackStackEntryCount(); i++) {
-            fm.popBackStack();
+        if (fm.getBackStackEntryCount() > 0) {
+            fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
         }
     }
 

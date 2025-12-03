@@ -468,14 +468,16 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
 
     @Override
     public void onRetakeQuiz() {
-        Log. d(TAG, "🔄 Retaking quiz...");
+        Log.d(TAG, "🔄 Retaking quiz...");
 
         correctCount = 0;
+        skippedCount = 0;
         isSubmitted = false;
 
         for (QuizQuestion q : questions) {
             q.isAnswered = false;
             q.isCorrect = false;
+            q.isSkipped = false;
             q.selectedOptionIndex = -1;
         }
 
@@ -491,7 +493,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         startTimer();
 
         if (viewPager.getAdapter() != null) {
-            viewPager. getAdapter().notifyDataSetChanged();
+            viewPager.getAdapter().notifyDataSetChanged();
         }
 
 
