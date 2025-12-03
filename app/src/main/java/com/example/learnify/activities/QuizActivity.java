@@ -5,19 +5,21 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
-import android.widget. ProgressBar;
-import android.widget. TextView;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.OnBackPressedCallback;
-import androidx.activity. OnBackPressedDispatcher;
-import androidx.annotation. Nullable;
+import androidx.activity.OnBackPressedDispatcher;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.learnify.helpers.CustomToast;
+import com.example.learnify.helpers.DialogHelper;
 import com.example.learnify.modelclass.Quiz;
 import com.example.learnify.repository.QuizAttemptRepository;
 import com.example.learnify.repository.QuizHistoryRepository;
@@ -28,11 +30,11 @@ import com.example.learnify.fragments.GenerateQuizFragment;
 import com.example.learnify.fragments.QuestionPageFragment;
 import com.example.learnify.fragments.QuizCompleteDialogFragment;
 import com.google.android.material.button.MaterialButton;
-import com. google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util. Locale;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class QuizActivity extends BaseActivity implements QuizCompleteDialogFragment.QuizCompleteDialogListener {
@@ -45,7 +47,9 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
     private ProgressBar progressBar;
     private TextView tvTimer;
     private MaterialButton btnNext;
+    private MaterialButton btnSkip;
     private MaterialButton btnStartCoding;
+    private FrameLayout fragmentContainer;
 
     private List<QuizQuestion> questions;
     private String currentQuizId;
@@ -53,6 +57,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
     private String quizSourceContent;
 
     private int correctCount = 0;
+    private int skippedCount = 0;
     private int currentQuestionIndex = 0;
     private CountDownTimer quizTimer;
     private long totalTimeInMillis;
@@ -75,18 +80,20 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         // Initialize Views
         viewPager = findViewById(R.id.view_pager_questions);
         progressBar = findViewById(R.id.quiz_progress_bar);
-        tvTimer = findViewById(R.id. tv_timer);
+        tvTimer = findViewById(R.id.tv_timer);
         btnNext = findViewById(R.id.btn_next_question);
+        btnSkip = findViewById(R.id.btn_skip_question);
         btnStartCoding = findViewById(R.id.btn_start_coding);
+        fragmentContainer = findViewById(R.id.fragment_container);
 
         // Get quiz data from intent
-        if (getIntent(). hasExtra("QUIZ_ID")) {
+        if (getIntent().hasExtra("QUIZ_ID")) {
             currentQuizId = getIntent().getStringExtra("QUIZ_ID");
         }
         if (getIntent().hasExtra("QUIZ_TITLE")) {
             currentQuizTitle = getIntent().getStringExtra("QUIZ_TITLE");
         } else {
-            currentQuizTitle = "Generated Quiz";
+            currentQuizTitle = getString(R.string.quiz_title);
         }
 
         if (getIntent().hasExtra("QUIZ_SOURCE")) {
@@ -99,16 +106,15 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
             Log.d(TAG, "✅ Received " + (questions != null ? questions.size() : 0) + " questions");
 
             if (questions == null || questions.isEmpty()) {
-
-                CustomToast.info(this,"No questions found.");
+                CustomToast.info(this, getString(R.string.error_loading));
                 finish();
                 return;
             }
 
             for (int i = 0; i < questions.size(); i++) {
                 questions.get(i).id = i + 1;
-                if (questions.get(i).difficulty == null || questions.get(i).difficulty. isEmpty()) {
-                    questions. get(i).difficulty = "NORMAL";
+                if (questions.get(i).difficulty == null || questions.get(i).difficulty.isEmpty()) {
+                    questions.get(i).difficulty = "NORMAL";
                 }
             }
 
@@ -119,8 +125,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
             fetchQuizFromFirestore(currentQuizId);
         } else {
             Log.e(TAG, "❌ No QUIZ_DATA or QUIZ_ID provided!");
-
-            CustomToast.error(this, "No quiz data provided");
+            CustomToast.error(this, getString(R.string.error_loading));
             finish();
         }
 
@@ -142,29 +147,30 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
 
         btnNext.setEnabled(false);
         btnNext.setOnClickListener(v -> goToNextQuestion());
+        btnSkip.setOnClickListener(v -> skipQuestion());
         btnStartCoding.setOnClickListener(v -> startCodingExercise());
 
         // ViewPager page change listener
-        viewPager. registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 currentQuestionIndex = position;
                 progressBar.setProgress(position + 1);
 
-                // ⭐ UPDATE BUTTON STATE FOR NEW PAGE
+                // UPDATE BUTTON STATE FOR NEW PAGE
                 updateButtonState(position);
             }
         });
 
-        // ⭐ CRITICAL: Initialize buttons for FIRST question
+        // CRITICAL: Initialize buttons for FIRST question
         updateButtonState(0);
 
         Log.d(TAG, "✅ Quiz setup complete");
     }
 
     /**
-     * ⭐ EXTRACTED METHOD: Updates button visibility/state
+     * EXTRACTED METHOD: Updates button visibility/state
      * Called from setupQuiz() for first question
      * Called from onPageSelected() for subsequent navigation
      */
@@ -175,25 +181,54 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         }
 
         QuizQuestion currentQuestion = questions.get(position);
-        boolean isCodingQuestion = currentQuestion. type != null && currentQuestion.type.equals("CODING");
+        boolean isCodingQuestion = currentQuestion.type != null && currentQuestion.type.equals("CODING");
+        boolean isLastQuestion = position == questions.size() - 1;
 
         if (isCodingQuestion) {
-            // 💻 CODING QUESTION
+            // CODING QUESTION
             btnStartCoding.setVisibility(View.VISIBLE);
-            btnNext.setText("Skip For Now");
-            btnNext. setEnabled(true); // Always enabled for coding
+            btnSkip.setVisibility(View.VISIBLE);
+            btnNext.setText(getString(R.string.skip_question));
+            btnNext.setEnabled(true); // Always enabled for coding
             Log.d(TAG, "📝 Coding question at position " + position + " - Skip enabled ✅");
         } else {
-            // ❓ REGULAR QUESTION
+            // REGULAR QUESTION
             btnStartCoding.setVisibility(View.GONE);
+            btnSkip.setVisibility(View.VISIBLE);
             btnNext.setEnabled(currentQuestion.isAnswered);
 
-            if (position == questions.size() - 1) {
-                btnNext.setText("Finish Quiz");
+            if (isLastQuestion) {
+                btnNext.setText(getString(R.string.view_results));
             } else {
-                btnNext. setText("Next Question");
+                btnNext.setText(getString(R.string.next_question));
             }
             Log.d(TAG, "❓ Regular question at position " + position + " - Enabled: " + currentQuestion.isAnswered);
+        }
+    }
+
+    /**
+     * Skip the current question - award 0 marks
+     */
+    private void skipQuestion() {
+        QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
+
+        // Mark as answered and skipped (incorrect)
+        currentQuestion.isAnswered = true;
+        currentQuestion.isCorrect = false;
+        currentQuestion.selectedOptionIndex = -1; // Mark as skipped
+
+        skippedCount++;
+
+        // Show feedback
+        CustomToast.info(this, getString(R.string.question_skipped));
+
+        Log.d(TAG, "⏭️ Question " + (currentQuestionIndex + 1) + " skipped. Total skipped: " + skippedCount);
+
+        // Move to next question or finish
+        if (currentQuestionIndex < questions.size() - 1) {
+            viewPager.setCurrentItem(currentQuestionIndex + 1, true);
+        } else {
+            finishQuiz();
         }
     }
 
@@ -215,17 +250,16 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
                 long minutes = TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished);
                 long seconds = TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) -
                         TimeUnit.MINUTES.toSeconds(minutes);
-                tvTimer. setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
+                tvTimer.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
             }
 
             @Override
             public void onFinish() {
                 tvTimer.setText("00:00");
-
-                CustomToast.info(QuizActivity.this, "Time's up!");
+                CustomToast.info(QuizActivity.this, getString(R.string.error_loading));
                 finishQuiz();
             }
-        }. start();
+        }.start();
     }
 
     public void onOptionSelected(int selectedOptionIndex, boolean isCorrect) {
@@ -249,7 +283,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         Log.d(TAG, "🚀 Starting coding exercise for question " + currentQuestionIndex);
 
         Intent intent = new Intent(this, CodingExerciseActivity.class);
-        // ⭐ PASS FULL QUESTION OBJECT (not individual fields)
+        // PASS FULL QUESTION OBJECT (not individual fields)
         intent.putExtra("QUESTION", currentQuestion);
         intent.putExtra("QUESTION_INDEX", currentQuestionIndex);
         startActivityForResult(intent, REQUEST_CODE_CODING_EXERCISE);
@@ -263,44 +297,43 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
             Log.d(TAG, "⬅️ Returned from CodingExerciseActivity");
 
             if (resultCode == RESULT_OK) {
-                // ✅ CODE WAS SUCCESSFUL
-                Log. d(TAG, "✅ Coding exercise completed successfully");
+                // CODE WAS SUCCESSFUL
+                Log.d(TAG, "✅ Coding exercise completed successfully");
 
                 QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
                 currentQuestion.isAnswered = true;
                 currentQuestion.isCorrect = true;
                 correctCount++;
 
-
-                CustomToast.success(this, "Great job! Code passed.");
+                CustomToast.success(this, getString(R.string.cd_success));
 
                 goToNextQuestion();
 
             } else if (resultCode == RESULT_CANCELED) {
-                // ❌ USER BACK/SKIPPED - Mark as skipped
-                Log. d(TAG, "⏭️ User skipped/cancelled coding exercise");
+                // USER BACK/SKIPPED - Mark as skipped
+                Log.d(TAG, "⏭️ User skipped/cancelled coding exercise");
 
                 QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
                 currentQuestion.isAnswered = true;
-                currentQuestion. isCorrect = false; // Mark as incorrect/skipped
+                currentQuestion.isCorrect = false; // Mark as incorrect/skipped
 
-                // ⭐ UPDATE BUTTON STATE AFTER RETURNING
+                // UPDATE BUTTON STATE AFTER RETURNING
                 updateButtonState(currentQuestionIndex);
 
-                CustomToast.info(this, "Question marked as skipped");
+                CustomToast.info(this, getString(R.string.question_skipped));
             }
         }
     }
 
     private void goToNextQuestion() {
         QuizQuestion currentQuestion = questions.get(currentQuestionIndex);
-        boolean isCodingQuestion = currentQuestion. type != null && currentQuestion.type.equals("CODING");
+        boolean isCodingQuestion = currentQuestion.type != null && currentQuestion.type.equals("CODING");
 
         // Handle skip for coding question
-        if (isCodingQuestion && ! currentQuestion.isCorrect) {
-            Log. d(TAG, "⏭️ Skipping coding question " + currentQuestionIndex);
+        if (isCodingQuestion && !currentQuestion.isCorrect) {
+            Log.d(TAG, "⏭️ Skipping coding question " + currentQuestionIndex);
             currentQuestion.isAnswered = true;
-            currentQuestion. isCorrect = false;
+            currentQuestion.isCorrect = false;
         }
 
         if (currentQuestionIndex < questions.size() - 1) {
@@ -311,8 +344,6 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         }
     }
 
-
-
     private void finishQuiz() {
         if (isSubmitted) return;
         isSubmitted = true;
@@ -321,7 +352,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
             quizTimer.cancel();
         }
 
-        // ⭐ USE NEW REPOSITORY TO SAVE ATTEMPT
+        // USE NEW REPOSITORY TO SAVE ATTEMPT
         if (currentQuizId != null) {
             Log.d(TAG, "💾 Saving quiz attempt to history");
             QuizAttemptRepository attemptRepo = new QuizAttemptRepository();
@@ -339,7 +370,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
 
     private void showQuizCompleteDialog() {
         int total = questions.size();
-        String scoreMessage = "Your score: " + correctCount + "/" + total;
+        String scoreMessage = getString(R.string.your_score, correctCount, total);
 
         QuizCompleteDialogFragment dialog = QuizCompleteDialogFragment.newInstance(scoreMessage, correctCount, total);
         dialog.setCancelable(false);
@@ -348,24 +379,22 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
 
     private void fetchQuizFromFirestore(String quizId) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("quizzes"). document(quizId).get()
+        db.collection("quizzes").document(quizId).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
                         Quiz quiz = documentSnapshot.toObject(Quiz.class);
                         if (quiz != null) {
                             questions = quiz.getQuestions();
                             currentQuizTitle = quiz.getTitle();
-                            if (questions != null && ! questions.isEmpty()) {
+                            if (questions != null && !questions.isEmpty()) {
                                 setupQuiz();
                             } else {
-
-                                CustomToast.error(this, "Error: Quiz is empty.");
+                                CustomToast.error(this, getString(R.string.error_loading));
                                 finish();
                             }
                         }
                     } else {
-                        Toast.makeText(this, "Quiz not found.", Toast.LENGTH_SHORT).show();
-                        CustomToast.error(this, "Quiz not found.");
+                        CustomToast.error(this, getString(R.string.error_loading));
                         finish();
                     }
                 })
@@ -385,7 +414,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         }
 
         Intent intent = new Intent(this, RecommendationsActivity.class);
-        intent. putExtra("TOTAL_QUESTIONS", questions.size());
+        intent.putExtra("TOTAL_QUESTIONS", questions.size());
         intent.putExtra("CORRECT_COUNT", correctCount);
         intent.putExtra("INCORRECT_QUESTIONS", incorrectQuestions);
         intent.putExtra("QUIZ_ID", currentQuizId);
@@ -396,23 +425,27 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
 
     @Override
     public void onRegenerateQuiz() {
-        Log. d(TAG, "🔄 Regenerate Quiz clicked");
+        Log.d(TAG, "🔄 Regenerate Quiz clicked");
 
         try {
-            // ⭐ IF WE HAVE SOURCE CONTENT, REGENERATE ON SAME TOPIC
-            if (quizSourceContent != null && ! quizSourceContent.isEmpty()) {
+            // IF WE HAVE SOURCE CONTENT, REGENERATE ON SAME TOPIC
+            if (quizSourceContent != null && !quizSourceContent.isEmpty()) {
                 Log.d(TAG, "✅ Regenerating quiz on same topic");
+
+                // Show fragment container and hide quiz views
+                if (fragmentContainer != null) {
+                    fragmentContainer.setVisibility(View.VISIBLE);
+                }
 
                 // Create GenerateQuizFragment with same content
                 GenerateQuizFragment generateFragment = GenerateQuizFragment.newInstance(quizSourceContent);
 
                 // Replace current fragment stack
-                getSupportFragmentManager(). beginTransaction()
+                getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, generateFragment)
-                        . addToBackStack(null)
+                        .addToBackStack(null)
                         .commit();
             } else {
-
                 Log.d(TAG, "⚠️ No source content stored, going to home");
                 Intent intent = new Intent(this, MainActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -421,17 +454,17 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
             }
         } catch (Exception e) {
             Log.e(TAG, "Error with regenerate quiz", e);
-
-            CustomToast.error(this, "Error regenerating quiz");
+            CustomToast.error(this, getString(R.string.error_loading));
             finish();
         }
     }
 
     @Override
     public void onRetakeQuiz() {
-        Log. d(TAG, "🔄 Retaking quiz...");
+        Log.d(TAG, "🔄 Retaking quiz...");
 
         correctCount = 0;
+        skippedCount = 0;
         isSubmitted = false;
 
         for (QuizQuestion q : questions) {
@@ -444,7 +477,7 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         currentQuestionIndex = 0;
         progressBar.setProgress(0);
 
-        // ⭐ CALL FIXED METHOD
+        // CALL FIXED METHOD
         updateButtonState(0);
 
         if (quizTimer != null) quizTimer.cancel();
@@ -452,11 +485,10 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
         startTimer();
 
         if (viewPager.getAdapter() != null) {
-            viewPager. getAdapter().notifyDataSetChanged();
+            viewPager.getAdapter().notifyDataSetChanged();
         }
 
-
-        CustomToast.info(this, "Retaking quiz");
+        CustomToast.info(this, getString(R.string.retake_quiz));
     }
 
     private void setupBackPressHandler() {
@@ -468,15 +500,20 @@ public class QuizActivity extends BaseActivity implements QuizCompleteDialogFrag
                     finish();
                     return;
                 }
-                if (backPressedTime + BACK_PRESS_DELAY > System.currentTimeMillis()) {
-                    if (exitToast != null) exitToast.cancel();
-                    if (quizTimer != null) quizTimer.cancel();
-                    finish();
-                } else {
-                    backPressedTime = System.currentTimeMillis();
-                    exitToast = CustomToast.info(QuizActivity.this, "Press BACK again to quit quiz.");
 
-                }
+                // Show confirmation dialog for exiting quiz
+                DialogHelper.showConfirmation(
+                        QuizActivity.this,
+                        getString(R.string.exit_quiz_title),
+                        getString(R.string.exit_quiz_message),
+                        getString(R.string.exit),
+                        () -> {
+                            if (quizTimer != null) quizTimer.cancel();
+                            finish();
+                        },
+                        getString(R.string.stay),
+                        null
+                );
             }
         });
     }

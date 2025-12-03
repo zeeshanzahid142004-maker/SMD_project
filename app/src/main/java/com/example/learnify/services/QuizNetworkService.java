@@ -10,6 +10,7 @@ import com.example.learnify.BuildConfig;
 import com.example.learnify.groqapihelpers.GroqRequest;
 import com.example.learnify.groqapihelpers.GroqResponse;
 import com.example.learnify.managers.LanguageManager;
+import com.example.learnify.modelclass.QuizSettings;
 import com.example.learnify.groqapihelpers.QuizApi;
 import com.example.learnify.modelclass.QuizQuestion;
 import com.google.gson.Gson;
@@ -69,10 +70,20 @@ public class QuizNetworkService {
         this.quizApi = retrofit.create(QuizApi.class);
     }
 
+    /**
+     * Generate quiz with default settings (backwards compatible)
+     */
     public void generateQuiz(String inputContext, QuizCallback callback) {
+        generateQuizWithSettings(inputContext, null, callback);
+    }
+
+    /**
+     * Generate quiz with custom settings
+     */
+    public void generateQuizWithSettings(String inputContext, QuizSettings settings, QuizCallback callback) {
         Log.d(TAG, "🎯 Generating quiz from content...");
 
-        String prompt = buildPrompt(inputContext);
+        String prompt = buildPromptWithSettings(inputContext, settings);
         GroqRequest requestBody = new GroqRequest(prompt);
         String authHeader = "Bearer " + apiKey;
 
@@ -147,12 +158,24 @@ public class QuizNetworkService {
         });
     }
 
-    private String buildPrompt(String input) {
+    private String buildPromptWithSettings(String input, QuizSettings settings) {
         // Get user's preferred language
         String targetLanguage = "ENGLISH";
+        int questionCount = 5;
+        String difficultyInstruction = "Mix difficulty levels: include EASY, NORMAL, and HARD questions.";
+        String codingInstruction = "Include at least 1-2 coding questions with type 'CODING' if the content is technical.";
+
         if (context != null) {
             LanguageManager langManager = LanguageManager.getInstance(context);
             targetLanguage = langManager.getCurrentLanguage().toUpperCase();
+        }
+
+        // Apply custom settings if provided
+        if (settings != null) {
+            targetLanguage = settings.getLanguage().toUpperCase();
+            questionCount = settings.getNumberOfQuestions();
+            difficultyInstruction = settings.getDifficultyInstruction();
+            codingInstruction = settings.getCodingInstruction();
         }
 
         return
@@ -181,19 +204,23 @@ public class QuizNetworkService {
                         "- Translate concepts, ideas, and facts to " + targetLanguage + "\n" +
                         "- Maintain the original meaning while using " + targetLanguage + " language\n\n" +
 
+                        "📊 QUIZ SETTINGS:\n" +
+                        "- Number of questions: Generate EXACTLY " + questionCount + " questions\n" +
+                        "- Difficulty: " + difficultyInstruction + "\n" +
+                        "- Coding questions: " + codingInstruction + "\n\n" +
+
                         "CONTENT TO ANALYZE:\n" +
                         input + "\n\n" +
 
                         "TASK:\n" +
-                        "Generate 5 to 10 quiz questions based on the content above.\n" +
+                        "Generate exactly " + questionCount + " quiz questions based on the content above.\n" +
                         "Rules:\n" +
                         "1. Extract key information from the content (regardless of its language)\n" +
                         "2. Create questions that test understanding of the material\n" +
                         "3. Do NOT invent facts not present in the content\n" +
-                        "4. Mix difficulty levels: EASY, NORMAL, and HARD\n" +
-                        "5. For technical/programming content: use \"type\": \"CODING\"\n" +
-                        "6. For conceptual content: use \"type\": \"MCQ\"\n" +
-                        "7. 🌍 ALL TEXT IN " + targetLanguage + " - translate if source is in another language\n\n" +
+                        "4. Follow the difficulty setting: " + difficultyInstruction + "\n" +
+                        "5. Follow the coding setting: " + codingInstruction + "\n" +
+                        "6. 🌍 ALL TEXT IN " + targetLanguage + " - translate if source is in another language\n\n" +
 
                         "RESPONSE FORMAT:\n" +
                         "{\n" +
@@ -218,6 +245,11 @@ public class QuizNetworkService {
                         "  \"difficulty\": \"HARD\"\n" +
                         "}\n\n" +
 
-                        "🎯 REMEMBER: Output ONLY the JSON object. ALL text in " + targetLanguage + ". Include 'topic' field!";
+                        "🎯 REMEMBER: Output ONLY the JSON object. ALL text in " + targetLanguage + ". Include 'topic' field! Generate EXACTLY " + questionCount + " questions!";
+    }
+
+    // Keep the old method for backwards compatibility
+    private String buildPrompt(String input) {
+        return buildPromptWithSettings(input, null);
     }
 }
