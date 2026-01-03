@@ -540,8 +540,8 @@ public class DialogHelper {
         }
 
         // Initialize views
-        RadioGroup rgQuestionCount = view.findViewById(R.id.rg_question_count);
-        RadioGroup rgDifficulty = view.findViewById(R.id.rg_difficulty);
+        RadioGroup rgQuestionCount = view.findViewById(R.id.chip_group_questions);
+        RadioGroup rgDifficulty = view.findViewById(R.id.chip_group_difficulty);
         SwitchMaterial switchCoding = view.findViewById(R.id.switch_coding);
         TextView tvLanguage = view.findViewById(R.id.tv_language);
         MaterialButton btnCancel = view.findViewById(R.id.btn_cancel);
@@ -563,26 +563,26 @@ public class DialogHelper {
             // Get number of questions
             int questionCount = 5; // default
             int checkedQuestionId = rgQuestionCount.getCheckedRadioButtonId();
-            if (checkedQuestionId == R.id.rb_questions_3) {
+            if (checkedQuestionId == R.id.chip_questions_3) {
                 questionCount = 3;
-            } else if (checkedQuestionId == R.id.rb_questions_5) {
+            } else if (checkedQuestionId == R.id.chip_questions_5) {
                 questionCount = 5;
-            } else if (checkedQuestionId == R.id.rb_questions_10) {
+            } else if (checkedQuestionId == R.id.chip_questions_10) {
                 questionCount = 10;
-            } else if (checkedQuestionId == R.id.rb_questions_15) {
+            } else if (checkedQuestionId == R.id.chip_questions_15) {
                 questionCount = 15;
             }
 
             // Get difficulty
             QuizSettings.Difficulty difficulty = QuizSettings.Difficulty.MIX; // default
             int checkedDifficultyId = rgDifficulty.getCheckedRadioButtonId();
-            if (checkedDifficultyId == R.id.rb_easy) {
+            if (checkedDifficultyId == R.id.chip_group_difficulty) {
                 difficulty = QuizSettings.Difficulty.EASY;
-            } else if (checkedDifficultyId == R.id.rb_medium) {
+            } else if (checkedDifficultyId == R.id.chip_medium) {
                 difficulty = QuizSettings.Difficulty.MEDIUM;
-            } else if (checkedDifficultyId == R.id.rb_hard) {
+            } else if (checkedDifficultyId == R.id.chip_hard) {
                 difficulty = QuizSettings.Difficulty.HARD;
-            } else if (checkedDifficultyId == R.id.rb_mix) {
+            } else if (checkedDifficultyId == R.id.chip_mix) {
                 difficulty = QuizSettings.Difficulty.MIX;
             }
 

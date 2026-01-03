@@ -84,24 +84,30 @@
             <!-- Skip Question Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_skip_question"
+
+
+
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
                 android:text="@string/skip_question"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                app:strokeColor="@color/figma_purple_main"
-                android:textColor="@color/figma_purple_main"
-                android:layout_marginEnd="8dp"/>
+                style="@style/Widget.AppCompat.Button.Small"
+                android:enabled="false"
+
+
+                />
 
             <!-- Next/Finish Button -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_next_question"
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
                 android:text="@string/next_question"
-                style="@style/Widget.App.Button.Gradient"
-                android:enabled="false"/>
+                android:id="@+id/btn_next_question"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                app:strokeColor="@color/figma_purple_main"
+                android:textColor="@color/figma_purple_main"
+                android:layout_marginEnd="8dp"/>
 
         </LinearLayout>
 

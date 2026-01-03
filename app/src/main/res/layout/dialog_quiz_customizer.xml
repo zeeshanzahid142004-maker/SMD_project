@@ -93,46 +93,47 @@
             android:layout_marginBottom="12dp"
             android:layout_marginTop="8dp" />
 
+        <!-- Divider -->
+
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/chip_group_difficulty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:singleSelection="true"
+            android:layout_marginBottom="20dp"
             app:selectionRequired="true"
-            android:layout_marginBottom="20dp">
+            app:singleSelection="true">
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_easy"
+                style="@style/Widget.App.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/easy"
-                style="@style/Widget.App.Chip.Choice" />
+                android:text="@string/easy" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_medium"
+                style="@style/Widget.App.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/medium"
-                style="@style/Widget.App.Chip.Choice" />
+                android:text="@string/medium" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_hard"
+                style="@style/Widget.App.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/hard"
-                style="@style/Widget.App.Chip.Choice" />
+                android:text="@string/hard" />
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chip_mix"
+                style="@style/Widget.App.Chip.Choice"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/mix"
                 android:checked="true"
-                style="@style/Widget.App.Chip.Choice" />
+                android:text="@string/mix" />
 
         </com.google.android.material.chip.ChipGroup>
 
-        <!-- Divider -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
