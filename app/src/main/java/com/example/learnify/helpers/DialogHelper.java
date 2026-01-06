@@ -541,6 +541,7 @@ public class DialogHelper {
         }
 
         // Initialize views
+        Log.d("DialogHelper", "🎨 Initializing quiz customizer dialog");
         ChipGroup rgQuestionCount = view.findViewById(R.id.chip_group_questions);
         ChipGroup rgDifficulty = view.findViewById(R.id.chip_group_difficulty);
         SwitchMaterial switchCoding = view.findViewById(R.id.switch_coding);

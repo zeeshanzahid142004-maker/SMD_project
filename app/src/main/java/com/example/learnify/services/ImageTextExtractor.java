@@ -40,12 +40,34 @@ public class ImageTextExtractor {
      * @param callback Callback to receive extracted text or error
      */
     public void extractTextFromUri(Uri imageUri, ExtractionCallback callback) {
+        Log.d(TAG, "🔍 extractTextFromUri() called with uri: " + imageUri);
+        
+        if (imageUri == null) {
+            Log.e(TAG, "❌ Image URI is null");
+            callback.onError("Image URI is null");
+            return;
+        }
+        
         try {
+            Log.d(TAG, "📷 Creating InputImage from URI");
             InputImage image = InputImage.fromFilePath(context, imageUri);
+            
+            if (image == null) {
+                Log.e(TAG, "❌ InputImage is null after creation");
+                callback.onError("Failed to create image from URI");
+                return;
+            }
+            
+            Log.d(TAG, "✅ InputImage created successfully, processing...");
             processImage(image, callback);
         } catch (IOException e) {
-            Log.e(TAG, "Failed to create InputImage from URI", e);
+            Log.e(TAG, "❌ IOException while creating InputImage from URI", e);
+            e.printStackTrace();
             callback.onError("Failed to load image: " + e.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Unexpected exception in extractTextFromUri", e);
+            e.printStackTrace();
+            callback.onError("Unexpected error: " + e.getMessage());
         }
     }
 
@@ -55,32 +77,80 @@ public class ImageTextExtractor {
      * @param callback Callback to receive extracted text or error
      */
     public void extractTextFromBitmap(Bitmap bitmap, ExtractionCallback callback) {
+        Log.d(TAG, "🔍 extractTextFromBitmap() called");
+        
         if (bitmap == null) {
+            Log.e(TAG, "❌ Bitmap is null");
             callback.onError("Bitmap is null");
             return;
         }
-        InputImage image = InputImage.fromBitmap(bitmap, 0);
-        processImage(image, callback);
+        
+        try {
+            Log.d(TAG, "📷 Creating InputImage from Bitmap");
+            InputImage image = InputImage.fromBitmap(bitmap, 0);
+            
+            if (image == null) {
+                Log.e(TAG, "❌ InputImage is null after creation from bitmap");
+                callback.onError("Failed to create image from bitmap");
+                return;
+            }
+            
+            Log.d(TAG, "✅ InputImage created from bitmap, processing...");
+            processImage(image, callback);
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Exception in extractTextFromBitmap", e);
+            e.printStackTrace();
+            callback.onError("Failed to process bitmap: " + e.getMessage());
+        }
     }
 
     /**
      * Process the InputImage with ML Kit Text Recognition
      */
     private void processImage(InputImage image, ExtractionCallback callback) {
-        recognizer.process(image)
-                .addOnSuccessListener(text -> {
-                    String extractedText = text.getText();
-                    if (extractedText == null || extractedText.trim().isEmpty()) {
-                        callback.onError("No text found in image");
-                    } else {
-                        Log.d(TAG, "✅ Extracted " + extractedText.length() + " characters from image");
-                        callback.onSuccess(extractedText);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Text recognition failed", e);
-                    callback.onError("Text recognition failed: " + e.getMessage());
-                });
+        Log.d(TAG, "🔄 Processing image with ML Kit Text Recognition");
+        
+        if (image == null) {
+            Log.e(TAG, "❌ InputImage is null in processImage");
+            callback.onError("Input image is null");
+            return;
+        }
+        
+        if (recognizer == null) {
+            Log.e(TAG, "❌ Text recognizer is null");
+            callback.onError("Text recognizer not initialized");
+            return;
+        }
+        
+        try {
+            recognizer.process(image)
+                    .addOnSuccessListener(text -> {
+                        Log.d(TAG, "🎉 Text recognition successful");
+                        if (text == null) {
+                            Log.e(TAG, "❌ Recognition succeeded but text object is null");
+                            callback.onError("No text object returned");
+                            return;
+                        }
+                        
+                        String extractedText = text.getText();
+                        if (extractedText == null || extractedText.trim().isEmpty()) {
+                            Log.d(TAG, "⚠️ No text found in image");
+                            callback.onError("No text found in image");
+                        } else {
+                            Log.d(TAG, "✅ Extracted " + extractedText.length() + " characters from image");
+                            callback.onSuccess(extractedText);
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "❌ Text recognition failed", e);
+                        e.printStackTrace();
+                        callback.onError("Text recognition failed: " + e.getMessage());
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Exception while processing image", e);
+            e.printStackTrace();
+            callback.onError("Exception during recognition: " + e.getMessage());
+        }
     }
 
     /**

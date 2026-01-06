@@ -435,52 +435,76 @@ public class HomeFragment extends Fragment {
     }
 
     private void extractAndProcessFile(Uri uri) {
-        Log.d(TAG, "⏳ Starting background extraction for: " + uri);
+        Log.d(TAG, "🔍 extractAndProcessFile() called with uri: " + uri);
         
-        // Store context reference before starting thread
-        final Context context = getContext();
+        // Store context reference BEFORE starting thread
+        Context context = getContext();
+        
         if (context == null) {
+            Log.e(TAG, "❌ Context is null, cannot process file");
             return;
         }
         
+        Log.d(TAG, "✅ Context is valid");
         CustomToast.info(context, getString(R.string.msg_reading_file));
 
         new Thread(() -> {
-            String text = null;
-            String type = context.getContentResolver().getType(uri);
-
             try {
-                if (type != null && type.equals("application/pdf")) {
-                    text = extractPdf(uri, context);
-                } else if (type != null && (type.contains("wordprocessingml") || type.contains("msword"))) {
-                    text = extractDocx(uri, context);
-                } else if (type != null && type.startsWith("text/")) {
-                    text = extractTxt(uri, context);
-                } else {
-                    try {
+                Log.d(TAG, "📄 Starting file extraction in background thread");
+                String text = null;
+                String type = context.getContentResolver().getType(uri);
+                Log.d(TAG, "📄 File MIME type: " + type);
+
+                try {
+                    if (type != null && type.equals("application/pdf")) {
+                        Log.d(TAG, "📄 Extracting PDF file");
                         text = extractPdf(uri, context);
-                    } catch (Exception e) {
+                    } else if (type != null && (type.contains("wordprocessingml") || type.contains("msword"))) {
+                        Log.d(TAG, "📄 Extracting DOCX file");
+                        text = extractDocx(uri, context);
+                    } else if (type != null && type.startsWith("text/")) {
+                        Log.d(TAG, "📄 Extracting TXT file");
                         text = extractTxt(uri, context);
+                    } else {
+                        Log.d(TAG, "📄 Unknown type, trying PDF first");
+                        try {
+                            text = extractPdf(uri, context);
+                        } catch (Exception e) {
+                            Log.d(TAG, "📄 PDF failed, trying TXT");
+                            text = extractTxt(uri, context);
+                        }
                     }
+                } catch (Exception extractionError) {
+                    Log.e(TAG, "❌ File extraction method failed", extractionError);
+                    throw extractionError;
                 }
 
                 final String extractedText = text;
+                Log.d(TAG, "📝 Extraction complete. Text length: " + (extractedText != null ? extractedText.length() : "null"));
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         Context uiContext = getContext();
-                        if (uiContext != null) {
-                            if (extractedText != null && !extractedText.isEmpty()) {
-                                launchGenerateQuizFragment(extractedText);
-                            } else {
-                                CustomToast.warning(uiContext, getString(R.string.msg_could_not_read_file));
-                            }
+                        if (uiContext == null) {
+                            Log.e(TAG, "❌ UI Context is null after extraction");
+                            return;
+                        }
+                        
+                        if (extractedText != null && !extractedText.isEmpty()) {
+                            Log.d(TAG, "✅ Launching quiz fragment with extracted text");
+                            launchGenerateQuizFragment(extractedText);
+                        } else {
+                            Log.e(TAG, "❌ Extracted text is empty");
+                            CustomToast.warning(uiContext, getString(R.string.msg_could_not_read_file));
                         }
                     });
+                } else {
+                    Log.e(TAG, "❌ Activity is null after extraction");
                 }
 
             } catch (Exception e) {
                 Log.e(TAG, "❌ FATAL File Extraction Error", e);
+                e.printStackTrace();
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         Context uiContext = getContext();
@@ -534,55 +558,84 @@ public class HomeFragment extends Fragment {
      * Extract text from image using OCR (ML Kit Text Recognition)
      */
     private void extractTextFromImage(Uri imageUri) {
-        Log.d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
+        Log.d(TAG, "📷 extractTextFromImage() called with uri: " + imageUri);
         
         Context context = getContext();
+        
         if (context == null) {
+            Log.e(TAG, "❌ Context is null for image extraction");
             return;
         }
         
+        if (imageUri == null) {
+            Log.e(TAG, "❌ Image URI is null");
+            CustomToast.error(context, "No image selected");
+            return;
+        }
+        
+        Log.d(TAG, "✅ Starting OCR extraction");
         CustomToast.info(context, getString(R.string.msg_scanning_image));
 
         if (imageTextExtractor == null) {
-            imageTextExtractor = new ImageTextExtractor(requireContext());
+            Log.d(TAG, "🔧 Initializing ImageTextExtractor");
+            try {
+                imageTextExtractor = new ImageTextExtractor(requireContext());
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Failed to initialize ImageTextExtractor", e);
+                CustomToast.error(context, "OCR initialization failed");
+                return;
+            }
         }
+        
+        // Add try-catch around the extraction
+        try {
+            imageTextExtractor.extractTextFromUri(imageUri, new ImageTextExtractor.ExtractionCallback() {
+                @Override
+                public void onSuccess(String extractedText) {
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Log.d(TAG, "✅ OCR Success: " + extractedText.length() + " characters extracted");
+                            
+                            Context uiContext = getContext();
+                            if (uiContext == null) {
+                                Log.e(TAG, "❌ UI Context is null after OCR");
+                                return;
+                            }
 
-        imageTextExtractor.extractTextFromUri(imageUri, new ImageTextExtractor.ExtractionCallback() {
-            @Override
-            public void onSuccess(String extractedText) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        Log.d(TAG, "✅ OCR Success: " + extractedText.length() + " characters extracted");
-                        
-                        Context uiContext = getContext();
-                        if (uiContext == null) {
-                            return;
-                        }
+                            if (extractedText.trim().isEmpty()) {
+                                Log.d(TAG, "⚠️ Extracted text is empty");
+                                CustomToast.warning(uiContext, getString(R.string.msg_no_text_in_image));
+                                return;
+                            }
 
-                        if (extractedText.trim().isEmpty()) {
-                            CustomToast.warning(uiContext, getString(R.string.msg_no_text_in_image));
-                            return;
-                        }
-
-                        CustomToast.success(uiContext, getString(R.string.msg_text_extracted));
-                        launchGenerateQuizFragment(extractedText);
-                    });
+                            CustomToast.success(uiContext, getString(R.string.msg_text_extracted));
+                            launchGenerateQuizFragment(extractedText);
+                        });
+                    } else {
+                        Log.e(TAG, "❌ Activity is null after OCR success");
+                    }
                 }
-            }
 
-            @Override
-            public void onError(String error) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        Log.e(TAG, "❌ OCR Error: " + error);
-                        Context uiContext = getContext();
-                        if (uiContext != null) {
-                            CustomToast.error(uiContext, getString(R.string.msg_ocr_failed, error));
-                        }
-                    });
+                @Override
+                public void onError(String error) {
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            Log.e(TAG, "❌ OCR Error: " + error);
+                            Context uiContext = getContext();
+                            if (uiContext != null) {
+                                CustomToast.error(uiContext, getString(R.string.msg_ocr_failed, error));
+                            }
+                        });
+                    } else {
+                        Log.e(TAG, "❌ Activity is null after OCR error");
+                    }
                 }
-            }
-        });
+            });
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Exception in extractTextFromUri", e);
+            e.printStackTrace();
+            CustomToast.error(context, "OCR failed: " + e.getMessage());
+        }
     }
 
     public interface OnHomeFragmentInteractionListener {
