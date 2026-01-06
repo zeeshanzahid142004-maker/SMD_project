@@ -22,6 +22,7 @@ import com.example.learnify.R;
 import com.example.learnify.managers.LanguageManager;
 import com.example.learnify.modelclass.QuizSettings;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.radiobutton.MaterialRadioButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
@@ -540,8 +541,8 @@ public class DialogHelper {
         }
 
         // Initialize views
-        RadioGroup rgQuestionCount = view.findViewById(R.id.chip_group_questions);
-        RadioGroup rgDifficulty = view.findViewById(R.id.chip_group_difficulty);
+        ChipGroup rgQuestionCount = view.findViewById(R.id.chip_group_questions);
+        ChipGroup rgDifficulty = view.findViewById(R.id.chip_group_difficulty);
         SwitchMaterial switchCoding = view.findViewById(R.id.switch_coding);
         TextView tvLanguage = view.findViewById(R.id.tv_language);
         MaterialButton btnCancel = view.findViewById(R.id.btn_cancel);
@@ -562,7 +563,7 @@ public class DialogHelper {
         btnGenerate.setOnClickListener(v -> {
             // Get number of questions
             int questionCount = 5; // default
-            int checkedQuestionId = rgQuestionCount.getCheckedRadioButtonId();
+            int checkedQuestionId = rgQuestionCount.getCheckedChipId();
             if (checkedQuestionId == R.id.chip_questions_3) {
                 questionCount = 3;
             } else if (checkedQuestionId == R.id.chip_questions_5) {
@@ -575,8 +576,8 @@ public class DialogHelper {
 
             // Get difficulty
             QuizSettings.Difficulty difficulty = QuizSettings.Difficulty.MIX; // default
-            int checkedDifficultyId = rgDifficulty.getCheckedRadioButtonId();
-            if (checkedDifficultyId == R.id.chip_group_difficulty) {
+            int checkedDifficultyId = rgDifficulty.getCheckedChipId();
+            if (checkedDifficultyId == R.id.chip_easy) {
                 difficulty = QuizSettings.Difficulty.EASY;
             } else if (checkedDifficultyId == R.id.chip_medium) {
                 difficulty = QuizSettings.Difficulty.MEDIUM;

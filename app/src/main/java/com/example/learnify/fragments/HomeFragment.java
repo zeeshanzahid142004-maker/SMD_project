@@ -117,7 +117,7 @@ public class HomeFragment extends Fragment {
                     if (uri != null) {
                         extractAndProcessFile(uri);
                     } else {
-                        CustomToast.info(getContext(), "No file selected");
+                        CustomToast.info(getContext(), getString(R.string.msg_no_file_selected));
                     }
                 }
         );
@@ -131,7 +131,7 @@ public class HomeFragment extends Fragment {
                             extractTextFromImage(cameraPhotoUri);
                         }
                     } else {
-                        CustomToast.info(getContext(), "Camera cancelled");
+                        CustomToast.info(getContext(), getString(R.string.msg_camera_cancelled));
                     }
                 }
         );
@@ -146,7 +146,7 @@ public class HomeFragment extends Fragment {
                             extractTextFromImage(selectedImageUri);
                         }
                     } else {
-                        CustomToast.info(getContext(), "No image selected");
+                        CustomToast.info(getContext(), getString(R.string.msg_no_image_selected));
                     }
                 }
         );
@@ -158,7 +158,7 @@ public class HomeFragment extends Fragment {
                     if (isGranted) {
                         launchCamera();
                     } else {
-                        CustomToast.warning(getContext(), "Camera permission required");
+                        CustomToast.warning(getContext(), getString(R.string.msg_camera_permission_required));
                     }
                 }
         );
@@ -436,24 +436,31 @@ public class HomeFragment extends Fragment {
 
     private void extractAndProcessFile(Uri uri) {
         Log.d(TAG, "⏳ Starting background extraction for: " + uri);
-        CustomToast.info(getContext(), "Reading file...");
+        
+        // Store context reference before starting thread
+        final Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        
+        CustomToast.info(context, getString(R.string.msg_reading_file));
 
         new Thread(() -> {
             String text = null;
-            String type = getContext().getContentResolver().getType(uri);
+            String type = context.getContentResolver().getType(uri);
 
             try {
                 if (type != null && type.equals("application/pdf")) {
-                    text = extractPdf(uri);
+                    text = extractPdf(uri, context);
                 } else if (type != null && (type.contains("wordprocessingml") || type.contains("msword"))) {
-                    text = extractDocx(uri);
-                } else if (type != null && type. startsWith("text/")) {
-                    text = extractTxt(uri);
+                    text = extractDocx(uri, context);
+                } else if (type != null && type.startsWith("text/")) {
+                    text = extractTxt(uri, context);
                 } else {
                     try {
-                        text = extractPdf(uri);
+                        text = extractPdf(uri, context);
                     } catch (Exception e) {
-                        text = extractTxt(uri);
+                        text = extractTxt(uri, context);
                     }
                 }
 
@@ -461,10 +468,13 @@ public class HomeFragment extends Fragment {
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        if (extractedText != null && !extractedText.isEmpty()) {
-                            launchGenerateQuizFragment(extractedText);
-                        } else {
-                            CustomToast.warning(getContext(), "Could not read text from this file.");
+                        Context uiContext = getContext();
+                        if (uiContext != null) {
+                            if (extractedText != null && !extractedText.isEmpty()) {
+                                launchGenerateQuizFragment(extractedText);
+                            } else {
+                                CustomToast.warning(uiContext, getString(R.string.msg_could_not_read_file));
+                            }
                         }
                     });
                 }
@@ -472,9 +482,12 @@ public class HomeFragment extends Fragment {
             } catch (Exception e) {
                 Log.e(TAG, "❌ FATAL File Extraction Error", e);
                 if (getActivity() != null) {
-                    getActivity().runOnUiThread(() ->
-                            CustomToast.error(getContext(), "Error reading file: " + e.getMessage())
-                    );
+                    getActivity().runOnUiThread(() -> {
+                        Context uiContext = getContext();
+                        if (uiContext != null) {
+                            CustomToast.error(uiContext, getString(R.string.msg_error_reading_file, e.getMessage()));
+                        }
+                    });
                 }
             }
         }).start();
@@ -488,8 +501,8 @@ public class HomeFragment extends Fragment {
                 .commit();
     }
 
-    private String extractPdf(Uri uri) throws Exception {
-        InputStream is = getContext().getContentResolver(). openInputStream(uri);
+    private String extractPdf(Uri uri, Context context) throws Exception {
+        InputStream is = context.getContentResolver().openInputStream(uri);
         PDDocument doc = PDDocument.load(is);
         PDFTextStripper stripper = new PDFTextStripper();
         String text = stripper.getText(doc);
@@ -497,8 +510,8 @@ public class HomeFragment extends Fragment {
         return text;
     }
 
-    private String extractDocx(Uri uri) throws Exception {
-        InputStream is = getContext().getContentResolver().openInputStream(uri);
+    private String extractDocx(Uri uri, Context context) throws Exception {
+        InputStream is = context.getContentResolver().openInputStream(uri);
         XWPFDocument doc = new XWPFDocument(is);
         XWPFWordExtractor extractor = new XWPFWordExtractor(doc);
         String text = extractor.getText();
@@ -506,8 +519,8 @@ public class HomeFragment extends Fragment {
         return text;
     }
 
-    private String extractTxt(Uri uri) throws Exception {
-        InputStream is = getContext().getContentResolver().openInputStream(uri);
+    private String extractTxt(Uri uri, Context context) throws Exception {
+        InputStream is = context.getContentResolver().openInputStream(uri);
         BufferedReader r = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
         String line;
@@ -521,8 +534,14 @@ public class HomeFragment extends Fragment {
      * Extract text from image using OCR (ML Kit Text Recognition)
      */
     private void extractTextFromImage(Uri imageUri) {
-        Log. d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
-        CustomToast.info(getContext(), "Scanning image for text...");
+        Log.d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
+        
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        
+        CustomToast.info(context, getString(R.string.msg_scanning_image));
 
         if (imageTextExtractor == null) {
             imageTextExtractor = new ImageTextExtractor(requireContext());
@@ -533,14 +552,19 @@ public class HomeFragment extends Fragment {
             public void onSuccess(String extractedText) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        Log.d(TAG, "✅ OCR Success: " + extractedText. length() + " characters extracted");
-
-                        if (extractedText.trim().isEmpty()) {
-                            CustomToast.warning(getContext(), "No text found in image");
+                        Log.d(TAG, "✅ OCR Success: " + extractedText.length() + " characters extracted");
+                        
+                        Context uiContext = getContext();
+                        if (uiContext == null) {
                             return;
                         }
 
-                        CustomToast.success(getContext(), "Text extracted successfully!");
+                        if (extractedText.trim().isEmpty()) {
+                            CustomToast.warning(uiContext, getString(R.string.msg_no_text_in_image));
+                            return;
+                        }
+
+                        CustomToast.success(uiContext, getString(R.string.msg_text_extracted));
                         launchGenerateQuizFragment(extractedText);
                     });
                 }
@@ -551,7 +575,10 @@ public class HomeFragment extends Fragment {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         Log.e(TAG, "❌ OCR Error: " + error);
-                        CustomToast.error(getContext(), "OCR failed: " + error);
+                        Context uiContext = getContext();
+                        if (uiContext != null) {
+                            CustomToast.error(uiContext, getString(R.string.msg_ocr_failed, error));
+                        }
                     });
                 }
             }

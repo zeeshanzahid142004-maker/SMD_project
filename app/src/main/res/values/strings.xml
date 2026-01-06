@@ -209,4 +209,17 @@
     <string name="times_up">Time\'s up!</string>
     <string name="code_passed">Great job! Code passed.</string>
     <string name="default_language">English</string>
+
+    <!-- Toast Messages -->
+    <string name="msg_no_file_selected">No file selected</string>
+    <string name="msg_camera_cancelled">Camera cancelled</string>
+    <string name="msg_no_image_selected">No image selected</string>
+    <string name="msg_reading_file">Reading file...</string>
+    <string name="msg_scanning_image">Scanning image for text...</string>
+    <string name="msg_text_extracted">Text extracted successfully!</string>
+    <string name="msg_camera_permission_required">Camera permission required</string>
+    <string name="msg_no_text_in_image">No text found in image</string>
+    <string name="msg_could_not_read_file">Could not read text from this file.</string>
+    <string name="msg_ocr_failed">OCR failed: %s</string>
+    <string name="msg_error_reading_file">Error reading file: %s</string>
 </resources>
