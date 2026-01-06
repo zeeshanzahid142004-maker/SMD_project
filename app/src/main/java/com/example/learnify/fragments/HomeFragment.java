@@ -454,7 +454,7 @@ public class HomeFragment extends Fragment {
                     text = extractPdf(uri, context);
                 } else if (type != null && (type.contains("wordprocessingml") || type.contains("msword"))) {
                     text = extractDocx(uri, context);
-                } else if (type != null && type. startsWith("text/")) {
+                } else if (type != null && type.startsWith("text/")) {
                     text = extractTxt(uri, context);
                 } else {
                     try {
@@ -502,7 +502,7 @@ public class HomeFragment extends Fragment {
     }
 
     private String extractPdf(Uri uri, Context context) throws Exception {
-        InputStream is = context.getContentResolver(). openInputStream(uri);
+        InputStream is = context.getContentResolver().openInputStream(uri);
         PDDocument doc = PDDocument.load(is);
         PDFTextStripper stripper = new PDFTextStripper();
         String text = stripper.getText(doc);
@@ -534,7 +534,7 @@ public class HomeFragment extends Fragment {
      * Extract text from image using OCR (ML Kit Text Recognition)
      */
     private void extractTextFromImage(Uri imageUri) {
-        Log. d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
+        Log.d(TAG, "📷 Starting OCR extraction from image: " + imageUri);
         
         Context context = getContext();
         if (context == null) {
@@ -552,7 +552,7 @@ public class HomeFragment extends Fragment {
             public void onSuccess(String extractedText) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        Log.d(TAG, "✅ OCR Success: " + extractedText. length() + " characters extracted");
+                        Log.d(TAG, "✅ OCR Success: " + extractedText.length() + " characters extracted");
                         
                         Context uiContext = getContext();
                         if (uiContext == null) {
