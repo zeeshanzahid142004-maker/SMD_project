@@ -171,28 +171,43 @@ public class GenerateQuizFragment extends Fragment {
      * Show quiz customizer dialog before starting generation
      */
     private void showQuizCustomizer() {
-        if (getContext() == null) return;
+        Log.d(TAG, "🎨 showQuizCustomizer() called");
+        
+        if (getContext() == null) {
+            Log.e(TAG, "❌ Context is null in showQuizCustomizer");
+            return;
+        }
 
-        String currentLanguage = LanguageManager.getInstance(requireContext()).getCurrentLanguage();
+        try {
+            String currentLanguage = LanguageManager.getInstance(requireContext()).getCurrentLanguage();
+            Log.d(TAG, "🌍 Current language: " + currentLanguage);
 
-        DialogHelper.showQuizCustomizerDialog(requireContext(), currentLanguage,
-                new DialogHelper.QuizCustomizerListener() {
-                    @Override
-                    public void onSettingsConfirmed(QuizSettings settings) {
-                        currentQuizSettings = settings;
-                        Log.d(TAG, "📝 Quiz settings: " + settings.getNumberOfQuestions() + " questions, " +
-                                settings.getDifficulty() + " difficulty, coding=" + settings.isIncludeCodingQuestions());
-                        startProcess();
-                    }
-
-                    @Override
-                    public void onCancelled() {
-                        // Go back when cancelled
-                        if (getActivity() != null) {
-                            getActivity().getSupportFragmentManager().popBackStack();
+            DialogHelper.showQuizCustomizerDialog(requireContext(), currentLanguage,
+                    new DialogHelper.QuizCustomizerListener() {
+                        @Override
+                        public void onSettingsConfirmed(QuizSettings settings) {
+                            Log.d(TAG, "✅ Quiz settings confirmed: " + settings.getNumberOfQuestions() + " questions, " +
+                                    settings.getDifficulty() + " difficulty, coding=" + settings.isIncludeCodingQuestions());
+                            currentQuizSettings = settings;
+                            startProcess();
                         }
-                    }
-                });
+
+                        @Override
+                        public void onCancelled() {
+                            Log.d(TAG, "❌ Quiz customizer cancelled");
+                            // Go back when cancelled
+                            if (getActivity() != null) {
+                                getActivity().getSupportFragmentManager().popBackStack();
+                            }
+                        }
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Exception in showQuizCustomizer", e);
+            e.printStackTrace();
+            if (getContext() != null) {
+                CustomToast.error(getContext(), "Error: " + e.getMessage());
+            }
+        }
     }
 
     private void startProcess() {

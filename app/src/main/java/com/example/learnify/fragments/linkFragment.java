@@ -118,14 +118,25 @@ public class linkFragment extends Fragment {
 
         // 3. "Take Quiz" Button
         quizButton.setOnClickListener(v -> {
-            Log.d(TAG, "🎯 Take Quiz clicked");
+            Log.d(TAG, "🎯 Take Quiz button clicked");
+            Log.d(TAG, "📝 isYouTubeVideo: " + isYouTubeVideo);
+            Log.d(TAG, "📝 extractedTranscript length: " + (extractedTranscript != null ? extractedTranscript.length() : "null"));
+            Log.d(TAG, "📝 processedLink: " + processedLink);
 
-            if (isYouTubeVideo && !extractedTranscript.isEmpty()) {
-                Log.d(TAG, "✅ Using transcript for quiz generation");
-                launchGenerateQuizFragment(extractedTranscript);
-            } else {
-                Log.d(TAG, "📝 Using URL for quiz generation");
-                launchGenerateQuizFragment(processedLink);
+            try {
+                if (isYouTubeVideo && !extractedTranscript.isEmpty()) {
+                    Log.d(TAG, "✅ Using transcript for quiz generation");
+                    launchGenerateQuizFragment(extractedTranscript);
+                } else {
+                    Log.d(TAG, "📝 Using URL for quiz generation");
+                    launchGenerateQuizFragment(processedLink);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Error launching quiz fragment", e);
+                e.printStackTrace();
+                if (getContext() != null) {
+                    CustomToast.error(getContext(), "Error: " + e.getMessage());
+                }
             }
         });
     }

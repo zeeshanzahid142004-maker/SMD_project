@@ -33,6 +33,16 @@ public class MainActivity extends BaseActivity implements HomeFragment.OnHomeFra
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Hide/transparent navigation bar
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                getWindow().setDecorFitsSystemWindows(false);
+            }
+            getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        } catch (Exception e) {
+            Log.e(TAG, "Could not set navigation bar transparency", e);
+        }
+
         // Initialize PDFBox
         try {
             PDFBoxResourceLoader.init(getApplicationContext());
