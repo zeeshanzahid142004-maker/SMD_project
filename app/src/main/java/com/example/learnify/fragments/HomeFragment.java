@@ -439,14 +439,13 @@ public class HomeFragment extends Fragment {
         
         // Store context reference BEFORE starting thread
         Context context = getContext();
-        Activity activity = getActivity();
         
-        if (context == null || activity == null) {
-            Log.e(TAG, "❌ Context or Activity is null, cannot process file");
+        if (context == null) {
+            Log.e(TAG, "❌ Context is null, cannot process file");
             return;
         }
         
-        Log.d(TAG, "✅ Context and Activity are valid");
+        Log.d(TAG, "✅ Context is valid");
         CustomToast.info(context, getString(R.string.msg_reading_file));
 
         new Thread(() -> {
@@ -562,10 +561,9 @@ public class HomeFragment extends Fragment {
         Log.d(TAG, "📷 extractTextFromImage() called with uri: " + imageUri);
         
         Context context = getContext();
-        Activity activity = getActivity();
         
-        if (context == null || activity == null) {
-            Log.e(TAG, "❌ Context or Activity is null for image extraction");
+        if (context == null) {
+            Log.e(TAG, "❌ Context is null for image extraction");
             return;
         }
         
